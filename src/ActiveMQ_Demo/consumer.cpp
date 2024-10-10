@@ -141,21 +141,26 @@ public:
         try
         {
             count++;
-            const TextMessage* textMessage =
-                dynamic_cast< const TextMessage* >( message );
-            string text = "";
+            const BytesMessage* textMessage =
+                dynamic_cast< const BytesMessage* >( message );
+            unsigned char* bytes = {0};
 
             if( textMessage != NULL ) {
-                text = textMessage->getText();
+                bytes = textMessage->getBodyBytes();
             } else {
-                text = "NOT A TEXTMESSAGE!";
+                bytes = {0};
             }
 
             if( clientAck ) {
                 message->acknowledge();
             }
 
-            printf( "Message #%d Received: %s\n", count, text.c_str() );
+            char text[textMessage->getBodyLength()];
+            int iter = 0;
+            for (int i = 0; i < textMessage->getBodyLength(); i++)
+                iter += sprintf(&text[iter], "0x%02X, ", bytes[i]);
+
+            printf( "Message #%d Received: %s\n", count, text );
         } catch (CMSException& e) {
             e.printStackTrace();
         }
@@ -212,7 +217,7 @@ int main(int argc AMQCPP_UNUSED, char* argv[] AMQCPP_UNUSED) {
     //  http://activemq.apache.org/cms/
     //
     std::string brokerURI =
-        "failover:(tcp://127.0.0.1:61616)";
+        "failover:(tcp://192.168.71.115:61616)";
 
     //============================================================
     // This is the Destination Name and URI options.  Use this to
