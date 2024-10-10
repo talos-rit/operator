@@ -32,7 +32,7 @@ CFLAGS      := -g -Wall -Wextra -Werror -std=c11 -D _DEFAULT_SOURCE
 CPPFLAGS    := -I include -I$(INT_SRC_DIR) -I$(EXT_SRC_DIR) -lpthread
 
 # Internal sources (ChariotNode)
-SRCS        := main.c
+SRCS        := log_demo.c
 # SRCS        += tmp/tmp.c
 
 # External sources (Common)
