@@ -39,12 +39,15 @@ SRCS        := log_demo.c
 EXTS		:= log/log.c
 EXTS		+= util/timestamp.c
 EXTS		+= data/s_list.c
+# EXTS		+= tamq/tamq.cpp
 
 # Automated reformatting
 SRCS := $(SRCS:%=$(INT_SRC_DIR)/%)
 EXTS := $(EXTS:%=$(EXT_SRC_DIR)/%)
 OBJS := $(SRCS:$(INT_SRC_DIR)/%.c=$(OBJ_DIR)/$(SUB_DIR)/%.o)
 OBJS += $(EXTS:$(EXT_SRC_DIR)/%.c=$(OBJ_DIR)/$(EXT_DIR)/%.o)
+# OBJS_CPP := $(SRCS:$(INT_SRC_DIR)/%.cpp=$(OBJ_DIR)/CPP/$(SUB_DIR)/%.o)
+# OBJS_CPP += $(EXTS:$(EXT_SRC_DIR)/%.cpp=$(OBJ_DIR)/CPP/$(EXT_DIR)/%.o)
 
 #------------------------------------------------#
 #   UTENSILS                                     #
@@ -89,7 +92,8 @@ clean:
 fclean: clean
 	$(RM) $(NAME)
 	mkdir -p $(BIN_DIR)
-	mkdir -p $(OBJ_DIR)
+	# mkdir -p $(OBJ_DIR)/C/$(SUB_DIR) $(OBJ_DIR)/C/$(EXT_DIR)
+	# mkdir -p $(OBJ_DIR)/CPP/$(SUB_DIR) $(OBJ_DIR)/CPP/$(EXT_DIR)
 
 re:
 	$(MAKE) fclean
