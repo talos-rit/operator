@@ -27,24 +27,30 @@ TEST 		:= $(BIN_DIR)/$(NAME)_test
 BINS		:= $(BIN_DIR)/$(NAME)
 
 # Compiler options
-CC          := gcc
-CFLAGS      := -g -Wall -Wextra -Werror -std=c11 -D _DEFAULT_SOURCE
-CPPFLAGS    := -I include -I$(INT_SRC_DIR) -I$(EXT_SRC_DIR) -lpthread
+CC          := g++
+CFLAGS      := -g -Wall -Wextra -D _DEFAULT_SOURCE -lpthread
+CPPFLAGS    := -I include -I$(INT_SRC_DIR) -I$(EXT_SRC_DIR)
+
+AMQ_CFLAGS 	:= -luuid -lssl -lcrypto -lapr-1
+AMQ_INC 	:= -I/usr/include/apr-1.0/ -I/usr/local/include/activemq-cpp-3.10.0/ -lactivemq-cpp
 
 # Internal sources (ChariotNode)
-SRCS        := log_demo.c
+SRCS        := main.c
 # SRCS        += tmp/tmp.c
 
 # External sources (Common)
 EXTS		:= log/log.c
 EXTS		+= util/timestamp.c
 EXTS		+= data/s_list.c
+EXTS_CPP	:= tamq/tamq.cpp
 
 # Automated reformatting
 SRCS := $(SRCS:%=$(INT_SRC_DIR)/%)
 EXTS := $(EXTS:%=$(EXT_SRC_DIR)/%)
+EXTS_CPP := $(EXTS_CPP:%=$(EXT_SRC_DIR)/%)
 OBJS := $(SRCS:$(INT_SRC_DIR)/%.c=$(OBJ_DIR)/$(SUB_DIR)/%.o)
 OBJS += $(EXTS:$(EXT_SRC_DIR)/%.c=$(OBJ_DIR)/$(EXT_DIR)/%.o)
+OBJS += $(EXTS_CPP:$(EXT_SRC_DIR)/%.cpp=$(OBJ_DIR)/$(EXT_DIR)/%.o)
 
 #------------------------------------------------#
 #   UTENSILS                                     #
@@ -71,7 +77,7 @@ all: $(NAME)
 
 # Executable
 $(NAME): $(OBJS)
-	$(CC) $(OBJS) -o $(BIN_DIR)/$(NAME)
+	$(CC) $(OBJS) -o $(BIN_DIR)/$(NAME) -lactivemq-cpp
 
 # Internal source compilation
 $(OBJ_DIR)/$(SUB_DIR)/%.o: $(INT_SRC_DIR)/%.c
@@ -81,7 +87,17 @@ $(OBJ_DIR)/$(SUB_DIR)/%.o: $(INT_SRC_DIR)/%.c
 # External source compilation
 $(OBJ_DIR)/$(EXT_DIR)/%.o: $(EXT_SRC_DIR)/%.c
 	$(DIR_DUP)
-	$(CC) $(CFLAGS) $(CPPFLAGS) -c -o $@ $<
+	$(CC) $(CFLAGS) $(CPPFLAGS) -g -c -o $@ $<
+
+# Internal source compilation
+$(OBJ_DIR)/$(SUB_DIR)/%.o: $(INT_SRC_DIR)/%.cpp
+	$(DIR_DUP)
+	$(CC) $(CFLAGS) $(CPPFLAGS) -g -c -o $@ $<
+
+# External source compilation
+$(OBJ_DIR)/$(EXT_DIR)/%.o: $(EXT_SRC_DIR)/%.cpp
+	$(DIR_DUP)
+	$(CC) $(CFLAGS) $(AMQ_CFLAGS) $(CPPFLAGS) $(AMQ_INC) -g -c -o $@ $<
 
 clean:
 	$(RM) $(OBJS)

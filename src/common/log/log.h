@@ -1,6 +1,4 @@
-// #pragma once
-#ifndef LOG_H
-#define LOG_H
+#pragma once
 
 #include <pthread.h>
 #include <stdint.h>
@@ -9,10 +7,14 @@
 #include "log/log_ansi_color.h"
 #include "data/s_list.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #define LOG_USE_LOCATION false
 #define LOG_USE_COLOR true
 #define LOG_USE_STDERR true
-#define LOG_FILE_PATH "/home/brooke/Dev/personal/Chariot/build/chariot.log"
+#define LOG_FILE_PATH "/media/brooke/Vault/Dev/RIT/Fall2024/SWEN561/runtime/log/operator.log"
 
 #define STD_FAIL            {LOG_IEC(); return -1;}     // Not quite sure where to put this
 #define STD_FAIL_VOID       {LOG_IEC(); return;}        // Not quite sure where to put this
@@ -89,4 +91,6 @@ int8_t LOG_stop();
 */
 int8_t LOG_destory();
 
+#ifdef __cplusplus
+}
 #endif

@@ -161,13 +161,7 @@ public:
                 message->acknowledge();
             }
 
-            int len = strlen(&text[0]);
-            char bytes[len];
-            int iter = 0;
-            for (int i = 0; i < len; i++)
-                iter += sprintf(&bytes[iter], "0x%02X, ", text[i]);
-
-            LOG_VERBOSE(2, "Message #%d Received: %s\n\t%s\n", count, bytes, text );
+            LOG_VERBOSE(2, "Message #%d Received: %s\n", count, text.c_str() );
         } catch (CMSException& e) {
             e.printStackTrace();
         }

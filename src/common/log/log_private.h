@@ -8,6 +8,10 @@
 #include "data/s_list.h"
 #include "log/log.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 const char* const _LOG_level_color[] =
 {
     BRED,   // Fatal
@@ -63,3 +67,7 @@ typedef struct _log
 
 void LOG_thread_poll ();
 void LOG_thread_print();
+
+#ifdef __cplusplus
+}
+#endif

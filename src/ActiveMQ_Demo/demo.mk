@@ -5,7 +5,7 @@ BIN_DIR := build/bin/
 OBJ_DIR := build/obj/src/demo
 
 CC 		:= g++
-CFLAGS 	:= -pthread -luuid -lssl -lcrypto -lapr-1
+CFLAGS 	:= -g -Wall -Wextra -D _DEFAULT_SOURCE -lpthread -luuid -lssl -lcrypto -lapr-1
 INC 	:= -I /usr/include/apr-1.0/ -I /usr/local/include/activemq-cpp-3.10.0/ -lactivemq-cpp
 SRCS	:= $(SRC_DIR)/consumer.cpp
 
