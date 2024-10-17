@@ -43,6 +43,7 @@ EXTS		:= log/log.c
 EXTS		+= util/timestamp.c
 EXTS		+= data/s_list.c
 EXTS_CPP	:= tamq/tamq.cpp
+EXTS_CPP	+= sub/sub.cpp
 
 # Automated reformatting
 SRCS := $(SRCS:%=$(INT_SRC_DIR)/%)

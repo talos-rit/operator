@@ -1,6 +1,3 @@
-#include "log/log.h"
-#include "log/log_private.h"
-
 #include <stdarg.h>
 #include <stdio.h>
 #include <stdint.h>
@@ -11,6 +8,9 @@
 #include <unistd.h>
 #include <fcntl.h>
 
+#include "log/log.h"
+#include "log/log_private.h"
+#include "util/comm.h"
 #include "util/timestamp.h"
 
 #define LOG_CLOCK CLOCK_REALTIME

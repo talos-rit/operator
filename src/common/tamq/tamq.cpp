@@ -38,6 +38,8 @@
 
 #include "tamq/tamq.h"
 #include "log/log.h"
+#include "util/comm.h"
+#include "sub/sub.h"
 
 #define LOG_FILE_THRESHOLD_THIS LOG_THRESHOLD_MAX
 #define LOG_CONSOLE_THRESHOLD_THIS LOG_VERBOSE + 2
@@ -51,10 +53,16 @@ using namespace decaf::util::concurrent;
 using namespace cms;
 using namespace std;
 
+
+class SimpleAsyncConsumer;
+
+SimpleAsyncConsumer *client;
+
 ////////////////////////////////////////////////////////////////////////////////
 class SimpleAsyncConsumer : public ExceptionListener,
                             public MessageListener,
-                            public DefaultTransportListener {
+                            public DefaultTransportListener,
+                            public SUB_Messenger {
 private:
 
     Connection* connection;
@@ -65,9 +73,9 @@ private:
     std::string brokerURI;
     std::string destURI;
     bool clientAck;
+    TAMQ_Config config;
 
 private:
-
     SimpleAsyncConsumer( const SimpleAsyncConsumer& );
 
 public:
@@ -182,6 +190,39 @@ public:
         LOG_INFO("The Connection's Transport has been Restored.");
     }
 
+    // int Init(TAMQ_Config *config)
+    // {
+    //     // Copy configuration
+    //     if (NULL != config) memcpy(&this->config, config, sizeof(TAMQ_Config));
+    //     else
+    //     {
+    //         this->config = {TAMQ_BROKER_URI, TAMQ_DEST_URI, TAMQ_USE_TOPICS, TAMQ_CLIENT_ACK};
+    //     }
+
+    //     // Initialize Subscriber
+    //     client = new SimpleAsyncConsumer ( config->connection, config->dest_uri, config->use_topics, config->client_ack ); // Create the consumer
+    //     LOG_VERBOSE(0, "Talos ActiveMQ Client Initialized");
+
+    //     return 0;
+    // }
+
+    int Start() 
+    {
+        client->runConsumer(); // Start it up and it will listen forever.
+        LOG_INFO("Talos ActiveMQ Client Running...");
+
+        return 0;
+    }
+
+    int Stop() 
+    {
+        // All CMS resources should be closed before the library is shutdown.
+        client->close();
+        LOG_INFO("Talos ActiveMQ Client Stopped");
+
+        return 0;
+    }
+
 private:
 
     void cleanup(){
@@ -201,38 +242,55 @@ private:
     }
 };
 
-SimpleAsyncConsumer *consumer;
-
 ////////////////////////////////////////////////////////////////////////////////
-int TAMQ_init() 
+SUB_Messenger* TAMQ_init(TAMQ_Config *config) 
 {
     activemq::library::ActiveMQCPP::initializeLibrary();
+    TAMQ_Config conf;
 
-    std::string brokerURI = TAMQ_BROKER_URI;
-    std::string destURI = TAMQ_DEST_URI;
-    bool useTopics = TAMQ_USE_TOPICS;
-    bool clientAck = TAMQ_CLIENT_ACK;
+    // Copy configuration
+    if (NULL != config) memcpy(&conf, config, sizeof(TAMQ_Config));
+    else
+    {
+        conf = {TAMQ_BROKER_URI, TAMQ_DEST_URI, TAMQ_USE_TOPICS, TAMQ_CLIENT_ACK};
+    }
 
-    consumer = new SimpleAsyncConsumer ( brokerURI, destURI, useTopics, clientAck ); // Create the consumer
+    // std::string brokerURI = TAMQ_BROKER_URI;
+    // std::string destURI = TAMQ_DEST_URI;
+    // bool useTopics = TAMQ_USE_TOPICS;
+    // bool clientAck = TAMQ_CLIENT_ACK;
+
+    client = new SimpleAsyncConsumer (  conf.connection, 
+                                        conf.dest_uri, 
+                                        conf.use_topics, 
+                                        conf.client_ack ); // Create the consumer
+
     LOG_VERBOSE(0, "Talos ActiveMQ Client Initialized");
+    return client;
 }
 
-int TAMQ_start() 
-{
-    consumer->runConsumer(); // Start it up and it will listen forever.
-    LOG_INFO("Talos ActiveMQ Client Running...");
-}
+// int TAMQ_start() 
+// {
+//     client->runConsumer(); // Start it up and it will listen forever.
+//     LOG_INFO("Talos ActiveMQ Client Running...");
 
-int TAMQ_stop()
-{
-    // All CMS resources should be closed before the library is shutdown.
-    consumer->close();
-    LOG_INFO("Talos ActiveMQ Client Stopped");
-}
+//     return 0;
+// }
+
+// int TAMQ_stop()
+// {
+//     // All CMS resources should be closed before the library is shutdown.
+//     client->close();
+//     LOG_INFO("Talos ActiveMQ Client Stopped");
+
+//     return 0;
+// }
 
 int TAMQ_destroy()
 {
-    delete consumer;
+    delete client;
     activemq::library::ActiveMQCPP::shutdownLibrary();
     LOG_VERBOSE(0, "Talos ActiveMQ Client Stopped");
+
+    return 0;
 }

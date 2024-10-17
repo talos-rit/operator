@@ -1,7 +1,7 @@
-#include "data/s_list.h"
-
 #include <string.h>
 
+#include "data/s_list.h"
+#include "util/comm.h"
 #include "log/log.h"
 
 #define LOG_CONSOLE_THRESHOLD_THIS LOG_VERBOSE + 2

@@ -16,10 +16,6 @@ extern "C" {
 #define LOG_USE_STDERR true
 #define LOG_FILE_PATH "/media/brooke/Vault/Dev/RIT/Fall2024/SWEN561/runtime/log/operator.log"
 
-#define STD_FAIL            {LOG_IEC(); return -1;}     // Not quite sure where to put this
-#define STD_FAIL_VOID       {LOG_IEC(); return;}        // Not quite sure where to put this
-#define STD_FAIL_VOID_PTR   {LOG_IEC(); return NULL;}   // Not quite sure where to put this
-
 // Location info is considered part of the message body
 #define LOG_MAX_BUFFER 255
 #define LOG_BUFFER_LEN 127

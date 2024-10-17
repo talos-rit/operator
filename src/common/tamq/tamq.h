@@ -1,6 +1,16 @@
 // (Talos) ActiveMQ implementation (TAMQ to avoid confusion with the Apache library)
 #pragma once
 
+#include <stdlib.h>
+#include <stdio.h>
+#include <iostream>
+#include <string>
+
+#include "util/comm.h"
+#include "sub/sub.h"
+
+using namespace std;
+
 // Set the URI to point to the IPAddress of your broker.
 // add any optional params to the url to enable things like
 // tightMarshalling or tcp logging etc.  See the CMS web site for
@@ -30,6 +40,16 @@
 //============================================================
 #define TAMQ_CLIENT_ACK false
 
+#define TAMQ_CONFIG_FIELD_LEN 64
+
+typedef struct _tamq_config
+{
+    char connection[TAMQ_CONFIG_FIELD_LEN];
+    char dest_uri[TAMQ_CONFIG_FIELD_LEN];
+    bool use_topics;
+    bool client_ack;
+} TAMQ_Config;
+
 typedef enum _tamq_message_type
 {
     ID_ACTIVEMQBLOBMESSAGE      = 29,
@@ -41,10 +61,10 @@ typedef enum _tamq_message_type
     ID_ACTIVEMQTEXTMESSAGE      = 28,
 } Tamq_Message_Type;
 
-int TAMQ_init();
+SUB_Messenger *TAMQ_init(TAMQ_Config *config);
 
-int TAMQ_start();
+// int TAMQ_start();
 
-int TAMQ_stop();
+// int TAMQ_stop();
 
 int TAMQ_destroy();
