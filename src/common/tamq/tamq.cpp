@@ -36,6 +36,14 @@
 #include <stdio.h>
 #include <iostream>
 
+#include "tamq/tamq.h"
+#include "log/log.h"
+#include "util/comm.h"
+#include "sub/sub.h"
+
+#define LOG_FILE_THRESHOLD_THIS LOG_THRESHOLD_MAX
+#define LOG_CONSOLE_THRESHOLD_THIS LOG_VERBOSE + 2
+
 using namespace activemq;
 using namespace activemq::core;
 using namespace activemq::transport;
@@ -45,10 +53,16 @@ using namespace decaf::util::concurrent;
 using namespace cms;
 using namespace std;
 
+
+class SimpleAsyncConsumer;
+
+SimpleAsyncConsumer *client;
+
 ////////////////////////////////////////////////////////////////////////////////
 class SimpleAsyncConsumer : public ExceptionListener,
                             public MessageListener,
-                            public DefaultTransportListener {
+                            public DefaultTransportListener,
+                            public SUB_Messenger {
 private:
 
     Connection* connection;
@@ -56,19 +70,17 @@ private:
     Destination* destination;
     MessageConsumer* consumer;
     bool useTopic;
-    std::string brokerURI;
-    std::string destURI;
+    std::string brokerURI;      // IP Addr/Port to broker
+    std::string destURI;        // Topic/Queue name
     bool clientAck;
-
-    char buff[512];
+    TAMQ_Config config;
 
 private:
-
     SimpleAsyncConsumer( const SimpleAsyncConsumer& );
-    SimpleAsyncConsumer& operator= ( const SimpleAsyncConsumer& );
 
 public:
 
+    SimpleAsyncConsumer& operator= ( const SimpleAsyncConsumer& );
     SimpleAsyncConsumer( const std::string& brokerURI,
                          const std::string& destURI,
                          bool useTopic = false,
@@ -145,27 +157,37 @@ public:
             count++;
             const BytesMessage* textMessage =
                 dynamic_cast< const BytesMessage* >( message );
-            unsigned char* bytes = {0};
+            unsigned char* text = {0};
 
             if( textMessage != NULL ) {
-                bytes = textMessage->getBodyBytes();
+                text = textMessage->getBodyBytes();
             } else {
-                bytes = {0};
+                text = NULL;
             }
 
             if( clientAck ) {
                 message->acknowledge();
             }
 
-            int iter = 0;
-            printf("Length: %d\n", textMessage->getBodyLength());
-            for (int i = 0; i < textMessage->getBodyLength(); i++)
+
+
+            if ( NULL == textMessage )
             {
-                printf("i: %d\n", i);
-                iter += sprintf(&buff[iter], "0x%02X, ", bytes[i]);
+                int iter = 0;
+                int ex = textMessage->getBodyLength();
+                char str[4 * ex + 5];
+
+                for (int i = 0; i < textMessage->getBodyLength(); i++)
+                    iter += sprintf(&str[iter], "0x%02X, ");
+
+                LOG_VERBOSE(2, "Message #%d Received: %s", count, str );
             }
 
-            printf( "Message #%d Received: %s\n", count, buff );
+            else
+            {
+                LOG_VERBOSE(2, "Message #%d Received: ERR", count);
+            }
+
         } catch (CMSException& e) {
             e.printStackTrace();
         }
@@ -174,16 +196,33 @@ public:
     // If something bad happens you see it here as this class is also been
     // registered as an ExceptionListener with the connection.
     virtual void onException( const CMSException& ex AMQCPP_UNUSED ) {
-        printf("CMS Exception occurred.  Shutting down client.\n");
+        LOG_ERROR("CMS Exception occurred.  Shutting down client.\n");
         exit(1);
     }
 
     virtual void transportInterrupted() {
-        std::cout << "The Connection's Transport has been Interrupted." << std::endl;
+        LOG_INFO("The Connection's Transport has been Interrupted.");
     }
 
     virtual void transportResumed() {
-        std::cout << "The Connection's Transport has been Restored." << std::endl;
+        LOG_INFO("The Connection's Transport has been Restored.");
+    }
+
+    int Start() 
+    {
+        client->runConsumer(); // Start it up and it will listen forever.
+        LOG_INFO("Talos ActiveMQ Client Running...");
+
+        return 0;
+    }
+
+    int Stop() 
+    {
+        // All CMS resources should be closed before the library is shutdown.
+        client->close();
+        LOG_INFO("Talos ActiveMQ Client Stopped");
+
+        return 0;
     }
 
 private:
@@ -206,61 +245,32 @@ private:
 };
 
 ////////////////////////////////////////////////////////////////////////////////
-int main(int argc AMQCPP_UNUSED, char* argv[] AMQCPP_UNUSED) {
-
+SUB_Messenger* TAMQ_init(TAMQ_Config *config) 
+{
     activemq::library::ActiveMQCPP::initializeLibrary();
+    TAMQ_Config conf;
 
-    std::cout << "=====================================================\n";
-    std::cout << "Starting the example:" << std::endl;
-    std::cout << "-----------------------------------------------------\n";
+    // Copy configuration
+    if (NULL != config) memcpy(&conf, config, sizeof(TAMQ_Config));
+    else
+    {
+        conf = {TAMQ_BROKER_URI, TAMQ_DEST_URI, TAMQ_USE_TOPICS, TAMQ_CLIENT_ACK};
+    }
 
-    // Set the URI to point to the IPAddress of your broker.
-    // add any optional params to the url to enable things like
-    // tightMarshalling or tcp logging etc.  See the CMS web site for
-    // a full list of configuration options.
-    //
-    //  http://activemq.apache.org/cms/
-    //
-    std::string brokerURI =
-        // "failover:(tcp://192.168.120.115:61616)";
-        "failover:(tcp://127.0.0.1:61616)";
+    client = new SimpleAsyncConsumer (  conf.connection, 
+                                        conf.dest_uri, 
+                                        conf.use_topics, 
+                                        conf.client_ack ); // Create the consumer
 
-    //============================================================
-    // This is the Destination Name and URI options.  Use this to
-    // customize where the consumer listens, to have the consumer
-    // use a topic or queue set the 'useTopics' flag.
-    //============================================================
-    std::string destURI = "TEST.FOO"; //?consumer.prefetchSize=1";
+    LOG_VERBOSE(0, "Talos ActiveMQ Client Initialized");
+    return client;
+}
 
-    //============================================================
-    // set to true to use topics instead of queues
-    // Note in the code above that this causes createTopic or
-    // createQueue to be used in the consumer.
-    //============================================================
-    bool useTopics = false;
-
-    //============================================================
-    // set to true if you want the consumer to use client ack mode
-    // instead of the default auto ack mode.
-    //============================================================
-    bool clientAck = false;
-
-    // Create the consumer
-    SimpleAsyncConsumer consumer( brokerURI, destURI, useTopics, clientAck );
-
-    // Start it up and it will listen forever.
-    consumer.runConsumer();
-
-    // Wait to exit.
-    std::cout << "Press 'q' to quit" << std::endl;
-    while( std::cin.get() != 'q') {}
-
-    // All CMS resources should be closed before the library is shutdown.
-    consumer.close();
-
-    std::cout << "-----------------------------------------------------\n";
-    std::cout << "Finished with the example." << std::endl;
-    std::cout << "=====================================================\n";
-
+int TAMQ_destroy()
+{
+    delete client;
     activemq::library::ActiveMQCPP::shutdownLibrary();
+    LOG_VERBOSE(0, "Talos ActiveMQ Client Stopped");
+
+    return 0;
 }
