@@ -19,8 +19,8 @@
 #define STD_FAIL_VOID_PTR   {LOG_IEC(); return NULL;}   // Not quite sure where to put this
 
 // Location info is considered part of the message body
-#define LOG_MAX_BUFFER 255
-#define LOG_BUFFER_LEN 127
+#define LOG_MAX_BUFFER 127
+#define LOG_BUFFER_LEN 255
 #define LOG_HEADER_LEN 27 
 #define LOG_MESSAGE_LEN (LOG_BUFFER_LEN - LOG_HEADER_LEN)
 

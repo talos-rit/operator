@@ -37,12 +37,13 @@
 #include <iostream>
 
 #include "tamq/tamq.h"
+#include "sub/sub.h"
 #include "log/log.h"
 #include "util/comm.h"
-#include "sub/sub.h"
+#include "util/array.h"
 
 #define LOG_FILE_THRESHOLD_THIS LOG_THRESHOLD_MAX
-#define LOG_CONSOLE_THRESHOLD_THIS LOG_VERBOSE + 2
+#define LOG_CONSOLE_THRESHOLD_THIS LOG_VERBOSE + 6
 
 using namespace activemq;
 using namespace activemq::core;
@@ -55,8 +56,11 @@ using namespace std;
 
 
 class SimpleAsyncConsumer;
-
 SimpleAsyncConsumer *client;
+
+static void bytes_to_str (char *dest, uint8_t *btyes_src, uint16_t len)
+{
+}
 
 ////////////////////////////////////////////////////////////////////////////////
 class SimpleAsyncConsumer : public ExceptionListener,
@@ -74,6 +78,8 @@ private:
     std::string destURI;        // Topic/Queue name
     bool clientAck;
     TAMQ_Config config;
+
+    unsigned char buff[512];
 
 private:
     SimpleAsyncConsumer( const SimpleAsyncConsumer& );
@@ -148,47 +154,46 @@ public:
     }
 
     // Called from the consumer since this class is a registered MessageListener.
-    virtual void onMessage( const Message* message ) {
-
+    virtual void onMessage( const Message* message ) 
+    {
+        LOG_VERBOSE(2, "Received Message");
         static int count = 0;
+        int length = 0; 
 
         try
         {
             count++;
             const BytesMessage* textMessage =
                 dynamic_cast< const BytesMessage* >( message );
-            unsigned char* text = {0};
 
             if( textMessage != NULL ) {
-                text = textMessage->getBodyBytes();
+                length = textMessage->getBodyLength();
+                memcpy(&buff[0], textMessage->getBodyBytes(), length);
             } else {
-                text = NULL;
+                length = 6;
+                memcpy(&buff, "ERROR", length);
             }
+
+
+            char text[length * 6 + 5];
+            sprintf(&text[0], "INIT");
+            uint16_t str_iter = 0;
+            for (uint16_t iter = 0; iter < length; iter++)
+            {
+                str_iter += sprintf(&text[str_iter], "0x%02X, ", buff[iter]);
+            }
+
+            LOG_VERBOSE(4, "Byte length: %d", length);
+            LOG_VERBOSE(6, "Message #%d Received: Length: %d, Message: %s", count, length, text);
 
             if( clientAck ) {
                 message->acknowledge();
             }
 
+        }
 
-
-            if ( NULL == textMessage )
-            {
-                int iter = 0;
-                int ex = textMessage->getBodyLength();
-                char str[4 * ex + 5];
-
-                for (int i = 0; i < textMessage->getBodyLength(); i++)
-                    iter += sprintf(&str[iter], "0x%02X, ");
-
-                LOG_VERBOSE(2, "Message #%d Received: %s", count, str );
-            }
-
-            else
-            {
-                LOG_VERBOSE(2, "Message #%d Received: ERR", count);
-            }
-
-        } catch (CMSException& e) {
+        catch (CMSException& e) 
+        {
             e.printStackTrace();
         }
     }

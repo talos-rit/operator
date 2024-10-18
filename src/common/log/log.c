@@ -1,6 +1,3 @@
-#include "log/log.h"
-#include "log/log_private.h"
-
 #include <stdarg.h>
 #include <stdio.h>
 #include <stdint.h>
@@ -11,6 +8,9 @@
 #include <unistd.h>
 #include <fcntl.h>
 
+#include "log/log.h"
+#include "log/log_private.h"
+#include "util/comm.h"
 #include "util/timestamp.h"
 
 #define LOG_CLOCK CLOCK_REALTIME
@@ -217,9 +217,9 @@ static int8_t init_log_lists(Log *log)
 int8_t LOG_init()
 {
     memset(&the_log, 0, sizeof(Log));
-    if (-1 == pthread_mutex_init(&the_log.gen_lock,  PTHREAD_PROCESS_PRIVATE))   STD_FAIL
-    if (-1 == pthread_mutex_init(&the_log.wr_lock,   PTHREAD_PROCESS_PRIVATE))   STD_FAIL
-    if (-1 == pthread_mutex_init(&the_log.free_lock, PTHREAD_PROCESS_PRIVATE))   STD_FAIL
+    if (-1 == pthread_mutex_init(&the_log.gen_lock,  NULL))   STD_FAIL
+    if (-1 == pthread_mutex_init(&the_log.wr_lock,   NULL))   STD_FAIL
+    if (-1 == pthread_mutex_init(&the_log.free_lock, NULL))   STD_FAIL
     if (-1 == init_log_lists(&the_log)) STD_FAIL
     the_log.config.print_loc = LOG_USE_LOCATION;
     the_log.config.path = LOG_FILE_PATH;
