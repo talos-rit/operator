@@ -45,24 +45,16 @@ using namespace std;
 
 #define TAMQ_CONFIG_FIELD_LEN 64
 
-/**
- * @brief Talos ActiveMQ specific configurations
- * @memberof connection The IPv4 Address and port of the broker (e.g. 'failover:(tcp://127.0.0.1:61616)')
- * @memberof dest_uri The name of the topic/queue the client will listen to
- * @memberof use_topics When true, TAMQ will consume from a topic, rather than a queue
- * @memberof cleint_ack When true, TAMQ will not automatically send back an ack after consuming a message from the broker.
-*/
+/** Talos ActiveMQ specific configurations */
 typedef struct _tamq_config
 {
-    char connection[TAMQ_CONFIG_FIELD_LEN];
-    char dest_uri[TAMQ_CONFIG_FIELD_LEN];
-    bool use_topics;
-    bool client_ack;
+    char connection[TAMQ_CONFIG_FIELD_LEN];     /** The IPv4 Address and port of the broker (e.g. 'failover:(tcp://127.0.0.1:61616)') */
+    char dest_uri[TAMQ_CONFIG_FIELD_LEN];       /** The name of the topic/queue the client will listen to */
+    bool use_topics;                            /** When true, TAMQ will consume from a topic, rather than a queue */
+    bool client_ack;                            /** When true, TAMQ will not automatically send back an ack after consuming a message from the broker. */
 } TAMQ_Config;
 
-/**
- * @brief ID numbers of various AMQ message types
-*/
+/** ID numbers of various AMQ message types */
 typedef enum _tamq_message_type
 {
     ID_ACTIVEMQBLOBMESSAGE      = 29,
@@ -81,8 +73,8 @@ typedef enum _tamq_message_type
 */
 SUB_Messenger *TAMQ_init(TAMQ_Config *config);
 
-// int TAMQ_start();
-
-// int TAMQ_stop();
-
+/**
+ * @brief Destroys/Deinitializes TAMQ
+ * @returns 0 on success, -1 on failure
+*/
 int TAMQ_destroy();

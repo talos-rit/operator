@@ -54,13 +54,9 @@ using namespace decaf::util::concurrent;
 using namespace cms;
 using namespace std;
 
-
+// Globally declare cleint variable
 class SimpleAsyncConsumer;
 SimpleAsyncConsumer *client;
-
-static void bytes_to_str (char *dest, uint8_t *btyes_src, uint16_t len)
-{
-}
 
 ////////////////////////////////////////////////////////////////////////////////
 class SimpleAsyncConsumer : public ExceptionListener,
@@ -77,9 +73,7 @@ private:
     std::string brokerURI;      // IP Addr/Port to broker
     std::string destURI;        // Topic/Queue name
     bool clientAck;
-    TAMQ_Config config;
-
-    unsigned char buff[512];
+    unsigned char buff[512];    // Buffer for holding the message
 
 private:
     SimpleAsyncConsumer( const SimpleAsyncConsumer& );
@@ -174,6 +168,9 @@ public:
                 memcpy(&buff, "ERROR", length);
             }
 
+            if( clientAck ) {
+                message->acknowledge();
+            }
 
             char text[length * 6 + 5];
             sprintf(&text[0], "INIT");
@@ -185,11 +182,6 @@ public:
 
             LOG_VERBOSE(4, "Byte length: %d", length);
             LOG_VERBOSE(6, "Message #%d Received: Length: %d, Message: %s", count, length, text);
-
-            if( clientAck ) {
-                message->acknowledge();
-            }
-
         }
 
         catch (CMSException& e) 
