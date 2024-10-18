@@ -1,3 +1,9 @@
+/**
+ * Timestamping Module
+ * Used for converting time_t structs into ISO8601 timestamps
+ * Supports local timezones, UTC/Zulu timezone, and optionally milliseconds
+*/
+
 #pragma once
 
 #include <stdint.h>
@@ -5,7 +11,7 @@
 #include <sys/time.h>
 
 #ifdef __cplusplus
-// extern "C" {
+extern "C" {
 #endif
 
 // ISO 6801
@@ -138,5 +144,5 @@ int8_t UTIL_time_iso8601_time_offset(char* dst_str, int16_t tz_offset_sec);
 int8_t UTIL_time_iso8601_complete_datetime(char* dst_str, time_t time, int16_t tz_offset_min);
 
 #ifdef __cplusplus
-// }
+}
 #endif

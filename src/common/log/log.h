@@ -1,6 +1,17 @@
-// #pragma once
-#ifndef LOG_H
-#define LOG_H
+/**
+ * Logging Module
+ * Creates realtime logs to help the debugging process
+ * 
+ * Features:
+ *      - Console and File logging
+ *      - Prioritization levels
+ *      - Adjustable priority thresholds for console and file log outputs on a file-by-file basis
+ *      - ISO6801 Timestamps
+ *      - Optional color-coding
+ *      - Non-blocking (runs in separate thread)
+*/
+
+#pragma once
 
 #include <pthread.h>
 #include <stdint.h>
@@ -88,5 +99,3 @@ int8_t LOG_stop();
  * @return 0 on success, -1 on failure
 */
 int8_t LOG_destory();
-
-#endif

@@ -1,3 +1,7 @@
+/**
+ * Array helper functions
+*/
+
 #pragma once
 
 #include <stdint.h>
