@@ -28,7 +28,7 @@ BINS		:= $(BIN_DIR)/$(NAME)
 
 # Compiler options
 CC          := g++
-CFLAGS      := -g -Wall -Wextra -D _DEFAULT_SOURCE -lpthread
+CFLAGS      := -g -Wall -Wextra -Wno-deprecated-declarations -D _DEFAULT_SOURCE -lpthread
 CPPFLAGS    := -I include -I$(INT_SRC_DIR) -I$(EXT_SRC_DIR)
 
 AMQ_CFLAGS 	:= -luuid -lssl -lcrypto -lapr-1

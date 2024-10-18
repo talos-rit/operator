@@ -46,16 +46,20 @@ int SUB_destroy()
             STD_FAIL;
             break;
     }
+
+    return 0;
 }
 
 int SUB_start()
 {
     if (SUB_MODE_INIT != mode) STD_FAIL;
     hermes->Start();
+    return 0;
 }
 
 int SUB_stop()
 {
     if (SUB_MODE_RUN != mode) STD_FAIL;
     hermes->Stop();
+    return 0;
 }
