@@ -42,7 +42,7 @@ typedef struct _api_data_polar_pan
 } API_Data_Polar_Pan;
 #pragma pack(pop)
 
-#define API_WRAPPER_HEAD_LEN (offsetof(struct _api_data_wrapper, payload_head))
+#define API_WRAPPER_HEAD_LEN offsetof(API_Data_Wrapper, payload_head)
 
 /**
  * @brief Checks to see if a command is valid and can be processed safely
