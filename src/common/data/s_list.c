@@ -36,7 +36,7 @@ int8_t DATA_S_List_deinit (S_List *list)
     
     if (list->head) STD_FAIL
     if (list->tail) STD_FAIL
-    if (list->len) STD_FAIL;
+    if (list->len)  STD_FAIL;
     return 0;
 }
 
@@ -91,10 +91,10 @@ S_List_Node *DATA_S_List_pop (S_List *list)
 {
     if (!list || list->len == 0) STD_FAIL_VOID_PTR
 
-    S_List_Node *head = list->head;
+    S_List_Node *node = list->head;
     list->head = list->head->next;
     list->len--;
     if (list->len == 0) list->tail = list->head = NULL;
-    DATA_S_List_Node_init(head);
-    return head;
+    DATA_S_List_Node_init(node);
+    return node;
 }

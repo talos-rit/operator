@@ -259,6 +259,7 @@ SUB_Messenger* TAMQ_init(TAMQ_Config *config)
                                         conf.use_topics, 
                                         conf.client_ack ); // Create the consumer
 
+
     LOG_VERBOSE(0, "Talos ActiveMQ Client Initialized");
     return client;
 }
