@@ -10,7 +10,7 @@
 #include "data/list.h"
 #include "data/s_list.h"
 
-#define LOG_CONSOLE_THRESHOLD_THIS LOG_THRESHOLD_DEFAULT
+#define LOG_CONSOLE_THRESHOLD_THIS LOG_THRESHOLD_MAX
 #define LOG_FILE_THRESHOLD_THIS LOG_THRESHOLD_MAX
 
 Subscriber hermes;
@@ -145,7 +145,7 @@ int SUB_init_buffer(SUB_Buffer *buf)
 SUB_Buffer* SUB_dequeue_buffer(SUB_Queue queue_idx)
 {
     if (SUB_MODE_RUN != hermes.status)      STD_FAIL_VOID_PTR;
-    if ((uint8_t) queue_idx < SUB_MSG_LEN)  STD_FAIL_VOID_PTR;
+    if ((uint8_t) queue_idx >= SUB_MSG_LEN)  STD_FAIL_VOID_PTR;
 
     S_List_Node* node = NULL;
     pthread_mutex_lock      (&hermes.locks [(uint8_t) queue_idx]);
@@ -153,6 +153,7 @@ SUB_Buffer* SUB_dequeue_buffer(SUB_Queue queue_idx)
     pthread_mutex_unlock    (&hermes.locks [(uint8_t) queue_idx]);
     
     if (!node) STD_FAIL_VOID_PTR;
+    LOG_VERBOSE(2, "SUB_Buffer dequeued from queue index #%d", (uint8_t) queue_idx);
     return DATA_LIST_GET_OBJ(node, SUB_Buffer, node);
 }
 
@@ -160,11 +161,27 @@ int SUB_enqueue_buffer(SUB_Queue queue_idx, SUB_Buffer* buf)
 {
     if (SUB_MODE_RUN != hermes.status) STD_FAIL;
     if (!buf) STD_FAIL;
-    if ((uint8_t) queue_idx < SUB_MSG_LEN) STD_FAIL;
+    if ((uint8_t) queue_idx >= SUB_MSG_LEN) STD_FAIL;
+
+    #if 1
+    uint16_t length = buf->len;
+    char text[length * 6 + 5];
+    sprintf(&text[0], "INIT");
+    uint16_t str_iter = 0;
+    for (uint16_t iter = 0; iter < length; iter++)
+    {
+        str_iter += sprintf(&text[str_iter], "0x%02X, ", buf->body[iter]);
+    }
+
+    LOG_VERBOSE(6, "Message : %s", text);
+    queue_idx = SUB_QUEUE_FREE;
+    #endif
 
     pthread_mutex_lock      (&hermes.locks [(uint8_t) queue_idx]);
     if(DATA_S_List_append   (&hermes.queues[(uint8_t) queue_idx], &buf->node)) STD_FAIL;
     pthread_mutex_unlock    (&hermes.locks [(uint8_t) queue_idx]);
     
+    LOG_VERBOSE(2, "SUB_Buffer enqueued in queue index #%d", (uint8_t) queue_idx);
+
     return 0;
 }

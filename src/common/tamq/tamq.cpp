@@ -43,7 +43,7 @@
 #include "util/array.h"
 
 #define LOG_FILE_THRESHOLD_THIS LOG_THRESHOLD_MAX
-#define LOG_CONSOLE_THRESHOLD_THIS LOG_VERBOSE + 6
+#define LOG_CONSOLE_THRESHOLD_THIS LOG_VERBOSE + 4
 
 using namespace activemq;
 using namespace activemq::core;
@@ -73,7 +73,6 @@ private:
     std::string brokerURI;      // IP Addr/Port to broker
     std::string destURI;        // Topic/Queue name
     bool clientAck;
-    unsigned char buff[512];    // Buffer for holding the message
 
 private:
     SimpleAsyncConsumer( const SimpleAsyncConsumer& );
@@ -151,37 +150,43 @@ public:
     virtual void onMessage( const Message* message ) 
     {
         LOG_VERBOSE(2, "Received Message");
-        static int count = 0;
         int length = 0; 
 
         try
         {
-            count++;
+            SUB_Buffer *buf = SUB_dequeue_buffer (SUB_QUEUE_FREE);
+            if (!buf) STD_FAIL_VOID;
+
             const BytesMessage* textMessage =
                 dynamic_cast< const BytesMessage* >( message );
 
             if( textMessage != NULL ) {
                 length = textMessage->getBodyLength();
-                memcpy(&buff[0], textMessage->getBodyBytes(), length);
+                memcpy(&buf->body, textMessage->getBodyBytes(), length);
             } else {
                 length = 6;
-                memcpy(&buff, "ERROR", length);
+                memcpy(&buf->body, "ERROR", length);
             }
+
+            buf->len = length;
 
             if( clientAck ) {
                 message->acknowledge();
             }
 
+            #if LOG_CONSOLE_THRESHOLD_THIS >= LOG_VERBOSE + 6 | LOG_CONSOLE_THRESHOLD_THIS >= LOG_VERBOSE + 6
             char text[length * 6 + 5];
             sprintf(&text[0], "INIT");
             uint16_t str_iter = 0;
             for (uint16_t iter = 0; iter < length; iter++)
             {
-                str_iter += sprintf(&text[str_iter], "0x%02X, ", buff[iter]);
+                str_iter += sprintf(&text[str_iter], "0x%02X, ", buf->body[iter]);
             }
 
-            LOG_VERBOSE(4, "Byte length: %d", length);
-            LOG_VERBOSE(6, "Message #%d Received: Length: %d, Message: %s", count, length, text);
+            LOG_VERBOSE(6, "Message : %d", length);
+            #endif
+
+            SUB_enqueue_buffer(SUB_QUEUE_COMMAND, buf);
         }
 
         catch (CMSException& e) 
