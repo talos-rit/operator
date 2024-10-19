@@ -64,7 +64,7 @@ extern const char* const log_level_names[];
 
 #define LOG_FATAL(fmt, ...)                 LOG_write((uint8_t)LOG_FATAL, fmt, ##__VA_ARGS__)
 #define LOG_ERROR(fmt, ...)                 LOG_write((uint8_t)LOG_ERROR, fmt, ##__VA_ARGS__)
-#define LOG_IEC()                           LOG_ERROR("Internal error: %s:%d", __FILE__, __LINE__);
+#define LOG_IEC()                           LOG_ERROR("Internal error: [%s:%d]", __FILE__, __LINE__);
 #define LOG_WARN(fmt, ...)                  LOG_write((uint8_t)LOG_WARN, fmt, ##__VA_ARGS__)
 #define LOG_INFO(fmt, ...)                  LOG_write((uint8_t)LOG_INFO, fmt, ##__VA_ARGS__)
 #define LOG_VERBOSE(v_level, fmt, ...)      LOG_write((uint8_t)LOG_VERBOSE + v_level, fmt, ##__VA_ARGS__)
