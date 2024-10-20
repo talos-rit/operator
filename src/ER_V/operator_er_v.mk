@@ -35,8 +35,8 @@ AMQ_CFLAGS 	:= -luuid -lssl -lcrypto -lapr-1
 AMQ_INC 	:= -I/usr/include/apr-1.0/ -I/usr/local/include/activemq-cpp-3.10.0/ -lactivemq-cpp
 
 # Internal sources (ER_V)
-SRCS        := main.c
-# SRCS        += tmp/tmp.c
+SRCS        :=
+SRCS_CPP    := main.cpp
 
 # External sources (Common)
 EXTS		:= log/log.c
@@ -45,13 +45,17 @@ EXTS		+= data/s_list.c
 EXTS		+= api/api.c
 EXTS_CPP	:= tamq/tamq.cpp
 EXTS_CPP	+= sub/sub.cpp
+EXTS_CPP	+= arm/arm.cpp
 # EXTS_CPP	:= 
 
 # Automated reformatting
-SRCS := $(SRCS:%=$(INT_SRC_DIR)/%)
-EXTS := $(EXTS:%=$(EXT_SRC_DIR)/%)
-EXTS_CPP := $(EXTS_CPP:%=$(EXT_SRC_DIR)/%)
+SRCS 		:= $(SRCS:%=$(INT_SRC_DIR)/%)
+SRCS_CPP 	:= $(SRCS_CPP:%=$(INT_SRC_DIR)/%)
+EXTS 		:= $(EXTS:%=$(EXT_SRC_DIR)/%)
+EXTS_CPP 	:= $(EXTS_CPP:%=$(EXT_SRC_DIR)/%)
+
 OBJS := $(SRCS:$(INT_SRC_DIR)/%.c=$(OBJ_DIR)/$(SUB_DIR)/%.o)
+OBJS += $(SRCS_CPP:$(INT_SRC_DIR)/%.cpp=$(OBJ_DIR)/$(SUB_DIR)/%.o)
 OBJS += $(EXTS:$(EXT_SRC_DIR)/%.c=$(OBJ_DIR)/$(EXT_DIR)/%.o)
 OBJS += $(EXTS_CPP:$(EXT_SRC_DIR)/%.cpp=$(OBJ_DIR)/$(EXT_DIR)/%.o)
 
@@ -95,7 +99,7 @@ $(OBJ_DIR)/$(EXT_DIR)/%.o: $(EXT_SRC_DIR)/%.c
 # Internal source compilation
 $(OBJ_DIR)/$(SUB_DIR)/%.o: $(INT_SRC_DIR)/%.cpp
 	$(DIR_DUP)
-	$(CC) $(CFLAGS) $(CPPFLAGS) -g -c -o $@ $<
+	$(CC) $(CFLAGS) $(AMQ_CFLAGS) $(CPPFLAGS) $(AMQ_INC) -g -c -o $@ $<
 
 # External source compilation
 $(OBJ_DIR)/$(EXT_DIR)/%.o: $(EXT_SRC_DIR)/%.cpp
