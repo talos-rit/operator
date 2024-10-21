@@ -1,14 +1,18 @@
 #include <stdlib.h>
 #include <stdint.h>
+#include <stdio.h>
 #include <string.h>
 
 #include "sub/sub.h"
 #include "sub/sub_private.h"
 #include "util/comm.h"
+#include "util/array.h"
 #include "log/log.h"
 #include "tamq/tamq.h"
 #include "data/list.h"
 #include "data/s_list.h"
+
+#include "api/api.h"
 
 #define LOG_CONSOLE_THRESHOLD_THIS LOG_THRESHOLD_MAX
 #define LOG_FILE_THRESHOLD_THIS LOG_THRESHOLD_MAX
@@ -164,24 +168,38 @@ int SUB_enqueue_buffer(SUB_Queue queue_idx, SUB_Buffer* buf)
     if ((uint8_t) queue_idx >= SUB_MSG_LEN) STD_FAIL;
 
     #if 1
-    uint16_t length = buf->len;
-    char text[length * 6 + 5];
-    sprintf(&text[0], "INIT");
-    uint16_t str_iter = 0;
-    for (uint16_t iter = 0; iter < length; iter++)
+    API_validate_command(&buf->body[0], buf->len);
+    API_Data_Wrapper* cmd   = (API_Data_Wrapper*)   &buf->body;
+    char text[255];
+    uint8_t iter = 0;
+    API_Data_Polar_Pan* pan = (API_Data_Polar_Pan*) &cmd->payload_head;
+
+    switch (cmd->header.cmd_val)
     {
-        str_iter += sprintf(&text[str_iter], "0x%02X, ", buf->body[iter]);
+        case API_CMD_POLARPAN:
+            iter += sprintf(&text[iter], "Polar Pan\n");
+            iter += sprintf(&text[iter], "\tΔ Azimuth: \t%d\n",     pan->delta_azimuth);
+            iter += sprintf(&text[iter], "\tΔ Altitude: \t%d\n",    pan->delta_altitude);
+            iter += sprintf(&text[iter], "\tDelay: \t\t%d\n",       pan->delay_ms);
+            iter += sprintf(&text[iter], "\tTime: \t\t%d\n",        pan->time_ms);
+            break;
+        default:
+            iter += sprintf(&text[iter], "Unrecognized Command Value: %d", cmd->header.cmd_val);
+            break;
     }
 
-    LOG_VERBOSE(6, "Message : %s", text);
+    LOG_VERBOSE(4, "Message Recieved: %s", text);
     queue_idx = SUB_QUEUE_FREE;
     #endif
 
+    if (SUB_QUEUE_FREE == queue_idx) SUB_init_buffer (buf);
+
     pthread_mutex_lock      (&hermes.locks [(uint8_t) queue_idx]);
-    if(DATA_S_List_append   (&hermes.queues[(uint8_t) queue_idx], &buf->node)) STD_FAIL;
+    int ret = DATA_S_List_append (&hermes.queues[(uint8_t) queue_idx], &buf->node);
+    if (ret) LOG_IEC();
     pthread_mutex_unlock    (&hermes.locks [(uint8_t) queue_idx]);
     
+    if (ret) return -1;
     LOG_VERBOSE(2, "SUB_Buffer enqueued in queue index #%d", (uint8_t) queue_idx);
-
     return 0;
 }

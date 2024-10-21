@@ -64,8 +64,8 @@ static void fill_simulated_command(uint8_t *bytes)
     header->len             = sizeof(API_Data_Polar_Pan);
 
     // Assign test values to body
-    payload->delta_azimuth  =  -1; 
-    payload->delta_altitude =   0; 
+    payload->delta_azimuth  =  -1;
+    payload->delta_altitude =   0;
     payload->delay_ms       =   1;
     payload->time_ms        =   2;
 }
@@ -86,20 +86,20 @@ int main()
     // Prep simulated incoming message
     fill_simulated_command(&bytes[0]);
     API_Data_Wrapper *cmd = (API_Data_Wrapper*) &bytes[0];
-    format_byte_str(&text[0], &bytes[0], byte_len);
+    UTIL_format_byte_str(&text[0], &bytes[0], byte_len);
     LOG_VERBOSE(4, "Init: %s", text);
 
     prep_polar_pan_wrapper(cmd);
 
-    format_byte_str(&text[0], &bytes[0], byte_len);
+    UTIL_format_byte_str(&text[0], &bytes[0], byte_len);
     LOG_VERBOSE(4, "Pre : %s", text);
 
     // process command using API module
     if(API_validate_command(&bytes[0], byte_len)) LOG_IEC();
 
-    format_byte_str(&text[0], &bytes[0], byte_len);
+    UTIL_format_byte_str(&text[0], &bytes[0], byte_len);
     LOG_VERBOSE(4, "Post: %s", text);
-    
+
 
     LOG_INFO("Demo Ending...");
     LOG_stop();
