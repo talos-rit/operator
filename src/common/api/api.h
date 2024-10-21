@@ -14,6 +14,7 @@ typedef enum _api_cmd_id
 {
     API_CMD_HANDSHAKE   = 0x0000,
     API_CMD_POLARPAN    = 0x0001,
+    API_CMD_HOME        = 0x0002,
 } API_Command_ID;
 
 #pragma pack(push, 1)
@@ -35,11 +36,16 @@ typedef struct _api_data_wrapper
 
 typedef struct _api_data_polar_pan
 {
-    int32_t delta_azimuth;  /** Requested change in azimuth */
-    int32_t delta_altitude; /** Requested change in altitude */
-    int32_t delay_ms;       /** How long to wait until executing pan */
-    int32_t time_ms;        /** How long the pan should take to execute */
+    int32_t     delta_azimuth;  /** Requested change in azimuth */
+    int32_t     delta_altitude; /** Requested change in altitude */
+    uint32_t    delay_ms;       /** How long to wait until executing pan */
+    uint32_t    time_ms;        /** How long the pan should take to execute */
 } API_Data_Polar_Pan;
+
+typedef struct _api_data_home
+{
+    uint32_t    delay_ms;       /** How long to wait until executing pan */
+} API_Data_Home;
 #pragma pack(pop)
 
 #define API_WRAPPER_HEAD_LEN offsetof(API_Data_Wrapper, payload_head)
