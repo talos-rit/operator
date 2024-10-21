@@ -37,6 +37,7 @@ AMQ_INC 	:= -I/usr/include/apr-1.0/ -I/usr/local/include/activemq-cpp-3.10.0/ -l
 # Internal sources (ER_V)
 SRCS        :=
 SRCS_CPP    := main.cpp
+SRCS_CPP    += erv_arm/erv.cpp
 
 # External sources (Common)
 EXTS		:= log/log.c

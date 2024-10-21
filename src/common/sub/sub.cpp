@@ -156,7 +156,7 @@ SUB_Buffer* SUB_dequeue_buffer(SUB_Queue queue_idx)
     node = DATA_S_List_pop  (&hermes.queues[(uint8_t) queue_idx]);
     pthread_mutex_unlock    (&hermes.locks [(uint8_t) queue_idx]);
     
-    if (!node) STD_FAIL_VOID_PTR;
+    if (!node) return NULL;
     LOG_VERBOSE(2, "SUB_Buffer dequeued from queue index #%d", (uint8_t) queue_idx);
     return DATA_LIST_GET_OBJ(node, SUB_Buffer, node);
 }
@@ -167,7 +167,7 @@ int SUB_enqueue_buffer(SUB_Queue queue_idx, SUB_Buffer* buf)
     if (!buf) STD_FAIL;
     if ((uint8_t) queue_idx >= SUB_MSG_LEN) STD_FAIL;
 
-    #if 1
+    #if 0
     API_validate_command(&buf->body[0], buf->len);
     API_Data_Wrapper* cmd   = (API_Data_Wrapper*)   &buf->body;
     char text[255];

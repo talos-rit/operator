@@ -89,7 +89,7 @@ int8_t DATA_S_List_prepend (S_List *list, S_List_Node *node)
 
 S_List_Node *DATA_S_List_pop (S_List *list)
 {
-    if (!list || list->len == 0) STD_FAIL_VOID_PTR
+    if (!list || list->len == 0) return NULL;
 
     S_List_Node *node = list->head;
     list->head = list->head->next;

@@ -10,7 +10,19 @@
 #define LOG_CONSOLE_THRESHOLD_THIS  LOG_THRESHOLD_MAX
 #define LOG_FILE_THRESHOLD_THIS     LOG_THRESHOLD_MAX
 
-Arm* arm;
+Arm* arm = NULL;
+
+Arm::Arm()
+{
+    if (arm) return;
+    thread_enable = false;
+    arm = this;
+}
+
+Arm::~Arm()
+{
+    arm = NULL;
+}
 
 bool Arm::GetThreadEnable()
 {
@@ -38,6 +50,7 @@ static void* ARM_run(void*)
 
 int Arm::Start()
 {
+    thread_enable = true;
     int ret = pthread_create(&this->pid, NULL, ARM_run, NULL);
     if (ret == -1) STD_FAIL;
     return 0;
