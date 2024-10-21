@@ -5,6 +5,7 @@
 #pragma once
 
 #include <stdint.h>
+#include <pthread.h>
 
 #include "sub/sub.h"
 #include "api/api.h"
@@ -21,12 +22,12 @@ private:
     virtual int Home() = 0;
 
 public:
-    Arm()   {}  // Init
-    ~Arm()  {}  // Destroy
+    Arm();
+    ~Arm();
 
     // Thread control
-    virtual int Start()             = 0;
-    virtual int Stop()              = 0;
+    int Start();
+    int Stop();
 
     bool GetThreadEnable();
     int ProcessBuffer(SUB_Buffer *buf);
