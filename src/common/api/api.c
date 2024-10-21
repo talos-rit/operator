@@ -9,7 +9,7 @@
 #define LOG_CONSOLE_THRESHOLD_THIS  LOG_THRESHOLD_MAX
 #define LOG_FILE_THRESHOLD_THIS     LOG_THRESHOLD_MAX
 
-int API_prep_polar_pan(API_Data_Polar_Pan *payload)
+int API_prep_polar_pan(API_Data_Polar_Pan* payload)
 {
     if (!payload) STD_FAIL;
 
@@ -17,6 +17,15 @@ int API_prep_polar_pan(API_Data_Polar_Pan *payload)
     payload->delta_azimuth  = be32toh(payload->delta_azimuth);
     payload->delay_ms       = be32toh(payload->delay_ms);
     payload->time_ms        = be32toh(payload->time_ms);
+
+    return 0;
+}
+
+int API_prep_home(API_Data_Home* payload)
+{
+    if (!payload) STD_FAIL;
+
+    payload->delay_ms       = be32toh(payload->delay_ms);
 
     return 0;
 }
@@ -46,11 +55,14 @@ int API_validate_command (const uint8_t *buf, uint16_t len)
         case API_CMD_POLARPAN:
             API_prep_polar_pan((API_Data_Polar_Pan*) &cmd->payload_head);
             break;
+        case API_CMD_HOME:
+            API_prep_home((API_Data_Home *) &cmd->payload_head);
+            break;
         default:
             LOG_ERROR (
                 "API: Failed to process Command ID %d: Unrecognized Command Value: %d", 
                 cmd->header.cmd_id, cmd->header.cmd_val);
-            break;
+            return -1;
     }
 
     // Check CRC

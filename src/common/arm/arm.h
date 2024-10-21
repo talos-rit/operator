@@ -16,10 +16,9 @@ class Arm
     bool thread_enable;
 
 private:
-
     virtual int HandShake() = 0;
     virtual int PolarPan(API_Data_Polar_Pan *pan) = 0;
-    virtual int Home() = 0;
+    virtual int Home(API_Data_Home* home) = 0;
 
 public:
     Arm();
@@ -31,6 +30,8 @@ public:
 
     bool GetThreadEnable();
     int ProcessBuffer(SUB_Buffer *buf);
+
+    virtual void Poll() = 0;
 };
 
 #ifdef __cplusplus

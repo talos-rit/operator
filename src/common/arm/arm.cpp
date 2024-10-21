@@ -37,6 +37,7 @@ static void* ARM_run(void*)
         SUB_Buffer *buf = SUB_dequeue_buffer(SUB_QUEUE_COMMAND);
         if (!buf)
         {
+            // arm->Poll();
             if (!arm->GetThreadEnable()) break;
             usleep(25*1000);
             continue;
@@ -67,20 +68,28 @@ int Arm::ProcessBuffer(SUB_Buffer *buf)
     if (API_validate_command(&buf->body[0], buf->len)) STD_FAIL;
     API_Data_Wrapper *cmd = (API_Data_Wrapper *) &buf->body;
 
+    int status = 0;
     switch (cmd->header.cmd_val)
     {
         case API_CMD_HANDSHAKE:
-            if (HandShake()) STD_FAIL;
             LOG_INFO("Handshake Recieved");
+            if (HandShake()) STD_FAIL;
             break;
         case API_CMD_POLARPAN:
-            if (PolarPan((API_Data_Polar_Pan *) &cmd->payload_head)) STD_FAIL;
             LOG_INFO("Polar Pan Recieved");
+            if (PolarPan((API_Data_Polar_Pan *) &cmd->payload_head)) STD_FAIL;
+            break;
+        case API_CMD_HOME:
+            LOG_INFO("Home Received");
+            if (Home((API_Data_Home *)&cmd->payload_head)) STD_FAIL;
             break;
         default:
-            STD_FAIL;
+            LOG_IEC();
+            status = -1;
             break;
     }
 
-    return 0;
+    SUB_init_buffer(buf);
+    SUB_enqueue_buffer(SUB_QUEUE_FREE, buf);
+    return status;
 }

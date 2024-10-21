@@ -62,7 +62,11 @@ int SUB_prep_subscriber()
 
     pthread_mutex_lock(&hermes.locks[SUB_QUEUE_FREE]);
     for (uint16_t iter = 0; iter < SUB_MSG_COUNT; iter++)
-        SUB_init_buffer (&hermes.msg_pool[iter]);
+    {
+        SUB_Buffer* buf = &hermes.msg_pool[iter];
+        SUB_init_buffer (buf);
+        DATA_S_List_append(&hermes.queues[SUB_QUEUE_FREE], &buf->node);
+    }
     pthread_mutex_unlock(&hermes.locks[SUB_QUEUE_FREE]);
 
     return 0;
@@ -141,8 +145,6 @@ int SUB_init_buffer(SUB_Buffer *buf)
 
     memset(buf, 0, sizeof(SUB_Buffer));
     DATA_S_List_Node_init (&buf->node);
-    DATA_S_List_append(&hermes.queues[SUB_QUEUE_FREE], &buf->node);
-
     return 0;
 }
 

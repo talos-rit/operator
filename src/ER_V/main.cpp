@@ -8,6 +8,7 @@
 #include "log/log.h"
 #include "api/api.h"
 #include "sub/sub.h"
+#include "arm/arm.h"
 #include "erv_arm/erv.h"
 
 #define LOG_FILE_THRESHOLD_THIS     LOG_THRESHOLD_MAX
@@ -20,7 +21,7 @@ int main()
     LOG_INFO("Staring demo...");
 
     SUB_init(SUB_MSG_AMQ, NULL);
-    Scorbot bot = Scorbot();
+    Scorbot bot = Scorbot("/dev/ttyUSB1");
 
     SUB_start();
     bot.Start();
