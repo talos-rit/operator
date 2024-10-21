@@ -34,7 +34,7 @@ CPPFLAGS    := -I include -I$(INT_SRC_DIR) -I$(EXT_SRC_DIR)
 AMQ_CFLAGS 	:= -luuid -lssl -lcrypto -lapr-1
 AMQ_INC 	:= -I/usr/include/apr-1.0/ -I/usr/local/include/activemq-cpp-3.10.0/ -lactivemq-cpp
 
-# Internal sources (ChariotNode)
+# Internal sources (ER_V)
 SRCS        := main.c
 # SRCS        += tmp/tmp.c
 
