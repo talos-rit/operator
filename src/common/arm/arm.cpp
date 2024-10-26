@@ -10,18 +10,13 @@
 #define LOG_CONSOLE_THRESHOLD_THIS  LOG_THRESHOLD_MAX
 #define LOG_FILE_THRESHOLD_THIS     LOG_THRESHOLD_MAX
 
-Arm* arm = NULL;
-
 Arm::Arm()
 {
-    if (arm) return;
     thread_enable = false;
-    arm = this;
 }
 
 Arm::~Arm()
 {
-    arm = NULL;
 }
 
 bool Arm::GetThreadEnable()
@@ -29,8 +24,10 @@ bool Arm::GetThreadEnable()
     return this->thread_enable;
 }
 
-static void* ARM_run(void*)
+static void* ARM_run(void* arg)
 {
+    Arm* arm = (Arm*) arg;
+
     // TODO: Add exit code
     while(1)
     {
@@ -52,7 +49,7 @@ static void* ARM_run(void*)
 int Arm::Start()
 {
     thread_enable = true;
-    int ret = pthread_create(&this->pid, NULL, ARM_run, NULL);
+    int ret = pthread_create(&this->pid, NULL, ARM_run, this);
     if (ret == -1) STD_FAIL;
     return 0;
 }
@@ -89,7 +86,6 @@ int Arm::ProcessBuffer(SUB_Buffer *buf)
             break;
     }
 
-    SUB_init_buffer(buf);
     SUB_enqueue_buffer(SUB_QUEUE_FREE, buf);
     return status;
 }
