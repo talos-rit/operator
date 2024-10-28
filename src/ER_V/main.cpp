@@ -23,7 +23,7 @@ int main()
 
     // Init Modules
     Subscriber hermes = Subscriber();
-    SUB_Messenger* inbox = TAMQ_init(NULL);
+    SUB_Messenger* inbox = new TAMQ_Consumer(TAMQ_BROKER_URI, TAMQ_DEST_URI, TAMQ_USE_TOPICS, TAMQ_CLIENT_ACK);
     Arm* bot = new Scorbot("/dev/ttyUSB1");
 
     // Register modules

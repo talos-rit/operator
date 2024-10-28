@@ -4,6 +4,23 @@
 */
 #pragma once
 
+#include <decaf/lang/Thread.h>
+#include <decaf/lang/Runnable.h>
+#include <decaf/util/concurrent/CountDownLatch.h>
+#include <activemq/core/ActiveMQConnectionFactory.h>
+#include <activemq/core/ActiveMQConnection.h>
+#include <activemq/transport/DefaultTransportListener.h>
+#include <activemq/library/ActiveMQCPP.h>
+#include <decaf/lang/Integer.h>
+#include <activemq/util/Config.h>
+#include <decaf/util/Date.h>
+#include <cms/Connection.h>
+#include <cms/Session.h>
+#include <cms/TextMessage.h>
+#include <cms/BytesMessage.h>
+#include <cms/MapMessage.h>
+#include <cms/ExceptionListener.h>
+#include <cms/MessageListener.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include <iostream>
@@ -66,15 +83,53 @@ typedef enum _tamq_message_type
     ID_ACTIVEMQTEXTMESSAGE      = 28,
 } Tamq_Message_Type;
 
-/**
- * @brief Initializes TAMQ as a SUB_Messenger
- * @param config Pointer to a config to use to initialize the TAMQ
- * @returns SUB_Messeneger pointer on success, NULL on failure
-*/
-SUB_Messenger *TAMQ_init(TAMQ_Config *config);
+////////////////////////////////////////////////////////////////////////////////
+class TAMQ_Consumer :   public cms::ExceptionListener,
+                        public cms::MessageListener,
+                        public activemq::transport::DefaultTransportListener,
+                        public SUB_Messenger
+{
+    private:
 
-/**
- * @brief Destroys/Deinitializes TAMQ
- * @returns 0 on success, -1 on failure
-*/
-int TAMQ_destroy();
+        cms::Connection* connection;
+        cms::Session* session;
+        cms::Destination* destination;
+        cms::MessageConsumer* consumer;
+        bool useTopic;
+        std::string brokerURI;      // IP Addr/Port to broker
+        std::string destURI;        // Topic/Queue name
+        bool clientAck;
+
+    private:
+        TAMQ_Consumer( const TAMQ_Consumer& );
+
+    public:
+
+        TAMQ_Consumer& operator= ( const TAMQ_Consumer& );
+        TAMQ_Consumer( const std::string& brokerURI,
+                            const std::string& destURI,
+                            bool useTopic = false,
+                            bool clientAck = false );
+
+        virtual ~TAMQ_Consumer();
+        void close();
+        void runConsumer();
+
+        // Called from the consumer since this class is a registered MessageListener.
+        virtual void onMessage( const cms::Message* message );
+
+        // If something bad happens you see it here as this class is also been
+        // registered as an ExceptionListener with the connection.
+        virtual void onException( const cms::CMSException& ex AMQCPP_UNUSED );
+        virtual void transportInterrupted();
+        virtual void transportResumed();
+        int Start();
+        int Stop();
+        int RegisterSubscriber(Subscriber* sub);
+
+    private:
+
+        void cleanup();
+};
+
+////////////////////////////////////////////////////////////////////////////////
