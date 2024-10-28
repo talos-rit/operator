@@ -45,45 +45,14 @@
 #define LOG_FILE_THRESHOLD_THIS LOG_THRESHOLD_MAX
 #define LOG_CONSOLE_THRESHOLD_THIS LOG_VERBOSE + 4
 
-using namespace activemq;
-using namespace activemq::core;
-using namespace activemq::transport;
-using namespace decaf::lang;
-using namespace decaf::util;
-using namespace decaf::util::concurrent;
-using namespace cms;
-using namespace std;
-
 // Globally declare cleint variable
-class TAMQ_Consumer;
 TAMQ_Consumer *client;
+static int counter = 0;
 
-////////////////////////////////////////////////////////////////////////////////
-class TAMQ_Consumer : public ExceptionListener,
-                            public MessageListener,
-                            public DefaultTransportListener,
-                            public SUB_Messenger {
-private:
-
-    Connection* connection;
-    Session* session;
-    Destination* destination;
-    MessageConsumer* consumer;
-    bool useTopic;
-    std::string brokerURI;      // IP Addr/Port to broker
-    std::string destURI;        // Topic/Queue name
-    bool clientAck;
-
-private:
-    TAMQ_Consumer( const TAMQ_Consumer& );
-
-public:
-
-    TAMQ_Consumer& operator= ( const TAMQ_Consumer& );
-    TAMQ_Consumer( const std::string& brokerURI,
-                         const std::string& destURI,
-                         bool useTopic = false,
-                         bool clientAck = false ) :
+TAMQ_Consumer::TAMQ_Consumer( const std::string& brokerURI,
+                              const std::string& destURI,
+                              bool useTopic,
+                              bool clientAck) :
         connection(NULL),
         session(NULL),
         destination(NULL),
@@ -91,196 +60,168 @@ public:
         useTopic(useTopic),
         brokerURI(brokerURI),
         destURI(destURI),
-        clientAck(clientAck) {
-    }
-
-    virtual ~TAMQ_Consumer() {
-        this->cleanup();
-    }
-
-    void close() {
-        this->cleanup();
-    }
-
-    void runConsumer() {
-
-        try {
-
-            // Create a ConnectionFactory
-            ActiveMQConnectionFactory* connectionFactory =
-                new ActiveMQConnectionFactory( brokerURI );
-
-            // Create a Connection
-            connection = connectionFactory->createConnection();
-            delete connectionFactory;
-
-            ActiveMQConnection* amqConnection = dynamic_cast<ActiveMQConnection*>( connection );
-            if( amqConnection != NULL ) {
-                amqConnection->addTransportListener( this );
-            }
-
-            connection->start();
-
-            connection->setExceptionListener(this);
-
-            // Create a Session
-            if( clientAck ) {
-                session = connection->createSession( Session::CLIENT_ACKNOWLEDGE );
-            } else {
-                session = connection->createSession( Session::AUTO_ACKNOWLEDGE );
-            }
-
-            // Create the destination (Topic or Queue)
-            if( useTopic ) {
-                destination = session->createTopic( destURI );
-            } else {
-                destination = session->createQueue( destURI );
-            }
-
-            // Create a MessageConsumer from the Session to the Topic or Queue
-            consumer = session->createConsumer( destination );
-            consumer->setMessageListener( this );
-
-        } catch (CMSException& e) {
-            e.printStackTrace();
-        }
-    }
-
-    // Called from the consumer since this class is a registered MessageListener.
-    virtual void onMessage( const Message* message )
+        clientAck(clientAck)
     {
-        LOG_VERBOSE(2, "Received Message");
-        int length = 0;
-
-        try
+        if (0 == counter++)
         {
-            SUB_Buffer *buf = sub->DequeueBuffer (SUB_QUEUE_FREE);
-            if (!buf) STD_FAIL_VOID;
-
-            const BytesMessage* textMessage =
-                dynamic_cast< const BytesMessage* >( message );
-
-            if( textMessage != NULL ) {
-                length = textMessage->getBodyLength();
-                memcpy(&buf->body, textMessage->getBodyBytes(), length);
-            } else {
-                length = 6;
-                memcpy(&buf->body, "ERROR", length);
-            }
-
-            buf->len = length;
-
-            if( clientAck ) {
-                message->acknowledge();
-            }
-
-            #if LOG_CONSOLE_THRESHOLD_THIS >= LOG_VERBOSE + 6 | LOG_CONSOLE_THRESHOLD_THIS >= LOG_VERBOSE + 6
-            char text[length * 6 + 5];
-            sprintf(&text[0], "INIT");
-            uint16_t str_iter = 0;
-            for (uint16_t iter = 0; iter < length; iter++)
-            {
-                str_iter += sprintf(&text[str_iter], "0x%02X, ", buf->body[iter]);
-            }
-
-            LOG_VERBOSE(6, "Message : %d", length);
-            #endif
-
-            sub->EnqueueBuffer(SUB_QUEUE_COMMAND, buf);
-        }
-
-        catch (CMSException& e)
-        {
-            e.printStackTrace();
+            activemq::library::ActiveMQCPP::initializeLibrary();
         }
     }
 
-    // If something bad happens you see it here as this class is also been
-    // registered as an ExceptionListener with the connection.
-    virtual void onException( const CMSException& ex AMQCPP_UNUSED ) {
-        LOG_ERROR("CMS Exception occurred.  Shutting down client.\n");
-        exit(1);
-    }
+TAMQ_Consumer::~TAMQ_Consumer() {
+    this->cleanup();
 
-    virtual void transportInterrupted() {
-        LOG_INFO("The Connection's Transport has been Interrupted.");
-    }
-
-    virtual void transportResumed() {
-        LOG_INFO("The Connection's Transport has been Restored.");
-    }
-
-    int Start()
+    if (0 == --counter)
     {
-        client->runConsumer(); // Start it up and it will listen forever.
-        LOG_INFO("Talos ActiveMQ Client Running...");
-
-        return 0;
+        activemq::library::ActiveMQCPP::shutdownLibrary();
     }
-
-    int Stop()
-    {
-        // All CMS resources should be closed before the library is shutdown.
-        client->close();
-        LOG_INFO("Talos ActiveMQ Client Stopped");
-
-        return 0;
-    }
-
-    int RegisterSubscriber(Subscriber* sub)
-    {
-        if (!sub) STD_FAIL;
-        this->sub = sub;
-        return 0;
-    }
-
-private:
-
-    void cleanup(){
-
-        try {
-            if( connection != NULL ) {
-                connection->close();
-            }
-        } catch ( CMSException& e ) {
-            e.printStackTrace();
-        }
-
-        delete destination;
-        delete consumer;
-        delete session;
-        delete connection;
-    }
-};
-
-////////////////////////////////////////////////////////////////////////////////
-SUB_Messenger* TAMQ_init(TAMQ_Config *config)
-{
-    activemq::library::ActiveMQCPP::initializeLibrary();
-    TAMQ_Config conf;
-
-    // Copy configuration
-    if (NULL != config) memcpy(&conf, config, sizeof(TAMQ_Config));
-    else
-    {
-        conf = {TAMQ_BROKER_URI, TAMQ_DEST_URI, TAMQ_USE_TOPICS, TAMQ_CLIENT_ACK};
-    }
-
-    client = new TAMQ_Consumer (  conf.connection,
-                                        conf.dest_uri,
-                                        conf.use_topics,
-                                        conf.client_ack ); // Create the consumer
-
-
-    LOG_VERBOSE(0, "Talos ActiveMQ Client Initialized");
-    return client;
 }
 
-int TAMQ_destroy()
+void TAMQ_Consumer::close() {
+    this->cleanup();
+}
+
+void TAMQ_Consumer::runConsumer()
 {
-    delete client;
-    activemq::library::ActiveMQCPP::shutdownLibrary();
-    LOG_VERBOSE(0, "Talos ActiveMQ Client Stopped");
+    try {
+
+        // Create a ConnectionFactory
+        activemq::core::ActiveMQConnectionFactory* connectionFactory =
+            new activemq::core::ActiveMQConnectionFactory( brokerURI );
+
+        // Create a Connection
+        connection = connectionFactory->createConnection();
+        delete connectionFactory;
+
+        activemq::core::ActiveMQConnection* amqConnection = dynamic_cast<activemq::core::ActiveMQConnection*>( connection );
+        if( amqConnection != NULL ) {
+            amqConnection->addTransportListener( this );
+        }
+
+        connection->start();
+
+        connection->setExceptionListener(this);
+
+        // Create a Session
+        if( clientAck ) {
+            session = connection->createSession( cms::Session::CLIENT_ACKNOWLEDGE );
+        } else {
+            session = connection->createSession( cms::Session::AUTO_ACKNOWLEDGE );
+        }
+
+        // Create the destination (Topic or Queue)
+        if( useTopic ) {
+            destination = session->createTopic( destURI );
+        } else {
+            destination = session->createQueue( destURI );
+        }
+
+        // Create a MessageConsumer from the Session to the Topic or Queue
+        consumer = session->createConsumer( destination );
+        consumer->setMessageListener( this );
+
+    } catch (cms::CMSException& e) {
+        e.printStackTrace();
+    }
+}
+
+void TAMQ_Consumer::onMessage( const cms::Message* message )
+{
+    LOG_VERBOSE(2, "Received Message");
+    int length = 0;
+
+    try
+    {
+        SUB_Buffer *buf = sub->DequeueBuffer (SUB_QUEUE_FREE);
+        if (!buf) STD_FAIL_VOID;
+
+        const cms::BytesMessage* textMessage =
+            dynamic_cast< const cms::BytesMessage* >( message );
+
+        if( textMessage != NULL ) {
+            length = textMessage->getBodyLength();
+            memcpy(&buf->body, textMessage->getBodyBytes(), length);
+        } else {
+            length = 6;
+            memcpy(&buf->body, "ERROR", length);
+        }
+
+        buf->len = length;
+
+        if( clientAck ) {
+            message->acknowledge();
+        }
+
+        #if LOG_CONSOLE_THRESHOLD_THIS >= LOG_VERBOSE + 6 | LOG_CONSOLE_THRESHOLD_THIS >= LOG_VERBOSE + 6
+        char text[length * 6 + 5];
+        sprintf(&text[0], "INIT");
+        uint16_t str_iter = 0;
+        for (uint16_t iter = 0; iter < length; iter++)
+        {
+            str_iter += sprintf(&text[str_iter], "0x%02X, ", buf->body[iter]);
+        }
+
+        LOG_VERBOSE(6, "Message : %d", length);
+        #endif
+
+        sub->EnqueueBuffer(SUB_QUEUE_COMMAND, buf);
+    }
+
+    catch (cms::CMSException& e)
+    {
+        e.printStackTrace();
+    }
+}
+
+void TAMQ_Consumer::onException( const cms::CMSException& ex AMQCPP_UNUSED ) {
+    LOG_ERROR("CMS Exception occurred.  Shutting down client.\n");
+    exit(1);
+}
+
+void TAMQ_Consumer::transportInterrupted() {
+    LOG_INFO("The Connection's Transport has been Interrupted.");
+}
+
+void TAMQ_Consumer::transportResumed() {
+    LOG_INFO("The Connection's Transport has been Restored.");
+}
+
+int TAMQ_Consumer::Start()
+{
+    runConsumer(); // Start it up and it will listen forever.
+    LOG_INFO("Talos ActiveMQ Client Running...");
 
     return 0;
+}
+
+int TAMQ_Consumer::Stop()
+{
+    // All CMS resources should be closed before the library is shutdown.
+    close();
+    LOG_INFO("Talos ActiveMQ Client Stopped");
+
+    return 0;
+}
+
+int TAMQ_Consumer::RegisterSubscriber(Subscriber* sub)
+{
+    if (!sub) STD_FAIL;
+    this->sub = sub;
+    return 0;
+}
+
+void TAMQ_Consumer::cleanup(){
+
+    try {
+        if( connection != NULL ) {
+            connection->close();
+        }
+    } catch ( cms::CMSException& e ) {
+        e.printStackTrace();
+    }
+
+    delete destination;
+    delete consumer;
+    delete session;
+    delete connection;
 }
