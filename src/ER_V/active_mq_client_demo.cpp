@@ -76,7 +76,7 @@ int main(int argc AMQCPP_UNUSED, char* argv[] AMQCPP_UNUSED) {
     bool clientAck = false;
 
     // Create the consumer
-    SimpleAsyncConsumer consumer( brokerURI, destURI, useTopics, clientAck );
+    TAMQ_Consumer consumer( brokerURI, destURI, useTopics, clientAck );
 
     // Start it up and it will listen forever.
     consumer.runConsumer();

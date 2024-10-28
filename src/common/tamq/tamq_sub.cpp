@@ -36,7 +36,7 @@
 #include <stdio.h>
 #include <iostream>
 
-#include "tamq/tamq.h"
+#include "tamq/tamq_sub.h"
 #include "sub/sub.h"
 #include "log/log.h"
 #include "util/comm.h"
@@ -55,11 +55,11 @@ using namespace cms;
 using namespace std;
 
 // Globally declare cleint variable
-class SimpleAsyncConsumer;
-SimpleAsyncConsumer *client;
+class TAMQ_Consumer;
+TAMQ_Consumer *client;
 
 ////////////////////////////////////////////////////////////////////////////////
-class SimpleAsyncConsumer : public ExceptionListener,
+class TAMQ_Consumer : public ExceptionListener,
                             public MessageListener,
                             public DefaultTransportListener,
                             public SUB_Messenger {
@@ -75,12 +75,12 @@ private:
     bool clientAck;
 
 private:
-    SimpleAsyncConsumer( const SimpleAsyncConsumer& );
+    TAMQ_Consumer( const TAMQ_Consumer& );
 
 public:
 
-    SimpleAsyncConsumer& operator= ( const SimpleAsyncConsumer& );
-    SimpleAsyncConsumer( const std::string& brokerURI,
+    TAMQ_Consumer& operator= ( const TAMQ_Consumer& );
+    TAMQ_Consumer( const std::string& brokerURI,
                          const std::string& destURI,
                          bool useTopic = false,
                          bool clientAck = false ) :
@@ -94,7 +94,7 @@ public:
         clientAck(clientAck) {
     }
 
-    virtual ~SimpleAsyncConsumer() {
+    virtual ~TAMQ_Consumer() {
         this->cleanup();
     }
 
@@ -147,14 +147,14 @@ public:
     }
 
     // Called from the consumer since this class is a registered MessageListener.
-    virtual void onMessage( const Message* message ) 
+    virtual void onMessage( const Message* message )
     {
         LOG_VERBOSE(2, "Received Message");
-        int length = 0; 
+        int length = 0;
 
         try
         {
-            SUB_Buffer *buf = SUB_dequeue_buffer (SUB_QUEUE_FREE);
+            SUB_Buffer *buf = sub->DequeueBuffer (SUB_QUEUE_FREE);
             if (!buf) STD_FAIL_VOID;
 
             const BytesMessage* textMessage =
@@ -186,10 +186,10 @@ public:
             LOG_VERBOSE(6, "Message : %d", length);
             #endif
 
-            SUB_enqueue_buffer(SUB_QUEUE_COMMAND, buf);
+            sub->EnqueueBuffer(SUB_QUEUE_COMMAND, buf);
         }
 
-        catch (CMSException& e) 
+        catch (CMSException& e)
         {
             e.printStackTrace();
         }
@@ -210,7 +210,7 @@ public:
         LOG_INFO("The Connection's Transport has been Restored.");
     }
 
-    int Start() 
+    int Start()
     {
         client->runConsumer(); // Start it up and it will listen forever.
         LOG_INFO("Talos ActiveMQ Client Running...");
@@ -218,12 +218,19 @@ public:
         return 0;
     }
 
-    int Stop() 
+    int Stop()
     {
         // All CMS resources should be closed before the library is shutdown.
         client->close();
         LOG_INFO("Talos ActiveMQ Client Stopped");
 
+        return 0;
+    }
+
+    int RegisterSubscriber(Subscriber* sub)
+    {
+        if (!sub) STD_FAIL;
+        this->sub = sub;
         return 0;
     }
 
@@ -235,8 +242,8 @@ private:
             if( connection != NULL ) {
                 connection->close();
             }
-        } catch ( CMSException& e ) { 
-            e.printStackTrace(); 
+        } catch ( CMSException& e ) {
+            e.printStackTrace();
         }
 
         delete destination;
@@ -247,7 +254,7 @@ private:
 };
 
 ////////////////////////////////////////////////////////////////////////////////
-SUB_Messenger* TAMQ_init(TAMQ_Config *config) 
+SUB_Messenger* TAMQ_init(TAMQ_Config *config)
 {
     activemq::library::ActiveMQCPP::initializeLibrary();
     TAMQ_Config conf;
@@ -259,9 +266,9 @@ SUB_Messenger* TAMQ_init(TAMQ_Config *config)
         conf = {TAMQ_BROKER_URI, TAMQ_DEST_URI, TAMQ_USE_TOPICS, TAMQ_CLIENT_ACK};
     }
 
-    client = new SimpleAsyncConsumer (  conf.connection, 
-                                        conf.dest_uri, 
-                                        conf.use_topics, 
+    client = new TAMQ_Consumer (  conf.connection,
+                                        conf.dest_uri,
+                                        conf.use_topics,
                                         conf.client_ack ); // Create the consumer
 
 
