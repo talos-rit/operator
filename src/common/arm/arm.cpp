@@ -31,16 +31,14 @@ static void* ARM_run(void* arg)
     // TODO: Add exit code
     while(1)
     {
-        SUB_Buffer *buf = SUB_dequeue_buffer(SUB_QUEUE_COMMAND);
-        if (!buf)
+        int ret = arm->ProcessQueue();
+        if (1 == ret)
         {
             // arm->Poll();
             if (!arm->GetThreadEnable()) break;
             usleep(25*1000);
             continue;
         }
-
-        arm->ProcessBuffer(buf);
     }
 
     return 0;
@@ -59,9 +57,18 @@ int Arm::Stop()
     STD_FAIL;
 }
 
-int Arm::ProcessBuffer(SUB_Buffer *buf)
+int Arm::RegisterSubscriber(Subscriber* sub)
 {
-    if (!buf) STD_FAIL;
+    if (!sub) STD_FAIL;
+    this->sub = sub;
+    return 0;
+}
+
+int Arm::ProcessQueue()
+{
+    SUB_Buffer* buf = sub->DequeueBuffer(SUB_QUEUE_COMMAND);
+
+    if (!buf) return 1;
     if (API_validate_command(&buf->body[0], buf->len)) STD_FAIL;
     API_Data_Wrapper *cmd = (API_Data_Wrapper *) &buf->body;
 
@@ -86,6 +93,6 @@ int Arm::ProcessBuffer(SUB_Buffer *buf)
             break;
     }
 
-    SUB_enqueue_buffer(SUB_QUEUE_FREE, buf);
+    sub->EnqueueBuffer(SUB_QUEUE_FREE, buf);
     return status;
 }

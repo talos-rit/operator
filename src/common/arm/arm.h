@@ -12,24 +12,31 @@
 
 class Arm
 {
+private:
     pthread_t pid;
     bool thread_enable;
+    Subscriber* sub;
 
-private:
     virtual int HandShake() = 0;
     virtual int PolarPan(API_Data_Polar_Pan *pan) = 0;
     virtual int Home(API_Data_Home* home) = 0;
 
 public:
     Arm();
-    ~Arm();
+    virtual ~Arm();
 
     // Thread control
     int Start();
     int Stop();
 
     bool GetThreadEnable();
-    int ProcessBuffer(SUB_Buffer *buf);
+
+    /**
+     * @brief If there's a buffer in the command queue, it will be processed
+     * @returns 0 a buffer has processed properly, 1 if there is no buffer, -1 on failure
+    */
+    int ProcessQueue();
+    int RegisterSubscriber(Subscriber* sub);
 
     virtual void Poll() = 0;
 };

@@ -46,7 +46,7 @@ using namespace cms;
 using namespace std;
 
 ////////////////////////////////////////////////////////////////////////////////
-class SimpleAsyncConsumer : public ExceptionListener,
+class TAMQ_Consumer : public ExceptionListener,
                             public MessageListener,
                             public DefaultTransportListener {
 private:
@@ -64,12 +64,12 @@ private:
 
 private:
 
-    SimpleAsyncConsumer( const SimpleAsyncConsumer& );
-    SimpleAsyncConsumer& operator= ( const SimpleAsyncConsumer& );
+    TAMQ_Consumer( const TAMQ_Consumer& );
+    TAMQ_Consumer& operator= ( const TAMQ_Consumer& );
 
 public:
 
-    SimpleAsyncConsumer( const std::string& brokerURI,
+    TAMQ_Consumer( const std::string& brokerURI,
                          const std::string& destURI,
                          bool useTopic = false,
                          bool clientAck = false ) :
@@ -83,7 +83,7 @@ public:
         clientAck(clientAck) {
     }
 
-    virtual ~SimpleAsyncConsumer() {
+    virtual ~TAMQ_Consumer() {
         this->cleanup();
     }
 
@@ -194,8 +194,8 @@ private:
             if( connection != NULL ) {
                 connection->close();
             }
-        } catch ( CMSException& e ) { 
-            e.printStackTrace(); 
+        } catch ( CMSException& e ) {
+            e.printStackTrace();
         }
 
         delete destination;
@@ -246,7 +246,7 @@ int main(int argc AMQCPP_UNUSED, char* argv[] AMQCPP_UNUSED) {
     bool clientAck = false;
 
     // Create the consumer
-    SimpleAsyncConsumer consumer( brokerURI, destURI, useTopics, clientAck );
+    TAMQ_Consumer consumer( brokerURI, destURI, useTopics, clientAck );
 
     // Start it up and it will listen forever.
     consumer.runConsumer();

@@ -8,6 +8,7 @@
 #include "log/log.h"
 #include "api/api.h"
 #include "sub/sub.h"
+#include "tamq/tamq_sub.h"
 #include "arm/arm.h"
 #include "erv_arm/erv.h"
 
@@ -16,22 +17,37 @@
 
 int main()
 {
+    // Initalize program; Setup Logging
     LOG_init();
     LOG_start();
+
+    // Init Modules
+    Subscriber hermes = Subscriber();
+    SUB_Messenger* inbox = TAMQ_init(NULL);
+    Arm* bot = new Scorbot("/dev/ttyUSB1");
+
+    // Register modules
+    inbox->RegisterSubscriber(&hermes);
+    bot->RegisterSubscriber(&hermes);
+
+    // Start
     LOG_INFO("Staring demo...");
+    hermes.Start();
+    bot->Start();
+    inbox->Start();
 
-    SUB_init(SUB_MSG_AMQ, NULL);
-    Scorbot bot = Scorbot("/dev/ttyUSB1");
-
-    SUB_start();
-    bot.Start();
-
+    // Loop
     while(1);
 
-    bot.Stop();
-    SUB_stop();
-    SUB_destroy();
+    // Cleanup running processes
+    hermes.Stop();
+    bot->Stop();
 
+    // Release resources
+    delete bot;
+    bot = NULL;
+
+    // End demo
     LOG_INFO("Demo Ending...");
     LOG_stop();
     LOG_destory();
