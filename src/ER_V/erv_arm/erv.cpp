@@ -15,12 +15,12 @@ Scorbot::Scorbot(const char* dev)
 {
     strcpy(&this->dev[0], &dev[0]);
     fd = open(dev, O_RDWR | O_NOCTTY | O_NDELAY);
-    if (fd < 0) LOG_ERROR("Could not open file: %s", strerror(errno));
+    if (fd < 0) LOG_ERROR("Scorbot: Could not access device descriptor: %s", strerror(errno));
 }
 
 Scorbot::~Scorbot()
 {
-    if(close(fd)) LOG_ERROR("Could not close file: %s", strerror(errno));
+    if(close(fd)) LOG_ERROR("Scorbot: Could not close device descriptor: %s", strerror(errno));
 }
 
 void Scorbot::Poll()
