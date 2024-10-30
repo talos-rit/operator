@@ -63,18 +63,21 @@ int Scorbot::PolarPan(API_Data_Polar_Pan *pan)
     aclIter += sprintf(&aclCmd[aclIter], "HERE DELTA\r");
 
     write(fd, &aclCmd[0], aclIter);
+    LOG_INFO("%s", aclCmd);
 
-    usleep(10000);
+    usleep(100000);
 
     aclIter = sprintf(&aclCmd[0], "SHIFT DELTA BY 1 %d\r", pan->delta_azimuth);
     
     write(fd, &aclCmd[0], aclIter);
+    LOG_INFO("%s", aclCmd);
 
-    usleep(10000);
+    usleep(100000);
     
     aclIter = sprintf(&aclCmd[aclIter], "MOVE DELTA\r");
 
     write(fd, &aclCmd[0], aclIter);
+    LOG_INFO("%s", aclCmd);
 
     iter += sprintf(&text[iter], "Scorbot Received Polar Pan Command:\n");
     iter += sprintf(&text[iter], "\tΔ Azimuth: \t%d\n",     pan->delta_azimuth);
@@ -83,8 +86,6 @@ int Scorbot::PolarPan(API_Data_Polar_Pan *pan)
     iter += sprintf(&text[iter], "\tTime: \t\t%d\n",        pan->time_ms);
 
     LOG_INFO("%s", text);
-
-    
 
     return 0;
 }
