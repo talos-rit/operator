@@ -4,12 +4,16 @@
 #include <unistd.h>
 #include <err.h>
 #include <errno.h>
+#include <stddef.h>
 
 #include "erv_arm/erv.h"
 #include "log/log.h"
+#include "acl/acl.h"
 
 #define LOG_CONSOLE_THRESHOLD_THIS  LOG_THRESHOLD_MAX
 #define LOG_FILE_THRESHOLD_THIS     LOG_THRESHOLD_MAX
+
+#define ERV_DEFAULT_COMMAND_DELAY 200000
 
 Scorbot::Scorbot(const char* dev)
 {
@@ -57,27 +61,59 @@ int Scorbot::PolarPan(API_Data_Polar_Pan *pan)
     uint8_t iter = 0;
     char text[255];
 
-    uint8_t aclIter = 0;
-    char aclCmd[255];
+    //uint8_t aclIter = 0;
+    //char aclCmd[255];
 
-    aclIter += sprintf(&aclCmd[aclIter], "HERE DELTA\r");
+    S_List cmd_list;
+    DATA_S_List_init(&cmd_list);
+    ACL_convert_polar_pan(&cmd_list, pan);
 
-    write(fd, &aclCmd[0], aclIter);
-    LOG_INFO("%s", aclCmd);
+    S_List_Node* current = DATA_S_List_pop(&cmd_list);
+    ACL_Command* command = DATA_LIST_GET_OBJ(current, ACL_Command, node);
+    LOG_INFO("OUTPUT VALUE: %s", command->payload);
 
-    usleep(100000);
+    //current = DATA_S_List_pop(&cmd_list);
+    //ACL_Command* command2 = DATA_LIST_GET_OBJ(current, ACL_Command, node);
+    //LOG_INFO("OUTPUT VALUE 2: %s", command2->payload);
 
-    aclIter = sprintf(&aclCmd[0], "SHIFT DELTA BY 1 %d\r", pan->delta_azimuth);
+    while (current != NULL) {
+
+        ACL_Command* command = DATA_LIST_GET_OBJ(current, ACL_Command, node);
+        
+        // Manipulate the `command` object as needed
+        // For example, let's clear its payload and reset its length
+        //char cmd_payload[ACL_SIZE];
+        char* cmd_payload_ptr = &command->payload[0];
+        
+
+        // Move to the next node
+        current = DATA_S_List_pop(&cmd_list);
+
+        write(fd, &cmd_payload_ptr[0], command->len);
+        LOG_INFO("Sending Command: %s", cmd_payload_ptr);
+        usleep(ERV_DEFAULT_COMMAND_DELAY);
+    }
+
+
+    // aclIter += sprintf(&aclCmd[aclIter], "HERE DELTA\r");
+
+    // write(fd, &aclCmd[0], aclIter);
+    // LOG_INFO("%s", aclCmd);
+
+    // usleep(100000);
+
+    //aclIter = sprintf(&aclCmd[0], "SHIFT DELTA BY 1 300\r");
+    // aclIter = sprintf(&aclCmd[0], "SHIFT DELTA BY 1 %d\r", pan->delta_azimuth);
     
-    write(fd, &aclCmd[0], aclIter);
-    LOG_INFO("%s", aclCmd);
+    // write(fd, &aclCmd[0], aclIter);
+    // LOG_INFO("%s", aclCmd);
 
-    usleep(100000);
+    // usleep(100000);
     
-    aclIter = sprintf(&aclCmd[aclIter], "MOVE DELTA\r");
+    // aclIter = sprintf(&aclCmd[0], "MOVE DELTA\r");
 
-    write(fd, &aclCmd[0], aclIter);
-    LOG_INFO("%s", aclCmd);
+    // write(fd, &aclCmd[0], aclIter);
+    // LOG_INFO("%s", aclCmd);
 
     iter += sprintf(&text[iter], "Scorbot Received Polar Pan Command:\n");
     iter += sprintf(&text[iter], "\tΔ Azimuth: \t%d\n",     pan->delta_azimuth);

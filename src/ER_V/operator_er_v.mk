@@ -35,7 +35,7 @@ AMQ_CFLAGS 	:= -luuid -lssl -lcrypto -lapr-1
 AMQ_INC 	:= -I/usr/include/apr-1.0/ -I/usr/local/include/activemq-cpp-3.10.0/ -lactivemq-cpp
 
 # Internal sources (ER_V)
-SRCS        :=
+SRCS        := acl/acl.c
 SRCS_CPP    := main.cpp
 SRCS_CPP    += erv_arm/erv.cpp
 
