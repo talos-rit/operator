@@ -107,13 +107,10 @@ class Subscriber;
 */
 class SUB_Messenger
 {
-private:
-
 protected:
     Subscriber* sub;
 
 public:
-
     /**
      * @brief Constructor
     */
@@ -151,8 +148,6 @@ class Subscriber
 
     SUB_State status;           /** Current status of subscriber interface */
     SUB_Instance resources;     /** Resources for managing buffers */
-
-    protected:
 
     public:
     Subscriber();
