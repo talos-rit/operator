@@ -30,6 +30,11 @@ Scorbot::~Scorbot()
     if(close(fd)) LOG_ERROR("Scorbot: Could not close device descriptor: %s", strerror(errno));
 }
 
+/**
+ * @brief Helper function that determines if a character is a line terminator for the Scorbot RX line
+ * @param ch Character to determine
+ * @returns 1 if a terminating char, 0 otherwise.
+*/
 static uint8_t is_term (char ch)
 {
     switch (ch)
@@ -48,7 +53,10 @@ static uint8_t is_term (char ch)
 }
 
 /**
- * Assumes buffer length of ERV_TTY_BUFFER_LEN
+ * @brief Flushes the receive buffer, starting from index 0, up to index length; Logs the flushed data
+ * @details Assumes buffer length of ERV_TTY_BUFFER_LEN
+ * @param tty_buffer The buffer to flush; intended to be the static buffer storing the rx data
+ * @param len Number of chars to flush
 */
 static void flush_buffer(char* tty_buffer, uint16_t len)
 {
@@ -62,6 +70,11 @@ static void flush_buffer(char* tty_buffer, uint16_t len)
     memset(tty_buffer, 0, len);
 }
 
+/**
+ * @brief Function that is called by the parent Arm thread in a timed loop
+ * @details Primary purpose is to log data received from Scorbot.
+ * Flushes buffer after receiving a line terminator, or after a fixed length of time
+*/
 void Scorbot::Poll()
 {
     static clock_t last_print;
@@ -79,13 +92,12 @@ void Scorbot::Poll()
             {
                 flush_buffer(buffer, len);
                 len = 0;
+                last_print = clock();
                 continue;
             }
 
             buffer[len++] = inbox[iter];
         }
-
-        last_print = clock();
     }
 
     // Handle rx timeout; If timeout has occurred, flush buffer
