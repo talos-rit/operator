@@ -18,11 +18,14 @@
 /** Struct mapping ACL commands as an s_list for proper queing of commands */
 typedef struct _acl_command
 {
+  char        payload[ACL_SIZE]; /** The ACL command (dynamically sized)*/
   uint8_t     len;       /** The length of the ACL command */
   S_List_Node node;      /** The node of the s_list */
-  char        payload[ACL_SIZE]; /** The ACL command (dynamically sized)*/
 } ACL_Command;
 
+int ACL_init();
+
+int ACL_Command_init(ACL_Command *cmd);
 
 /**
  * @brief Populates s_list with formatted queue, according to contents of pan

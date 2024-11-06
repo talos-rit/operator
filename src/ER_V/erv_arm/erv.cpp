@@ -19,7 +19,8 @@ Scorbot::Scorbot(const char* dev)
 {
     strcpy(&this->dev[0], &dev[0]);
     fd = open(dev, O_RDWR | O_NOCTTY | O_NDELAY);
-    if (fd < 0) LOG_ERROR("Scorbot: Could not access device descriptor: %s", strerror(errno));
+    if (fd < 0) LOG_ERROR("Could not open file: %s", strerror(errno));
+    ACL_init();
 }
 
 Scorbot::~Scorbot()
@@ -68,30 +69,22 @@ int Scorbot::PolarPan(API_Data_Polar_Pan *pan)
     DATA_S_List_init(&cmd_list);
     ACL_convert_polar_pan(&cmd_list, pan);
 
-    S_List_Node* current = DATA_S_List_pop(&cmd_list);
-    ACL_Command* command = DATA_LIST_GET_OBJ(current, ACL_Command, node);
-    LOG_INFO("OUTPUT VALUE: %s", command->payload);
+    // S_List_Node* current = DATA_S_List_pop(&cmd_list);
+    // ACL_Command* command = DATA_LIST_GET_OBJ(current, ACL_Command, node);
+    // LOG_INFO("OUTPUT VALUE: %s", command->payload);
 
     //current = DATA_S_List_pop(&cmd_list);
     //ACL_Command* command2 = DATA_LIST_GET_OBJ(current, ACL_Command, node);
     //LOG_INFO("OUTPUT VALUE 2: %s", command2->payload);
 
-    while (current != NULL) {
-
-        ACL_Command* command = DATA_LIST_GET_OBJ(current, ACL_Command, node);
-        
-        // Manipulate the `command` object as needed
-        // For example, let's clear its payload and reset its length
-        //char cmd_payload[ACL_SIZE];
-        char* cmd_payload_ptr = &command->payload[0];
-        
-
-        // Move to the next node
-        current = DATA_S_List_pop(&cmd_list);
-
-        write(fd, &cmd_payload_ptr[0], command->len);
-        LOG_INFO("Sending Command: %s", cmd_payload_ptr);
+    ACL_Command* command;
+    while (cmd_list.len)
+    {
+        command = DATA_LIST_GET_OBJ(DATA_S_List_pop(&cmd_list), ACL_Command, node);
+        write(fd, &command->payload[0], command->len);
+        LOG_VERBOSE(4, "Sending Command: %s", &command->payload[0]);
         usleep(ERV_DEFAULT_COMMAND_DELAY);
+        ACL_Command_init(command);
     }
 
 

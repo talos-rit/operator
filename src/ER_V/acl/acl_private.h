@@ -37,5 +37,3 @@ typedef struct _acl_resources
     ACL_Command cmd_pool[ACL_CMD_COUNT];
     S_List      queue;
 } ACL_Resources;
-
-int ACL_init_command(ACL_Command *cmd);
