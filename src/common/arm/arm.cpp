@@ -34,7 +34,7 @@ static void* ARM_run(void* arg)
         int ret = arm->ProcessQueue();
         if (1 == ret)
         {
-            // arm->Poll();
+            arm->Poll();
             if (!arm->GetThreadEnable()) break;
             usleep(25*1000);
             continue;

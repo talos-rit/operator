@@ -42,8 +42,8 @@
 #include "util/comm.h"
 #include "util/array.h"
 
-#define LOG_FILE_THRESHOLD_THIS LOG_THRESHOLD_MAX
-#define LOG_CONSOLE_THRESHOLD_THIS LOG_VERBOSE + 4
+#define LOG_FILE_THRESHOLD_THIS     LOG_THRESHOLD_MAX
+#define LOG_CONSOLE_THRESHOLD_THIS  LOG_THRESHOLD_DEFAULT
 
 // Globally declare cleint variable
 TAMQ_Consumer *client;

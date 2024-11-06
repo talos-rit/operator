@@ -3,6 +3,8 @@
 #include "arm/arm.h"
 #include "acl/acl.h"
 
+#define ERV_RX_TIMEOUT_MS 500
+
 class Scorbot : public Arm
 {
     private:
