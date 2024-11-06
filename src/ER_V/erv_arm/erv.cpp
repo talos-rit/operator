@@ -5,15 +5,17 @@
 #include <err.h>
 #include <errno.h>
 #include <stddef.h>
+#include <time.h>
 
 #include "erv_arm/erv.h"
 #include "log/log.h"
 #include "acl/acl.h"
 
-#define LOG_CONSOLE_THRESHOLD_THIS  LOG_THRESHOLD_MAX
+#define LOG_CONSOLE_THRESHOLD_THIS  LOG_VERBOSE
 #define LOG_FILE_THRESHOLD_THIS     LOG_THRESHOLD_MAX
 
 #define ERV_DEFAULT_COMMAND_DELAY 200000
+#define ERV_TTY_BUFFER_LEN 127
 
 Scorbot::Scorbot(const char* dev)
 {
@@ -28,32 +30,77 @@ Scorbot::~Scorbot()
     if(close(fd)) LOG_ERROR("Scorbot: Could not close device descriptor: %s", strerror(errno));
 }
 
+static uint8_t is_term (char ch)
+{
+    switch (ch)
+    {
+    // Intentional fallthroughs
+        case '\r':
+        case '\n':
+        case '\0':
+        case '>':
+            return 1;
+        default:
+            break;
+    }
+
+    return 0;
+}
+
+/**
+ * Assumes buffer length of ERV_TTY_BUFFER_LEN
+*/
+static void flush_buffer(char* tty_buffer, uint16_t len)
+{
+    if (!tty_buffer) STD_FAIL_VOID;
+    if (!len) return;
+
+    tty_buffer[ERV_TTY_BUFFER_LEN - 1] = '\0';      // Ensure end is null terminated
+    if (len + 1 < ERV_TTY_BUFFER_LEN) tty_buffer[len + 1] = '\0';
+
+    LOG_VERBOSE(0, "SCOR: %s", tty_buffer);
+    memset(tty_buffer, 0, len);
+}
+
 void Scorbot::Poll()
 {
-    const uint8_t size = 255;
-    static uint8_t len = 0;
-    uint8_t start = len;
-    static char buffer[size];
-    // LOG_INFO("LEN: %d", len);
-    memset(&buffer[0], 0xFF, size);
-    len += read(fd, &buffer[0], size);
-    // LOG_INFO("LEN: %d", len);
+    static clock_t last_print;
+    static char buffer[ERV_TTY_BUFFER_LEN];
+    static uint16_t len = 0;
 
-    for (uint8_t iter = start; iter < len && iter < size; iter++)
+    // Handle new info in buffer
+    char inbox[ERV_TTY_BUFFER_LEN];
+    int result = read(fd, &inbox[0], ERV_TTY_BUFFER_LEN);
+    if (-1 != result)
     {
-        if ('\n' == buffer[iter] || '\0' == buffer[iter])
+        for (uint16_t iter = 0; iter < result; iter++)
         {
-            buffer[iter] = '\0';
-            LOG_INFO("SCOR: %s", buffer);
-            strcpy(&buffer[0], &buffer[start]);
-            len = iter - start;
+            if (is_term(inbox[iter]))
+            {
+                flush_buffer(buffer, len);
+                len = 0;
+                continue;
+            }
+
+            buffer[len++] = inbox[iter];
         }
+
+        last_print = clock();
+    }
+
+    // Handle rx timeout; If timeout has occurred, flush buffer
+    double delta_time_ms = ((double)(clock() - last_print) * 1000) / (CLOCKS_PER_SEC);
+    if (len > 0 && (float) ERV_RX_TIMEOUT_MS < delta_time_ms)
+    {
+        flush_buffer(buffer, len);
+        len = 0;
+        last_print = clock();
     }
 }
 
 int Scorbot::HandShake()
 {
-    LOG_INFO("Scorbot Recevied Home Command");
+    LOG_INFO("Scorbot Recevied Handshake Command");
     return 0;
 }
 
@@ -74,8 +121,7 @@ int Scorbot::PolarPan(API_Data_Polar_Pan *pan)
     iter += sprintf(&text[iter], "\tDelay: \t\t%d\n",       pan->delay_ms);
     iter += sprintf(&text[iter], "\tTime: \t\t%d\n",        pan->time_ms);
 
-    LOG_INFO("%s", text);
-
+    LOG_VERBOSE(2, "%s", text);
     return 0;
 }
 
@@ -85,7 +131,7 @@ int Scorbot::Home(API_Data_Home* home)
     char text[255];
 
     iter += sprintf(&text[iter], "Scorbot Received Home Command:\n");
-    iter += sprintf(&text[iter], "\tDelay: \t\t%d\n",       home->delay_ms);
+    iter += sprintf(&text[iter], "\tDelay: \t\t%d",       home->delay_ms);
 
     LOG_INFO("%s", text);
 
