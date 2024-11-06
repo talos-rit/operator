@@ -2,6 +2,7 @@
 
 /**
  * @brief Returns a pointer for the parent structure of a node
+ * @details requires #include <stddef.h>
  * @param node Pointer to node
  * @param obj_type Type of desired structure
  * @param node_name Name of the node member within the parent structure
