@@ -15,16 +15,28 @@
 #define ACL_SIZE 32
 
 
-/** Struct mapping ACL commands as an s_list for proper queing of commands */
+/** ACL Command Map for the command string, length, and node */
 typedef struct _acl_command
 {
   char        payload[ACL_SIZE]; /** The ACL command (dynamically sized)*/
-  uint8_t     len;       /** The length of the ACL command */
-  S_List_Node node;      /** The node of the s_list */
+  uint8_t     len;               /** The length of the ACL command */
+  S_List_Node node;              /** The node of the s_list */
 } ACL_Command;
 
+/**
+ * @brief Allocates memory for an ACL_Resources' array of ACL_Commands
+ * @details Iterates through command pool in global ACL_Resources and populates with dummy data
+ * @returns 1 on success
+ */
 int ACL_init();
 
+/**
+ * @brief Allocates memory for a single ACL_Command and initializes its S_List node
+ * @details Fills the input cmd with dummy data in the form of 0's
+ * Initializes cmd's S_List_Node; appends node to global resource's S_List
+ * @param cmd ACL_Command to initialize
+ * @returns 1 on success
+ */
 int ACL_Command_init(ACL_Command *cmd);
 
 /**
@@ -33,11 +45,6 @@ int ACL_Command_init(ACL_Command *cmd);
  * ACL Commands are stored in the input empty S_List
  * @param cmd_queue S_List pointer to be manipulated into a queue of ACL Commands
  * @param pan Polar Pan command struct pointer
- * @returns 0 if successful, -1 if not
+ * @returns 1 on success
  */
 int ACL_convert_polar_pan(S_List *cmd_queue, const API_Data_Polar_Pan *pan);
-
-/**
- * @brief Populates s_list with home command
- */
-int ACL_home_command(S_List *cmd_queue);

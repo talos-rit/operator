@@ -62,22 +62,12 @@ int Scorbot::PolarPan(API_Data_Polar_Pan *pan)
     uint8_t iter = 0;
     char text[255];
 
-    //uint8_t aclIter = 0;
-    //char aclCmd[255];
-
     S_List cmd_list;
     DATA_S_List_init(&cmd_list);
     ACL_convert_polar_pan(&cmd_list, pan);
 
-    // S_List_Node* current = DATA_S_List_pop(&cmd_list);
-    // ACL_Command* command = DATA_LIST_GET_OBJ(current, ACL_Command, node);
-    // LOG_INFO("OUTPUT VALUE: %s", command->payload);
-
-    //current = DATA_S_List_pop(&cmd_list);
-    //ACL_Command* command2 = DATA_LIST_GET_OBJ(current, ACL_Command, node);
-    //LOG_INFO("OUTPUT VALUE 2: %s", command2->payload);
-
     ACL_Command* command;
+
     while (cmd_list.len)
     {
         command = DATA_LIST_GET_OBJ(DATA_S_List_pop(&cmd_list), ACL_Command, node);
@@ -87,26 +77,6 @@ int Scorbot::PolarPan(API_Data_Polar_Pan *pan)
         ACL_Command_init(command);
     }
 
-
-    // aclIter += sprintf(&aclCmd[aclIter], "HERE DELTA\r");
-
-    // write(fd, &aclCmd[0], aclIter);
-    // LOG_INFO("%s", aclCmd);
-
-    // usleep(100000);
-
-    //aclIter = sprintf(&aclCmd[0], "SHIFT DELTA BY 1 300\r");
-    // aclIter = sprintf(&aclCmd[0], "SHIFT DELTA BY 1 %d\r", pan->delta_azimuth);
-    
-    // write(fd, &aclCmd[0], aclIter);
-    // LOG_INFO("%s", aclCmd);
-
-    // usleep(100000);
-    
-    // aclIter = sprintf(&aclCmd[0], "MOVE DELTA\r");
-
-    // write(fd, &aclCmd[0], aclIter);
-    // LOG_INFO("%s", aclCmd);
 
     iter += sprintf(&text[iter], "Scorbot Received Polar Pan Command:\n");
     iter += sprintf(&text[iter], "\tΔ Azimuth: \t%d\n",     pan->delta_azimuth);
