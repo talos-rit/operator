@@ -53,7 +53,7 @@ typedef struct _api_data_home
 /**
  * @brief Checks to see if a command is valid and can be processed safely
  * @details Fixes endianness, Checks validity of inputs, 
- * and the length and CRC of the provided inaput
+ * and the length and CRC of the provided input
  * @param buf Byte buffer
  * @param len Length of byte buffer
  * @returns 0 on success, -1 on failure
