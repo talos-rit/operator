@@ -1,6 +1,7 @@
 #pragma once
 
 #include "arm/arm.h"
+#include "acl/acl.h"
 
 class Scorbot : public Arm
 {
@@ -11,6 +12,7 @@ class Scorbot : public Arm
         int HandShake();
         int PolarPan(API_Data_Polar_Pan *pan);
         int Home(API_Data_Home *home);
+        int WriteCommandQueue(S_List cmd_list);
         void Poll();
 
     public:
