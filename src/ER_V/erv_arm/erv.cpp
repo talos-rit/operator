@@ -66,17 +66,7 @@ int Scorbot::PolarPan(API_Data_Polar_Pan *pan)
     DATA_S_List_init(&cmd_list);
     ACL_convert_polar_pan(&cmd_list, pan);
 
-    ACL_Command* command;
-
-    while (cmd_list.len)
-    {
-        command = DATA_LIST_GET_OBJ(DATA_S_List_pop(&cmd_list), ACL_Command, node);
-        write(fd, &command->payload[0], command->len);
-        LOG_VERBOSE(4, "Sending Command: %s", &command->payload[0]);
-        usleep(ERV_DEFAULT_COMMAND_DELAY);
-        ACL_Command_init(command);
-    }
-
+    WriteCommandQueue(cmd_list);
 
     iter += sprintf(&text[iter], "Scorbot Received Polar Pan Command:\n");
     iter += sprintf(&text[iter], "\tΔ Azimuth: \t%d\n",     pan->delta_azimuth);
@@ -98,7 +88,27 @@ int Scorbot::Home(API_Data_Home* home)
     iter += sprintf(&text[iter], "\tDelay: \t\t%d\n",       home->delay_ms);
 
     LOG_INFO("%s", text);
-    write(fd, "home\r", 5);
-    write(fd, "defp delta\r", 11); // defines position delta variable
+
+    S_List cmd_list;
+    DATA_S_List_init(&cmd_list);
+    ACL_home_sequence(&cmd_list);
+
+    WriteCommandQueue(cmd_list);
+
+    return 0;
+}
+
+int Scorbot::WriteCommandQueue(S_List cmd_list)
+{
+    ACL_Command *command;
+
+    while (cmd_list.len)
+    {
+        command = DATA_LIST_GET_OBJ(DATA_S_List_pop(&cmd_list), ACL_Command, node);
+        write(fd, &command->payload[0], command->len);
+        LOG_VERBOSE(4, "Sending Command: %s", &command->payload[0]);
+        usleep(ERV_DEFAULT_COMMAND_DELAY);
+        ACL_Command_init(command);
+    }
     return 0;
 }

@@ -26,7 +26,7 @@ typedef struct _acl_command
 /**
  * @brief Allocates memory for an ACL_Resources' array of ACL_Commands
  * @details Iterates through command pool in global ACL_Resources and populates with dummy data
- * @returns 1 on success
+  * @returns 0 on success, -1 on failure
  */
 int ACL_init();
 
@@ -35,16 +35,23 @@ int ACL_init();
  * @details Fills the input cmd with dummy data in the form of 0's
  * Initializes cmd's S_List_Node; appends node to global resource's S_List
  * @param cmd ACL_Command to initialize
- * @returns 1 on success
+  * @returns 0 on success, -1 on failure
  */
 int ACL_Command_init(ACL_Command *cmd);
 
 /**
- * @brief Populates s_list with formatted queue, according to contents of pan
+ * @brief Populates cmd_queue with formatted queue, according to contents of pan
  * @details Polar Pan command struct is processed and turned into a set of ACL commands
  * ACL Commands are stored in the input empty S_List
  * @param cmd_queue S_List pointer to be manipulated into a queue of ACL Commands
  * @param pan Polar Pan command struct pointer
- * @returns 1 on success
+ * @returns 0 on success, -1 on failure
  */
 int ACL_convert_polar_pan(S_List *cmd_queue, const API_Data_Polar_Pan *pan);
+
+/**
+ * @brief Generates and enqueues a home command and sets VAR_POS as the movable variable
+ * @param cmd_queue The command queue to fill
+ * @returns 0 on success, -1 on failure
+ */
+int ACL_home_sequence(S_List *cmd_queue);

@@ -11,9 +11,11 @@
 #define ACL_CMD_COUNT 10
 
 /** ACL Command Formats */
-#define SHIFT "SHIFT %s BY %u %d\r"
-#define HERE "HERE %s"
-#define MOVE "MOVE %s\r"
+#define SHIFT "SHIFT %s BY %u %d\r" // Shift command to move a variable the Scorbot has stored
+#define HERE "HERE %s\r" // Here command to set the input Scorbot position to its current position
+#define MOVE "MOVE %s\r" // Move command to move to a set point
+#define HOME "HOME\r" // Home command homes the robot
+#define DEFP "DEFP %s\r" // Defp command sets an internal variable to the current position for Scorbot
 
 /** ACL Command Types */
 typedef enum _acl_command_type
@@ -39,26 +41,30 @@ typedef enum _acl_axis
 typedef struct _acl_resources
 {
     ACL_Command cmd_pool[ACL_CMD_COUNT];
-    S_List      queue;
+    S_List      free_queue;
 } ACL_Resources;
 
 /**
  * @brief Calculates encoder count and stores the proper ACL shift command payload
  * @details Compares axes and stores the associated ACL command in the input ACL_Command struct
- * @param cmd ACL_Command to be filled
+ * @param cmd_queue S_List to fill with commands
  * @param axis Axis being manipulated on Scorbot
  * @param degree_count Amount of degrees to convert to Encoder Count
- * @returns 1 if successful
+ * @returns 0 on success, -1 on failure
  */
-int ACL_calc_enqueue_shift_command(ACL_Command *cmd, ACL_Axis axis, float degree_count);
+int ACL_calc_enqueue_shift_cmd(S_List *cmd_queue, ACL_Axis axis, float degree_count);
 
 /**
- * @brief Generates ACL_Command payload based on input axis and cmd_type and enqueues it in the input cmd_queue
- * @details Grabs pre-allocated ACL_Command from global resources; populates payload based on input axis and degree_count
- * Appends ACL_Command's node to cmd_queue
- * @param cmd_queue The S_List to add the generated ACL_Command to
- * @param cmd_type The type of ACL command
- * @param axis Axis being manipulated on Scorbot
- * @param degree_count Amount of degrees to move
+ * @brief Allocates and enqueues ACL HOME Command in input cmd_queue
+ * @param cmd_queue S_List to append to
+ * @returns 0 on success, -1 on failure
  */
-int ACL_command_generate_enqueue_movement(S_List *cmd_queue, ACL_Command_Type cmd_type, ACL_Axis axis, float degree_count);
+int ACL_generate_enqueue_here_cmd(S_List *cmd_queue);
+
+/**
+ * @brief Allocates and enqueues ACL MOVE Command in input cmd_queue
+ * @param cmd_queue S_List to append to
+ * @returns 0 on success, -1 on failure
+ */
+int ACL_generate_enqueue_move_cmd(S_List *cmd_queue);
+
