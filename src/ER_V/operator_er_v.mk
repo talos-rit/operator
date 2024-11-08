@@ -38,6 +38,7 @@ AMQ_INC 	:= -I/usr/include/apr-1.0/ -I/usr/local/include/activemq-cpp-3.10.0/ -l
 SRCS        := acl/acl.c
 SRCS_CPP    := main.cpp
 SRCS_CPP    += erv_arm/erv.cpp
+SRCS_CPP	+= erv_conf/erv_conf.cpp
 
 # External sources (Common)
 EXTS		:= log/log.c
@@ -47,6 +48,8 @@ EXTS		+= api/api.c
 EXTS_CPP	:= tamq/tamq_sub.cpp
 EXTS_CPP	+= sub/sub.cpp
 EXTS_CPP	+= arm/arm.cpp
+EXTS_CPP	+= conf/config.cpp
+EXTS_CPP	+= log/log_config.cpp
 # EXTS_CPP	:= 
 
 # Automated reformatting
