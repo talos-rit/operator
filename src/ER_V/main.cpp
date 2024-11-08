@@ -24,6 +24,8 @@ int main()
 
     Config conf = Config();
     conf.SetFilePath(CONF_DEFAULT_LOCATION);
+    conf.AddKey("log_loc");
+    conf.AddKey("scorbot_dev");
     conf.ParseConfig();
 
     // Init Modules
