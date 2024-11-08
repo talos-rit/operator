@@ -60,54 +60,90 @@ static int is_term(char ch)
     return 0;
 }
 
-void Config::ParseYaml(int fd)
+/**
+ * @brief Helper function for copying the contents of a regex match to a char buffer
+ * @param dst Destination char buffer
+ * @param src Original string from which matches are extracted
+ * @param group Match information
+*/
+static void copy_regex_group(char* dst, const char* src, regmatch_t* group)
+{
+    uint8_t match_len = group->rm_eo - group->rm_so;
+    strncpy(&dst[0], &src[group->rm_so], match_len);
+    dst[match_len] = '\0';
+}
+
+int Config::GetKeyIndex(const char* key)
+{
+    int16_t idx = -1;
+    for (uint8_t iter = 0; iter < key_count; iter++)
+    {
+        if(0 == strcmp(key, &keys[CONF_KEY_LEN * iter]))
+        {
+            idx = iter;
+            break;
+        }
+    }
+
+    return idx;
+}
+
+int Config::ParseYaml(int fd)
 {
     // Key pairs are assumed to be in "<KEY>: <VAL>" format, with a newline, null terminator, or end-of-file after each value
     // read function uses system call; minimize using buffers as much as possible
 
-    regex_t entry;
-    regmatch_t matches[3];
-    int ret = regcomp(&entry, "^([^:]*): (.*)$", REG_NEWLINE | REG_EXTENDED);
-    LOG_VERBOSE(4, "REG COMP: %d", ret);
+    regex_t entry;                                  // Compiled regex pattern for detecting config entries
+    regmatch_t matches[3];                          // Match groups for regex
+    uint8_t line = 1;                               // Tracks line number for logging/debugging
+    off_t offset;                                   // Tracks how far to back track for next read; used to line up to just after the first newline in the buffer
+    char buffer[CONF_KEY_LEN + CONF_VAL_LEN + 4];   // buffer to store read calls in; ": " and "\n\0" require 4 additional characters
+    char key[CONF_KEY_LEN];                         // buffer to temporarily hold keys/vals
+    int result;                                     // result of each read
 
-    char buffer[CONF_KEY_LEN + CONF_VAL_LEN + 4]; // ": " and "\n\0" require 4 additional characters
-    char debug[CONF_KEY_LEN];
-    int result; // result of each read
-    off_t offset = 0;
-    uint8_t line = 1;
-
-    while(3 <= (result = read(fd, &buffer[0], sizeof(buffer) - 1)))
+    if (0 != regcomp(&entry, CONF_ENTRY_FMT, CONF_REGEX_FLAGS)) STD_FAIL;   // Compile regex pattern
+    while(3 <= (result = read(fd, &buffer[0], sizeof(buffer) - 1)))         // Loop until file is empty
     {
         LOG_VERBOSE(5, "RESULT: %d", result);
-        buffer[result] = '\0';
-        int ret = regexec(&entry, &buffer[0], 3, matches, 0);
         LOG_VERBOSE(6, "BUFFER: %s", buffer);
+
+        buffer[result] = '\0';                                              // Null terminate buffer for str operations
+        int ret = regexec(&entry, &buffer[0], 3, matches, 0);               // match regex pattern against read buffer
         if(!ret)
         {
-            debug[matches[1].rm_eo - matches[1].rm_so] = '\0';
-            strncpy(&debug[0], &buffer[matches[1].rm_so], matches[1].rm_eo - matches[1].rm_so);
-            LOG_VERBOSE(4, "KEY: %s", debug);
+            // Match found
+            copy_regex_group(&key[0], &buffer[0], &matches[1]);
+            int idx = GetKeyIndex(&key[0]);
+            LOG_VERBOSE(4, "KEY: %s", key);
+            LOG_VERBOSE(5, "Key Index: %d", idx);
 
-            debug[matches[2].rm_eo - matches[2].rm_so] = '\0';
-            strncpy(&debug[0], &buffer[matches[2].rm_so], matches[2].rm_eo - matches[2].rm_so);
-            LOG_VERBOSE(4, "VAL: %s", debug);
-            // Match found; Check key
-            // If key is present, fill value
+            if (-1 == idx)
+            {
+                LOG_VERBOSE(4, "Unrecognized key; Moving on");
+            }
+            else
+            {
+                char* val = &vals[idx * CONF_VAL_LEN];
+                copy_regex_group(val, &buffer[0], &matches[2]);
+                LOG_VERBOSE(4, "VAL: %s", val);
+            }
 
-            offset = -(result - matches[2].rm_eo) + 1;
+            offset = matches[0].rm_eo;  // set offset to end of match
         }
         else
         {
             LOG_VERBOSE(4, "NO MATCH ON LINE %d", line);
-            uint8_t term_idx = 0;
-            for (; term_idx < result && !is_term(buffer[term_idx]); term_idx++);
-            offset = -(result - term_idx) + 1;
+            for (offset = 0; offset < result && !is_term(buffer[offset]); offset++);    // Sets offset to first newline in buffer
         }
+
+        offset -= result - 1;
         LOG_VERBOSE(6, "OFFSET: %d", offset);
-        memset(buffer, 0, sizeof(buffer));
-        lseek(fd, offset, SEEK_CUR);
-        line++;
+        memset(buffer, 0, sizeof(buffer));      // Clear buffer
+        lseek(fd, offset, SEEK_CUR);            // Align file iterator to just after first newline in buffer
+        line++;                                 // Increment line counter
     }
+
+    return 0;
 }
 
 int Config::ParseConfig()
@@ -149,17 +185,7 @@ int Config::GetVal(char* dst, const char* key)
     if (!dst) STD_FAIL;
     if (!key) STD_FAIL;
 
-    // Linear search for key
-    int16_t idx = -1;
-    for (uint8_t iter = 0; iter < key_count; iter++)
-    {
-        if(0 == strcmp(key, &keys[CONF_KEY_LEN * iter]))
-        {
-            idx = iter;
-            break;
-        }
-    }
-
+    int idx = GetKeyIndex(key);
     if (-1 == idx) return -1;
     return GetVal(dst, idx);
 }

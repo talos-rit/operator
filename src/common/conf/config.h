@@ -6,6 +6,8 @@
 #define CONF_VAL_LEN 32
 #define CONF_PAIR_LIMIT 16
 #define CONF_FILE_PERM O_RDONLY
+#define CONF_ENTRY_FMT "^([^:]*): (.*)$"
+#define CONF_REGEX_FLAGS (REG_NEWLINE | REG_EXTENDED)
 
 class Config
 {
@@ -15,7 +17,19 @@ class Config
         char vals[(CONF_KEY_LEN) * CONF_PAIR_LIMIT];    /** 2D Char Array of Values; Index corresponds to keys array */
         uint8_t key_count;                              /** Length of key/val table*/
 
-        void ParseYaml(int fd);
+        /**
+         * @brief Parses file according to YAML standards (more or less)
+         * @param fd File descriptor of config file
+         * @returns 0 on success, -1 on failure
+        */
+        int ParseYaml(int fd);
+
+        /**
+         * @brief Linearly searches through keys table and returns the index of the key
+         * @details Each entry is offset CONF_KEY_LEN from one another
+         * @returns index on success, -1 on failure
+        */
+        int GetKeyIndex(const char* key);
 
     public:
         Config();
@@ -40,6 +54,12 @@ class Config
          * @returns 0 on success, -1 on failure
         */
         int ParseConfig();
+
+        /**
+         * @brief Loads default configuration
+         * @returns 0 on success, -1 on failure
+        */
+        int LoadDefaults();
 
         /**
          * @brief Appends a key to the list of keys
