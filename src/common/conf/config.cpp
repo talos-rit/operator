@@ -78,7 +78,7 @@ void Config::ParseYaml(int fd)
 
     while(3 <= (result = read(fd, &buffer[0], sizeof(buffer) - 1)))
     {
-        LOG_VERBOSE(4, "RESULT: %d", result);
+        LOG_VERBOSE(5, "RESULT: %d", result);
         buffer[result] = '\0';
         int ret = regexec(&entry, &buffer[0], 3, matches, 0);
         LOG_VERBOSE(6, "BUFFER: %s", buffer);
@@ -86,12 +86,10 @@ void Config::ParseYaml(int fd)
         {
             debug[matches[1].rm_eo - matches[1].rm_so] = '\0';
             strncpy(&debug[0], &buffer[matches[1].rm_so], matches[1].rm_eo - matches[1].rm_so);
-            debug[matches[1].rm_eo - matches[1].rm_so] = '\0';
             LOG_VERBOSE(4, "KEY: %s", debug);
 
             debug[matches[2].rm_eo - matches[2].rm_so] = '\0';
             strncpy(&debug[0], &buffer[matches[2].rm_so], matches[2].rm_eo - matches[2].rm_so);
-            debug[matches[1].rm_eo - matches[2].rm_so] = '\0';
             LOG_VERBOSE(4, "VAL: %s", debug);
             // Match found; Check key
             // If key is present, fill value
@@ -103,7 +101,7 @@ void Config::ParseYaml(int fd)
             LOG_VERBOSE(4, "NO MATCH ON LINE %d", line);
             uint8_t term_idx = 0;
             for (; term_idx < result && !is_term(buffer[term_idx]); term_idx++);
-            offset = -(result - term_idx);
+            offset = -(result - term_idx) + 1;
         }
         LOG_VERBOSE(6, "OFFSET: %d", offset);
         memset(buffer, 0, sizeof(buffer));
