@@ -23,7 +23,7 @@
 #define LOG_USE_LOCATION false
 #define LOG_USE_COLOR true
 #define LOG_USE_STDERR true
-#define LOG_FILE_PATH "/home/brooke/Dev/personal/Chariot/build/chariot.log"
+#define LOG_FILE_PATH "/media/brooke/Vault/Dev/RIT/Fall2024/SWEN561/operator/operator.log"
 
 // Location info is considered part of the message body
 #define LOG_MAX_BUFFER 127

@@ -11,6 +11,7 @@
 #include "tamq/tamq_sub.h"
 #include "arm/arm.h"
 #include "erv_arm/erv.h"
+#include "conf/config.h"
 
 #define LOG_FILE_THRESHOLD_THIS     LOG_THRESHOLD_MAX
 #define LOG_CONSOLE_THRESHOLD_THIS  LOG_THRESHOLD_MAX
@@ -20,6 +21,10 @@ int main()
     // Initalize program; Setup Logging
     LOG_init();
     LOG_start();
+
+    Config conf = Config();
+    conf.SetFilePath(CONF_DEFAULT_LOCATION);
+    conf.ParseConfig();
 
     // Init Modules
     Subscriber hermes = Subscriber();
