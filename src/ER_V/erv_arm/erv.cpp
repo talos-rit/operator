@@ -137,6 +137,38 @@ int Scorbot::PolarPan(API_Data_Polar_Pan *pan)
     return 0;
 }
 
+int Scorbot::PolarPanStart(API_Data_Polar_Pan_Start *pan)
+{
+    uint8_t iter = 0;
+    char text[255];
+
+    iter += sprintf(&text[iter], "Scorbot Received Polar Pan Start Command:\n");
+    iter += sprintf(&text[iter], "\tΔ Azimuth: \t%d\n",     pan->delta_azimuth);
+    iter += sprintf(&text[iter], "\tΔ Altitude: \t%d\n",    pan->delta_altitude);
+
+    LOG_VERBOSE(4, "%s", text);
+
+    return 0;
+}
+
+int Scorbot::PolarPanStop()
+{
+    uint8_t iter = 0;
+    char text[255];
+
+    // S_List cmd_list;
+    // DATA_S_List_init(&cmd_list);
+    // ACL_convert_polar_pan(&cmd_list, pan);
+
+    // WriteCommandQueue(cmd_list);
+
+    iter += sprintf(&text[iter], "Scorbot Received Polar Pan Stop Command");
+
+    LOG_VERBOSE(4, "%s", text);
+
+    return 0;
+}
+
 int Scorbot::Home(API_Data_Home* home)
 {
     uint8_t iter = 0;
@@ -165,7 +197,7 @@ int Scorbot::WriteCommandQueue(S_List cmd_list)
         command = DATA_LIST_GET_OBJ(DATA_S_List_pop(&cmd_list), ACL_Command, node);
         write(fd, &command->payload[0], command->len);
         LOG_VERBOSE(4, "Sending Command: %s", &command->payload[0]);
-        usleep(ERV_DEFAULT_COMMAND_DELAY);
+        usleep(ACL_DEFAULT_COMMAND_DELAY_USEC);
         ACL_Command_init(command);
     }
     return 0;

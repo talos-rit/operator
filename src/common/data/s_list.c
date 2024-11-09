@@ -3,6 +3,7 @@
 #include <string.h>
 
 #include "log/log.h"
+#include "util/comm.h"
 
 #define LOG_CONSOLE_THRESHOLD_THIS LOG_VERBOSE + 2
 #define LOG_FILE_THRESHOLD_THIS LOG_VERBOSE + 2

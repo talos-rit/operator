@@ -11,37 +11,54 @@
 #define ACL_CMD_COUNT 10
 
 /** ACL Command Formats */
-#define SHIFT "SHIFT %s BY %u %d\r" // Shift command to move a variable the Scorbot has stored
-#define HERE "HERE %s\r" // Here command to set the input Scorbot position to its current position
-#define MOVE "MOVE %s\r" // Move command to move to a set point
-#define HOME "HOME\r" // Home command homes the robot
-#define DEFP "DEFP %s\r" // Defp command sets an internal variable to the current position for Scorbot
+#define ACL_SHIFT   "SHIFT %s BY %u %d\r" // Shift command to move a variable the Scorbot has stored
+#define ACL_HERE    "HERE %s\r" // Here command to set the input Scorbot position to its current position
+#define ACL_MOVE    "MOVE %s\r" // Move command to move to a set point
+#define ACL_HOME    "HOME\r" // Home command homes the robot
+#define ACL_DEFP    "DEFP %s\r" // Defp command sets an internal variable to the current position for Scorbot
+#define ACL_TOGGLE_MANUAL   "~" // While the scorbot controller is in direct mode, this command allows manual control of the position (like a joystick)
+#define ACL_MOVE_MANUAL     "%c"
 
-/** ACL Command Types */
-typedef enum _acl_command_type
-{
-    CMD_HOME,
-    CMD_MOVE,
-    CMD_SHIFT,
-    CMD_DEFP,
-    CMD_HERE
-} ACL_Command_Type;
+// /** ACL Command Types */
+// typedef enum _acl_command_type
+// {
+//     ACL_CMD_HOME,
+//     ACL_CMD_MOVE,
+//     ACL_CMD_SHIFT,
+//     ACL_CMD_DEFP,
+//     ACL_CMD_HERE
+// } ACL_Command_Type;
 
 /** Scorbot axes representation in ACL */
 typedef enum _acl_axis
 {
-    BASE_AXIS = 1,
-    SHOULDER_AXIS = 2,
-    ELBOW_AXIS = 3,
-    WRIST_PITCH_AXIS = 4,
-    WRIST_ROLL_AXIS = 5
+    ACL_AXIS_BASE                   = 1,
+    ACL_AXIS_SHOULDER               = 2,
+    ACL_AXIS_ELBOW                  = 3,
+    ACL_AXIS_WRIST_PITCH            = 4,
+    ACL_AXIS_WRIST_ROLL             = 5
 } ACL_Axis;
+
+typedef enum _acl_manual_axis
+{
+    ACL_MAN_POS_BASE_AXIS           = '1',
+    ACL_MAN_NEG_BASE_AXIS           = 'q',
+    ACL_MAN_POS_SHOULDER_AXIS       = '2',
+    ACL_MAN_NEG_SHOULDER_AXIS       = 'w',
+    ACL_MAN_POS_ELBOW_AXIS          = '3',
+    ACL_MAN_NEG_ELBOW_AXIS          = 'e',
+    ACL_MAN_POS_WRIST_PITCH_AXIS    = '4',
+    ACL_MAN_NEG_WRIST_PITCH_AXIS    = 'r',
+    ACL_MAN_POS_WRIST_ROLL_AXIS     = '5',
+    ACL_MAN_NEG_WRIST_ROLL_AXIS     = 't',
+} ACL_Manual_Axis;
 
 /** Resource management struct for ACL commands and the associated S_List */
 typedef struct _acl_resources
 {
     ACL_Command cmd_pool[ACL_CMD_COUNT];
     S_List      free_queue;
+    uint8_t     manaul_mode;
 } ACL_Resources;
 
 /**
