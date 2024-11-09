@@ -45,7 +45,7 @@ using namespace std;
 // customize where the consumer listens, to have the consumer
 // use a topic or queue set the 'useTopics' flag.
 //============================================================
-#define TAMQ_DEST_URI "operator_0"
+#define TAMQ_DEST_URI "instructions"
 
 //============================================================
 // set to true to use topics instead of queues
