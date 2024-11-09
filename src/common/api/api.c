@@ -49,9 +49,15 @@ int API_validate_command (const uint8_t *buf, uint16_t len)
     // Command specific preparation
     switch (cmd->header.cmd_val)
     {
+        // Intentional fallthrough
         case API_CMD_HANDSHAKE:
             // No body; Always valid
+        case API_CMD_POLARPAN_START:
+            // Already correct endianness
+        case API_CMD_POLARPAN_STOP:
+            // Already correct endianness
             break;
+
         case API_CMD_POLARPAN:
             API_prep_polar_pan((API_Data_Polar_Pan*) &cmd->payload_head);
             break;

@@ -87,6 +87,14 @@ int Arm::ProcessQueue()
             LOG_INFO("Home Received");
             if (Home((API_Data_Home *)&cmd->payload_head)) STD_FAIL;
             break;
+        case API_CMD_POLARPAN_START:
+            LOG_INFO("Polar Pan Start Recieved");
+            if (PolarPanStart((API_Data_Polar_Pan_Start *) &cmd->payload_head)) STD_FAIL;
+            break;
+        case API_CMD_POLARPAN_STOP:
+            LOG_INFO("Polar Pan Stop Recieved");
+            if (PolarPanStop()) STD_FAIL;
+            break;
         default:
             LOG_IEC();
             status = -1;

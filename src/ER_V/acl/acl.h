@@ -14,6 +14,11 @@
 
 #define ACL_SIZE 32
 
+#define ACL_DEFAULT_COMMAND_DELAY_USEC 200000
+#define ACL_DEV_BAUD 9600
+#define ACL_DEV_FRAME_SIZE 10
+#define ACL_DEV_BYTES_PER_SEC (ACL_DEV_BAUD / ACL_DEV_FRAME_SIZE)
+
 
 /** ACL Command Map for the command string, length, and node */
 typedef struct _acl_command
