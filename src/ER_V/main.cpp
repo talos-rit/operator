@@ -20,12 +20,13 @@
 int main()
 {
     // Initalize program; Setup Logging
-    LOG_init();
-    LOG_start();
-
     ERVConfig conf = ERVConfig();
     conf.SetFilePath(CONF_DEFAULT_LOCATION);
     conf.ParseConfig();
+
+    LOG_init(conf.GetLogLocation());
+    LOG_start();
+
 
     // Init Modules
     Subscriber hermes = Subscriber();

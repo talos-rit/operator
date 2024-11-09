@@ -3,11 +3,12 @@
 #include <stdint.h>
 
 #include "conf/config.h"
+#include "log/log_config.h"
 
 #define ERV_CONF_DEV_KEY        "scorbot_dev"
 #define ERV_CONF_DEV_DEFAULT    "/dev/ttyUSB0"
 
-class ERVConfig: public Config
+class ERVConfig:    public LogConfig
 {
     private:
         uint8_t dev_idx;

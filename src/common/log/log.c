@@ -16,8 +16,8 @@
 #define LOG_CLOCK CLOCK_REALTIME
 #define LOG_TS_LEN (UTIL_TIMESTAMP_LEN + UTIL_TS_MSEC_LEN + 1)
 
-#define LOG_CONSOLE_THRESHOLD_THIS  LOG_THRESHOLD_QUIET
-#define LOG_FILE_THRESHOLD_THIS     LOG_THRESHOLD_QUIET
+#define LOG_CONSOLE_THRESHOLD_THIS  LOG_THRESHOLD_MAX
+#define LOG_FILE_THRESHOLD_THIS     LOG_THRESHOLD_MAX
 
 Log the_log;
 
@@ -226,16 +226,18 @@ static int8_t init_log_lists(Log *log)
     return 0;
 }
 
-int8_t LOG_init()
+int8_t LOG_init(const char* log_loc)
 {
+    if (!log_loc) return -1;
     memset(&the_log, 0, sizeof(Log));
     if (-1 == pthread_mutex_init(&the_log.gen_lock,  NULL)) return -1;
     if (-1 == pthread_mutex_init(&the_log.wr_lock,   NULL)) return -1;
     if (-1 == pthread_mutex_init(&the_log.free_lock, NULL)) return -1;
     if (-1 == init_log_lists(&the_log)) return -1;
     the_log.config.print_loc = LOG_USE_LOCATION;
-    the_log.config.path = LOG_FILE_PATH;
-    the_log.fd = open(the_log.config.path, O_CREAT | O_WRONLY | O_TRUNC | O_APPEND, 0666);
+
+    the_log.config.path = log_loc;
+    the_log.fd = open(the_log.config.path, LOG_FILE_FLAG, LOG_FILE_PERM);
 
     LOG_INFO("Log Module Initialized.");
     return 0;
@@ -245,8 +247,9 @@ int8_t LOG_start()
 {
     pthread_create(&the_log.ptid, NULL, LOG_run, NULL);
     the_log.config.en = true;
+    LOG_VERBOSE(4, "Log Location: %s", the_log.config.path);
     LOG_INFO("Log Module Running...");
-    return -1;
+    return 0;
 }
 
 int8_t LOG_stop()

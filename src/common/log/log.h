@@ -24,6 +24,8 @@
 #define LOG_USE_COLOR true
 #define LOG_USE_STDERR true
 #define LOG_FILE_PATH "/media/brooke/Vault/Dev/RIT/Fall2024/SWEN561/operator/operator.log"
+#define LOG_FILE_FLAG (O_CREAT | O_WRONLY | O_TRUNC | O_APPEND)
+#define LOG_FILE_PERM 0666
 
 // Location info is considered part of the message body
 #define LOG_MAX_BUFFER 127
@@ -74,9 +76,10 @@ int8_t LOG_print(const char* file, uint16_t line, int8_t console_threshold, int8
 
 /**
  * @brief Initializes the Log thread for running
+ * @param log_loc Location of the log file
  * @return 0 on success, -1 on failure
 */
-int8_t LOG_init();
+int8_t LOG_init(const char* log_loc);
 
 /**
  * @brief Starts the log thread

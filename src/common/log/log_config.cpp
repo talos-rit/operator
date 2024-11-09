@@ -8,19 +8,23 @@
 #define LOG_CONSOLE_THRESHOLD_THIS  LOG_THRESHOLD_MAX
 #define LOG_FILE_THRESHOLD_THIS     LOG_THRESHOLD_MAX
 
+LogConfig::LogConfig()
+{
+    log_loc_idx = AddKey(LOG_CONF_LOC_KEY);
+}
+
+LogConfig::~LogConfig()
+{
+
+}
+
 int LogConfig::SetLogLocation(const char* log_location)
 {
     if(!log_location) STD_FAIL;
-    if(strlen(log_location) + 1 > CONF_MEMBER_LEN)
-    {
-        LOG_WARN("Configured log location is too long; switching to default.");
-        SetLogLocation(CONF_DEFAULT_LOCATION);
-        return -1;
-    }
-    return 0;
+    return OverrideValue(log_loc_idx, log_location);
 }
 
 const char* LogConfig::GetLogLocation()
 {
-    return (const char*) log_loc;
+    return GetVal(log_loc_idx);
 }
