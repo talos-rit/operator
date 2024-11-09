@@ -11,7 +11,7 @@
 #include "log/log.h"
 #include "acl/acl.h"
 
-#define LOG_CONSOLE_THRESHOLD_THIS  LOG_VERBOSE
+#define LOG_CONSOLE_THRESHOLD_THIS  LOG_VERBOSE + 4
 #define LOG_FILE_THRESHOLD_THIS     LOG_THRESHOLD_MAX
 
 #define ERV_DEFAULT_COMMAND_DELAY 200000
@@ -101,7 +101,7 @@ void Scorbot::Poll()
     }
 
     // Handle rx timeout; If timeout has occurred, flush buffer
-    double delta_time_ms = ((double)(clock() - last_print) * 1000) / (CLOCKS_PER_SEC);
+    double delta_time_ms = (static_cast<float> (clock() - last_print) * 1000) / (CLOCKS_PER_SEC);
     if (len > 0 && (float) ERV_RX_TIMEOUT_MS < delta_time_ms)
     {
         flush_buffer(buffer, len);
