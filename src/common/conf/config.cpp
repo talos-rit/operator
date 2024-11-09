@@ -10,7 +10,7 @@
 #include "util/comm.h"
 #include "log/log.h"
 
-#define LOG_CONSOLE_THRESHOLD_THIS  LOG_VERBOSE + 4
+#define LOG_CONSOLE_THRESHOLD_THIS  LOG_THRESHOLD_DEFAULT
 #define LOG_FILE_THRESHOLD_THIS     LOG_THRESHOLD_MAX
 
 Config::Config()
@@ -117,6 +117,7 @@ int Config::ParseYaml(int fd)
             LOG_VERBOSE(4, "KEY: %s", key);
             LOG_VERBOSE(5, "Key Index: %d", idx);
 
+
             if (-1 == idx)
             {
                 LOG_VERBOSE(4, "Unrecognized key; Moving on");
@@ -171,23 +172,19 @@ int Config::AddKey(const char* key)
     return key_count++;
 }
 
-int Config::GetVal(char* dst, uint8_t idx)
+const char* Config::GetVal(uint8_t idx)
 {
-    if (!dst) STD_FAIL;
-    if (idx >= key_count) STD_FAIL;
-
-    strcpy(dst, &keys[CONF_KEY_LEN * idx]);
-    return 0;
+    if (idx >= key_count) STD_FAIL_VOID_PTR;
+    return &vals[CONF_VAL_LEN * idx];
 }
 
-int Config::GetVal(char* dst, const char* key)
+const char* Config::GetVal(const char* key)
 {
-    if (!dst) STD_FAIL;
-    if (!key) STD_FAIL;
+    if (!key) STD_FAIL_VOID_PTR;
 
     int idx = GetKeyIndex(key);
-    if (-1 == idx) return -1;
-    return GetVal(dst, idx);
+    if (-1 == idx) return NULL;
+    return GetVal(idx);
 }
 
 void Config::ClearKeyVals()
@@ -195,4 +192,16 @@ void Config::ClearKeyVals()
     memset(keys, 0, sizeof(keys));
     memset(vals, 0, sizeof(vals));
     key_count = 0;
+}
+
+int Config::OverrideValue(uint8_t key_idx, const char* val)
+{
+    if (key_idx > key_count) STD_FAIL;
+    if (!val) STD_FAIL;
+
+    if (strlen(val) + 1 > CONF_VAL_LEN)
+        LOG_WARN("Override value for key %s too long", &keys[key_idx * CONF_KEY_LEN]);
+
+    strcpy(&vals[key_idx * CONF_VAL_LEN], val);
+    return 0;
 }

@@ -8,7 +8,7 @@
 #include "util/comm.h"
 #include "log/log.h"
 
-#define LOG_CONSOLE_THRESHOLD_THIS  LOG_THRESHOLD_MAX
+#define LOG_CONSOLE_THRESHOLD_THIS  LOG_THRESHOLD_DEFAULT
 #define LOG_FILE_THRESHOLD_THIS     LOG_THRESHOLD_MAX
 
 ACL_Resources resources;
