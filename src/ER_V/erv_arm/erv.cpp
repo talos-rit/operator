@@ -20,6 +20,7 @@
 
 Scorbot::Scorbot(const char* dev)
 {
+    LOG_VERBOSE(4, "Scorbot device path: %s", dev);
     strcpy(&this->dev[0], &dev[0]);
     fd = open(dev, O_RDWR | O_NOCTTY | O_NDELAY);
     if (fd < 0) LOG_ERROR("Could not open file: %s", strerror(errno));

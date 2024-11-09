@@ -12,6 +12,7 @@
 #include "arm/arm.h"
 #include "erv_arm/erv.h"
 #include "conf/config.h"
+#include "erv_conf/erv_conf.h"
 
 #define LOG_FILE_THRESHOLD_THIS     LOG_THRESHOLD_MAX
 #define LOG_CONSOLE_THRESHOLD_THIS  LOG_THRESHOLD_MAX
@@ -22,16 +23,14 @@ int main()
     LOG_init();
     LOG_start();
 
-    Config conf = Config();
+    ERVConfig conf = ERVConfig();
     conf.SetFilePath(CONF_DEFAULT_LOCATION);
-    conf.AddKey("log_loc");
-    conf.AddKey("scorbot_dev");
     conf.ParseConfig();
 
     // Init Modules
     Subscriber hermes = Subscriber();
     SUB_Messenger* inbox = new TAMQ_Consumer(TAMQ_BROKER_URI, TAMQ_DEST_URI, TAMQ_USE_TOPICS, TAMQ_CLIENT_ACK);
-    Arm* bot = new Scorbot("/dev/ttyUSB0");
+    Arm* bot = new Scorbot(conf.GetScorbotDevicePath());
 
     // Register modules
     inbox->RegisterSubscriber(&hermes);

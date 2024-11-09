@@ -31,6 +31,14 @@ class Config
         */
         int GetKeyIndex(const char* key);
 
+    protected:
+
+        /**
+         * @brief Overrides a value in the key-value table at the given index
+         * @returns 0 on success, -1 on failure
+        */
+        int OverrideValue(uint8_t key_idx, const char* val);
+
     public:
         Config();
         virtual ~Config();
@@ -56,12 +64,6 @@ class Config
         int ParseConfig();
 
         /**
-         * @brief Loads default configuration
-         * @returns 0 on success, -1 on failure
-        */
-        int LoadDefaults();
-
-        /**
          * @brief Appends a key to the list of keys
          * @param key Key to add
          * @returns -1 on failure, key index on success
@@ -70,22 +72,20 @@ class Config
 
 
         /**
-         * @brief Copies the associated value of a given key to the destination character pointer
+         * @brief Returns a const char buffer containing the value associated with the given key index
          * @details Uses index to directly access string; Faster than linear search overload
-         * @param dst Destination character pointer
-         * @param idx Index of value
-         * @returns 0 on success, -1 on failure
+         * @param idx Index of value's key
+         * @returns const char pointer to string on success, NULL on failure
         */
-        int GetVal(char* dst, uint8_t idx);
+        const char* GetVal(uint8_t idx);
 
         /**
          * @brief Copies the associated value of a given key to the destination character pointer
          * @details Searches through key list to find value
-         * @param dst Destination character pointer
          * @param key Key associated with value
-         * @returns 0 on success, -1 on failure
+         * @returns const char pointer to string on success, NULL on failure
         */
-        int GetVal(char* dst, const char* key);
+        const char* GetVal(const char* key);
 
         /**
          * @brief Clears key-value table
