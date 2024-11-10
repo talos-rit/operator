@@ -4,11 +4,13 @@
 
 #include "conf/config.h"
 #include "log/log_config.h"
+#include "tamq/tamq_conf.h"
 
 #define ERV_CONF_DEV_KEY        "scorbot_dev"
 #define ERV_CONF_DEV_DEFAULT    "/dev/ttyUSB0"
 
-class ERVConfig:    public LogConfig
+class ERVConfig:    public LogConfig,
+                    public TAMQ_Config
 {
     private:
         uint8_t dev_idx;

@@ -50,6 +50,7 @@ EXTS_CPP	+= sub/sub.cpp
 EXTS_CPP	+= arm/arm.cpp
 EXTS_CPP	+= conf/config.cpp
 EXTS_CPP	+= log/log_config.cpp
+EXTS_CPP	+= tamq/tamq_conf.cpp
 # EXTS_CPP	:= 
 
 # Automated reformatting

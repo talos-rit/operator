@@ -8,14 +8,28 @@
 #define CONF_FILE_PERM O_RDONLY
 #define CONF_ENTRY_FMT "^([^:]*): (.*)$"
 #define CONF_REGEX_FLAGS (REG_NEWLINE | REG_EXTENDED)
+#define CONF_DEFAULT_BOOL_VAL false
+
+typedef enum _conf_data_type
+{
+    CONF_DATA_STRING,
+    CONF_DATA_BOOL,
+    CONF_DATA_INT,
+} CONF_Data_Type;
+
+typedef struct _conf_entry
+{
+    char key[CONF_KEY_LEN];                 /** Holds the key of the config entry*/
+    char val[CONF_VAL_LEN];                 /** Holds the value of the config entry*/
+    CONF_Data_Type type;                    /** Holds the type of the config entry*/
+} CONF_Entry;
 
 class Config
 {
     private:
-        char path[CONF_MEMBER_LEN];                     /** File Path */
-        char keys[(CONF_VAL_LEN) * CONF_PAIR_LIMIT];    /** 2D Char Array of Keys; Index corresponds to vals array   */
-        char vals[(CONF_KEY_LEN) * CONF_PAIR_LIMIT];    /** 2D Char Array of Values; Index corresponds to keys array */
-        uint8_t key_count;                              /** Length of key/val table*/
+        char        path[CONF_MEMBER_LEN];   /** File Path */
+        CONF_Entry  pairs[CONF_PAIR_LIMIT];  /** Stored pairs */
+        uint8_t     key_count;               /** Length of key-value table*/
 
         /**
          * @brief Parses file according to YAML standards (more or less)
@@ -31,13 +45,30 @@ class Config
         */
         int GetKeyIndex(const char* key);
 
+        /**
+         * @brief Helper function or handling an error during GetBool
+         * @param idx Index of config entry
+         * @returns Default bool value
+        */
+        bool fail_get_bool(int idx);
+
     protected:
 
         /**
          * @brief Overrides a value in the key-value table at the given index
+         * @param key_idx index of Key-Value pair to override
+         * @param val Value to override pair with
          * @returns 0 on success, -1 on failure
         */
         int OverrideValue(uint8_t key_idx, const char* val);
+
+        /**
+         * @brief Overrides a value in the key-value table at the given index
+         * @param key_idx index of Key-Value pair to override
+         * @param val Value to override pair with
+         * @returns 0 on success, -1 on failure
+        */
+        int OverrideValue(uint8_t key_idx, bool val);
 
     public:
         Config();
@@ -66,9 +97,10 @@ class Config
         /**
          * @brief Appends a key to the list of keys
          * @param key Key to add
+         * @param type Data type of value
          * @returns -1 on failure, key index on success
         */
-        int AddKey(const char* key);
+        int AddKey(const char* key, CONF_Data_Type type);
 
 
         /**
@@ -86,6 +118,24 @@ class Config
          * @returns const char pointer to string on success, NULL on failure
         */
         const char* GetVal(const char* key);
+
+        /**
+         * @brief Returns the value associated with the given index as a bool
+         * @details Uses index to directly access value, rather than linear search
+         * @param idx Index of value in key-value table
+         * @param deflt Default value of configuration
+         * @returns Boolean value of configuration
+        */
+        bool GetBool(int idx);
+
+        /**
+         * @brief Returns the value of the given key as a bool
+         * @details Uses linear search to find and access the value, as opposed to direct access with an index
+         * @param key Key associated with desired value
+         * @param deflt Default value of configuration
+         * @returns Boolean value of configuration
+        */
+        bool GetBool(const char* key);
 
         /**
          * @brief Clears key-value table
