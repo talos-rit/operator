@@ -10,13 +10,15 @@ class Scorbot : public Arm
     private:
         char dev[32];
         int fd;
+        char polar_pan_cont;
+        bool manual_mode;
 
         int HandShake();
         int PolarPan(API_Data_Polar_Pan *pan);
         int PolarPanStart(API_Data_Polar_Pan_Start *pan);
         int PolarPanStop();
         int Home(API_Data_Home *home);
-        int WriteCommandQueue(S_List cmd_list);
+        int WriteCommandQueue(S_List *cmd_list);
         void Poll();
 
     public:

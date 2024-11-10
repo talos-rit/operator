@@ -6,6 +6,7 @@
 #include <errno.h>
 #include <stddef.h>
 #include <time.h>
+#include <termios.h>
 
 #include "erv_arm/erv.h"
 #include "log/log.h"
@@ -23,6 +24,8 @@ Scorbot::Scorbot(const char* dev)
     fd = open(dev, O_RDWR | O_NOCTTY | O_NDELAY);
     if (fd < 0) LOG_ERROR("Could not open file: %s", strerror(errno));
     ACL_init();
+    polar_pan_cont = '\0';
+    manual_mode = false;
 }
 
 Scorbot::~Scorbot()
@@ -67,7 +70,6 @@ static void flush_buffer(char* tty_buffer, uint16_t len)
     if (len + 1 < ERV_TTY_BUFFER_LEN) tty_buffer[len + 1] = '\0';
 
     LOG_VERBOSE(0, "SCOR: %s", tty_buffer);
-    memset(tty_buffer, 0, len);
 }
 
 /**
@@ -80,6 +82,28 @@ void Scorbot::Poll()
     static clock_t last_print;
     static char buffer[ERV_TTY_BUFFER_LEN];
     static uint16_t len = 0;
+    static char last_pan_cont;
+
+    if (last_pan_cont != polar_pan_cont)
+    {
+        //flush write buffer
+        tcflush(fd, TCOFLUSH);
+        if (!last_pan_cont || !polar_pan_cont)
+        {
+            // Manual mode is toggling
+            write(fd, "~", 1);
+            manual_mode = !manual_mode;
+        }
+    }
+
+    char manual[ACL_MANUAL_MOVE_SIZE];
+    if (polar_pan_cont)
+    {
+        memset(&manual[0], polar_pan_cont, sizeof(manual));
+        write(fd, &manual, sizeof(manual));
+    }
+
+    last_pan_cont = polar_pan_cont;
 
     // Handle new info in buffer
     char inbox[ERV_TTY_BUFFER_LEN];
@@ -91,6 +115,7 @@ void Scorbot::Poll()
             if (is_term(inbox[iter]))
             {
                 flush_buffer(buffer, len);
+                memset(buffer, 0, sizeof(buffer));
                 len = 0;
                 last_print = clock();
                 continue;
@@ -105,6 +130,7 @@ void Scorbot::Poll()
     if (len > 0 && (float) ERV_RX_TIMEOUT_MS < delta_time_ms)
     {
         flush_buffer(buffer, len);
+        memset(buffer, 0, sizeof(buffer));
         len = 0;
         last_print = clock();
     }
@@ -125,7 +151,7 @@ int Scorbot::PolarPan(API_Data_Polar_Pan *pan)
     DATA_S_List_init(&cmd_list);
     ACL_convert_polar_pan(&cmd_list, pan);
 
-    WriteCommandQueue(cmd_list);
+    WriteCommandQueue(&cmd_list);
 
     iter += sprintf(&text[iter], "Scorbot Received Polar Pan Command:\n");
     iter += sprintf(&text[iter], "\tΔ Azimuth: \t%d\n",     pan->delta_azimuth);
@@ -145,9 +171,11 @@ int Scorbot::PolarPanStart(API_Data_Polar_Pan_Start *pan)
     iter += sprintf(&text[iter], "Scorbot Received Polar Pan Start Command:\n");
     iter += sprintf(&text[iter], "\tΔ Azimuth: \t%d\n",     pan->delta_azimuth);
     iter += sprintf(&text[iter], "\tΔ Altitude: \t%d\n",    pan->delta_altitude);
-
     LOG_VERBOSE(4, "%s", text);
 
+    polar_pan_cont = ACL_get_polar_pan_continuous_vector(pan);
+
+    if('\0' == polar_pan_cont) return -1;
     return 0;
 }
 
@@ -156,16 +184,10 @@ int Scorbot::PolarPanStop()
     uint8_t iter = 0;
     char text[255];
 
-    // S_List cmd_list;
-    // DATA_S_List_init(&cmd_list);
-    // ACL_convert_polar_pan(&cmd_list, pan);
-
-    // WriteCommandQueue(cmd_list);
-
     iter += sprintf(&text[iter], "Scorbot Received Polar Pan Stop Command");
-
     LOG_VERBOSE(4, "%s", text);
 
+    polar_pan_cont = '\0';
     return 0;
 }
 
@@ -183,20 +205,25 @@ int Scorbot::Home(API_Data_Home* home)
     DATA_S_List_init(&cmd_list);
     ACL_home_sequence(&cmd_list);
 
-    WriteCommandQueue(cmd_list);
+    WriteCommandQueue(&cmd_list);
 
     return 0;
 }
 
-int Scorbot::WriteCommandQueue(S_List cmd_list)
+int Scorbot::WriteCommandQueue(S_List* cmd_list)
 {
-    ACL_Command *command;
+    polar_pan_cont = '\0';
 
-    while (cmd_list.len)
+    ACL_Command *command;
+    while (cmd_list->len)
     {
-        command = DATA_LIST_GET_OBJ(DATA_S_List_pop(&cmd_list), ACL_Command, node);
+        S_List_Node* node = DATA_S_List_pop(cmd_list);
+        if (!node) STD_FAIL;
+
+        command = DATA_LIST_GET_OBJ(node, ACL_Command, node);
         write(fd, &command->payload[0], command->len);
         LOG_VERBOSE(4, "Sending Command: %s", &command->payload[0]);
+
         usleep(ACL_DEFAULT_COMMAND_DELAY_USEC);
         ACL_Command_init(command);
     }
