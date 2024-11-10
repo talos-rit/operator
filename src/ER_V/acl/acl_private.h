@@ -1,23 +1,22 @@
 #include "acl/acl.h"
-#define CMD_SIZE 32
 
-#define VAR_POS "DELTA" /** variable position moniker for ACL commands */
+#define ACL_VAR_POS "DELTA" /** variable position moniker for ACL commands */
 
 /** Conversion factors for Encoder Count */
-#define BASE_CONVERSION_FACTOR 42.5666f
-#define SHOULDER_CONVERSION_FACTOR 33.2121f
-#define WRIST_CONVERSION_FACTOR 8.3555f
+#define ACL_BASE_CONVERSION_FACTOR 42.5666f
+#define ACL_SHOULDER_CONVERSION_FACTOR 33.2121f
+#define ACL_WRIST_CONVERSION_FACTOR 8.3555f
 
 #define ACL_CMD_COUNT 10
 
 /** ACL Command Formats */
-#define ACL_SHIFT   "SHIFT %s BY %u %d\r" // Shift command to move a variable the Scorbot has stored
-#define ACL_HERE    "HERE %s\r" // Here command to set the input Scorbot position to its current position
-#define ACL_MOVE    "MOVE %s\r" // Move command to move to a set point
-#define ACL_HOME    "HOME\r" // Home command homes the robot
-#define ACL_DEFP    "DEFP %s\r" // Defp command sets an internal variable to the current position for Scorbot
-#define ACL_TOGGLE_MANUAL   "~" // While the scorbot controller is in direct mode, this command allows manual control of the position (like a joystick)
-#define ACL_MOVE_MANUAL     "%c"
+#define ACL_SHIFT_FMT           "SHIFT %s BY %u %d\r" // Shift command to move a variable the Scorbot has stored
+#define ACL_HERE_FMT            "HERE %s\r" // Here command to set the input Scorbot position to its current position
+#define ACL_MOVE_FMT            "MOVE %s\r" // Move command to move to a set point
+#define ACL_HOME_FMT            "HOME\r" // Home command homes the robot
+#define ACL_DEFP_FMT            "DEFP %s\r" // Defp command sets an internal variable to the current position for Scorbot
+#define ACL_TOGGLE_MANUAL_FMT   "~" // While the scorbot controller is in direct mode, this command allows manual control of the position (like a joystick)
+#define ACL_MOVE_MANUAL_FMT     "%c"
 
 /** Scorbot axes representation in ACL */
 typedef enum _acl_axis

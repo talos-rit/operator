@@ -12,7 +12,7 @@
 #include "log/log.h"
 #include "acl/acl.h"
 
-#define LOG_CONSOLE_THRESHOLD_THIS  LOG_VERBOSE + 4
+#define LOG_CONSOLE_THRESHOLD_THIS  LOG_VERBOSE + 2
 #define LOG_FILE_THRESHOLD_THIS     LOG_THRESHOLD_MAX
 
 #define ERV_DEFAULT_COMMAND_DELAY 200000
@@ -73,15 +73,15 @@ static void flush_buffer(char* tty_buffer, uint16_t len)
 }
 
 /**
- * @brief Function that is called by the parent Arm thread in a timed loop
- * @details Primary purpose is to log data received from Scorbot.
- * Flushes buffer after receiving a line terminator, or after a fixed length of time
+ * @brief Helper function used to handle continuous polar pan commands during polling
+ * @details Continuous polar pan has to run in a loop, independent of the command bus, to allow asyncrounous commands.
+ *          This allows the bus to not become overwhelmed.
+ * @param fd File descriptor for Scorbot ER V serial device
+ * @param polar_pan_cont Character describing the angular vector that the polar pan is executing
+ * @param manual_mode Pointer to the bool tracking the current mode of the controller
 */
-void Scorbot::Poll()
+static void poll_polar_pan(int fd, char polar_pan_cont, bool* manual_mode)
 {
-    static clock_t last_print;
-    static char buffer[ERV_TTY_BUFFER_LEN];
-    static uint16_t len = 0;
     static char last_pan_cont;
 
     if (last_pan_cont != polar_pan_cont)
@@ -92,7 +92,7 @@ void Scorbot::Poll()
         {
             // Manual mode is toggling
             write(fd, "~", 1);
-            manual_mode = !manual_mode;
+            *manual_mode = !(*manual_mode);
         }
     }
 
@@ -104,6 +104,17 @@ void Scorbot::Poll()
     }
 
     last_pan_cont = polar_pan_cont;
+}
+
+/**
+ * @brief Helper function used to handle incoming messages from the Scorbot ER V serial bus
+ * @param fd File descriptor for Scorbot ER V serial device
+*/
+static void poll_tty_rx(int fd)
+{
+    static clock_t last_print;
+    static char buffer[ERV_TTY_BUFFER_LEN];
+    static uint16_t len = 0;
 
     // Handle new info in buffer
     char inbox[ERV_TTY_BUFFER_LEN];
@@ -135,6 +146,11 @@ void Scorbot::Poll()
         last_print = clock();
     }
 }
+void Scorbot::Poll()
+{
+    poll_polar_pan(fd, polar_pan_cont, &manual_mode);
+    poll_tty_rx(fd);
+}
 
 int Scorbot::HandShake()
 {
@@ -153,13 +169,13 @@ int Scorbot::PolarPan(API_Data_Polar_Pan *pan)
 
     WriteCommandQueue(&cmd_list);
 
-    iter += sprintf(&text[iter], "Scorbot Received Polar Pan Command:\n");
+    iter += sprintf(&text[iter], "Polar Pan Payload:\n");
     iter += sprintf(&text[iter], "\tΔ Azimuth: \t%d\n",     pan->delta_azimuth);
     iter += sprintf(&text[iter], "\tΔ Altitude: \t%d\n",    pan->delta_altitude);
     iter += sprintf(&text[iter], "\tDelay: \t\t%d\n",       pan->delay_ms);
     iter += sprintf(&text[iter], "\tTime: \t\t%d\n",        pan->time_ms);
+    LOG_VERBOSE(4, "%s", text);
 
-    LOG_VERBOSE(2, "%s", text);
     return 0;
 }
 
@@ -168,7 +184,7 @@ int Scorbot::PolarPanStart(API_Data_Polar_Pan_Start *pan)
     uint8_t iter = 0;
     char text[255];
 
-    iter += sprintf(&text[iter], "Scorbot Received Polar Pan Start Command:\n");
+    iter += sprintf(&text[iter], "Polar Pan Start Payload:\n");
     iter += sprintf(&text[iter], "\tΔ Azimuth: \t%d\n",     pan->delta_azimuth);
     iter += sprintf(&text[iter], "\tΔ Altitude: \t%d\n",    pan->delta_altitude);
     LOG_VERBOSE(4, "%s", text);
@@ -181,12 +197,6 @@ int Scorbot::PolarPanStart(API_Data_Polar_Pan_Start *pan)
 
 int Scorbot::PolarPanStop()
 {
-    uint8_t iter = 0;
-    char text[255];
-
-    iter += sprintf(&text[iter], "Scorbot Received Polar Pan Stop Command");
-    LOG_VERBOSE(4, "%s", text);
-
     polar_pan_cont = '\0';
     return 0;
 }
@@ -196,10 +206,10 @@ int Scorbot::Home(API_Data_Home* home)
     uint8_t iter = 0;
     char text[255];
 
-    iter += sprintf(&text[iter], "Scorbot Received Home Command:\n");
+    iter += sprintf(&text[iter], "Home Payload:\n");
     iter += sprintf(&text[iter], "\tDelay: \t\t%d",       home->delay_ms);
 
-    LOG_INFO("%s", text);
+    LOG_VERBOSE(4, "%s", text);
 
     S_List cmd_list;
     DATA_S_List_init(&cmd_list);
