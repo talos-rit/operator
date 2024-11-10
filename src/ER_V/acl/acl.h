@@ -19,13 +19,29 @@
 #define ACL_DEV_FRAME_SIZE 10
 #define ACL_DEV_BYTES_PER_SEC (ACL_DEV_BAUD / ACL_DEV_FRAME_SIZE)
 
+/** (Bytes_s * delay_us) / (10^6) */
+// #define ACL_BYTES_PER_DELAY ((ACL_DEFAULT_COMMAND_DELAY_USEC) * (ACL_DEV_BYTES_PER_SEC) / (1000 * 1000))
+#define ACL_MANUAL_MOVE_SIZE 10
+
+/** ACL Command Types */
+typedef enum _acl_command_type
+{
+    ACL_CMD_INVALID,
+    ACL_CMD_HOME,
+    ACL_CMD_MOVE,
+    ACL_CMD_SHIFT,
+    ACL_CMD_DEFP,
+    ACL_CMD_HERE,
+    ACL_CMD_MANUAL,
+} ACL_Command_Type;
 
 /** ACL Command Map for the command string, length, and node */
 typedef struct _acl_command
 {
-  char        payload[ACL_SIZE]; /** The ACL command (dynamically sized)*/
-  uint8_t     len;               /** The length of the ACL command */
-  S_List_Node node;              /** The node of the s_list */
+  char              payload[ACL_SIZE]; /** The ACL command (dynamically sized)*/
+  uint8_t           len;               /** The length of the ACL command */
+  ACL_Command_Type  type;              /** ACL command type */
+  S_List_Node       node;              /** The node of the s_list */
 } ACL_Command;
 
 /**
@@ -60,3 +76,8 @@ int ACL_convert_polar_pan(S_List *cmd_queue, const API_Data_Polar_Pan *pan);
  * @returns 0 on success, -1 on failure
  */
 int ACL_home_sequence(S_List *cmd_queue);
+
+char ACL_get_polar_pan_continuous_vector(API_Data_Polar_Pan_Start* payload);
+
+int ACL_enqueue_manual_mode_toggle_cmd(S_List *cmd_queue);
+

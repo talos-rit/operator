@@ -19,16 +19,6 @@
 #define ACL_TOGGLE_MANUAL   "~" // While the scorbot controller is in direct mode, this command allows manual control of the position (like a joystick)
 #define ACL_MOVE_MANUAL     "%c"
 
-// /** ACL Command Types */
-// typedef enum _acl_command_type
-// {
-//     ACL_CMD_HOME,
-//     ACL_CMD_MOVE,
-//     ACL_CMD_SHIFT,
-//     ACL_CMD_DEFP,
-//     ACL_CMD_HERE
-// } ACL_Command_Type;
-
 /** Scorbot axes representation in ACL */
 typedef enum _acl_axis
 {
