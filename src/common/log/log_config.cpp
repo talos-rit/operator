@@ -10,7 +10,7 @@
 
 LogConfig::LogConfig()
 {
-    log_loc_idx = AddKey(LOG_CONF_LOC_KEY);
+    log_loc_idx = AddKey(LOG_CONF_LOC_KEY, CONF_DATA_STRING);
 }
 
 LogConfig::~LogConfig()

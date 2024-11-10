@@ -23,6 +23,18 @@ Config::~Config()
     ClearKeyVals();
 }
 
+/**
+ * @brief Helper function to initalize configuration entry
+ * @param entry Entry to initialize
+ * @returns 0 on success, -1 on failure
+*/
+static int CONF_Entry_init(CONF_Entry *entry)
+{
+    if (!entry) STD_FAIL;
+    memset(entry, 0, sizeof(CONF_Entry));
+    return 0;
+}
+
 const char* Config::GetFilePath()
 {
     return &path[0];
@@ -78,7 +90,7 @@ int Config::GetKeyIndex(const char* key)
     int16_t idx = -1;
     for (uint8_t iter = 0; iter < key_count; iter++)
     {
-        if(0 == strcmp(key, &keys[CONF_KEY_LEN * iter]))
+        if(0 == strcmp(key, &pairs[iter].key[0]))
         {
             idx = iter;
             break;
@@ -124,7 +136,7 @@ int Config::ParseYaml(int fd)
             }
             else
             {
-                char* val = &vals[idx * CONF_VAL_LEN];
+                char* val = &pairs[idx].val[0];
                 copy_regex_group(val, &buffer[0], &matches[2]);
                 LOG_VERBOSE(4, "VAL: %s", val);
             }
@@ -163,19 +175,20 @@ int Config::ParseConfig()
     return 0;
 }
 
-int Config::AddKey(const char* key)
+int Config::AddKey(const char* key, CONF_Data_Type type)
 {
     if (!key) STD_FAIL;
     if (CONF_PAIR_LIMIT <= key_count) STD_FAIL;
 
-    strcpy(&keys[CONF_KEY_LEN * key_count], key);
+    pairs[key_count].type = type;
+    strcpy(&pairs[key_count].key[0], key);
     return key_count++;
 }
 
 const char* Config::GetVal(uint8_t idx)
 {
     if (idx >= key_count) STD_FAIL_VOID_PTR;
-    return &vals[CONF_VAL_LEN * idx];
+    return &pairs[idx].val[0];
 }
 
 const char* Config::GetVal(const char* key)
@@ -187,10 +200,56 @@ const char* Config::GetVal(const char* key)
     return GetVal(idx);
 }
 
+bool Config::fail_get_bool(int idx)
+{
+    // Ensure in bounds
+    if(idx >= 0 && idx < key_count)
+    {
+        // Must be invalid value; not "true" or "false"
+        if (OverrideValue(idx, CONF_DEFAULT_BOOL_VAL)) LOG_IEC();
+        LOG_WARN("Unrecognized configuration value for key: \"%s\"; Using default value: %s%",
+                    pairs[idx].key, pairs[idx].val);
+    }
+
+    return CONF_DEFAULT_BOOL_VAL;
+}
+
+bool Config::GetBool(int idx)
+{
+    if (idx < 0 || idx >= key_count)
+    {
+        LOG_IEC();
+        return fail_get_bool(idx);
+    }
+
+    const char* val = GetVal(idx);
+    bool set;
+
+    if (0 == strcmp(val, "true"))
+        set = true;
+
+    else if (0 == strcmp(val, "false"))
+        set = false;
+
+    else
+        set = fail_get_bool(idx);
+
+    return set;
+}
+
+bool Config::GetBool(const char* key)
+{
+    if (!key) STD_FAIL;
+    int idx = GetKeyIndex(key);
+    if (-1 == idx) STD_FAIL;
+    return GetBool(idx);
+}
+
 void Config::ClearKeyVals()
 {
-    memset(keys, 0, sizeof(keys));
-    memset(vals, 0, sizeof(vals));
+    for(uint8_t iter = 0; iter < CONF_PAIR_LIMIT; iter++)
+        CONF_Entry_init(&pairs[iter]);
+
     key_count = 0;
 }
 
@@ -200,8 +259,17 @@ int Config::OverrideValue(uint8_t key_idx, const char* val)
     if (!val) STD_FAIL;
 
     if (strlen(val) + 1 > CONF_VAL_LEN)
-        LOG_WARN("Override value for key %s too long", &keys[key_idx * CONF_KEY_LEN]);
+    {
+        LOG_ERROR("Override value for key %s too long", &pairs[key_idx].key[0]);
+        return -1;
+    }
 
-    strcpy(&vals[key_idx * CONF_VAL_LEN], val);
+    strcpy(&pairs[key_idx].val[0], val);
     return 0;
+}
+
+int Config::OverrideValue(uint8_t key_idx, bool val)
+{
+    const char* str_val = val ? "true" : "false";
+    return OverrideValue(key_idx, str_val);
 }

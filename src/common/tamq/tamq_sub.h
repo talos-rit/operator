@@ -29,37 +29,6 @@
 #include "util/comm.h"
 #include "sub/sub.h"
 
-using namespace std;
-
-// Set the URI to point to the IPAddress of your broker.
-// add any optional params to the url to enable things like
-// tightMarshalling or tcp logging etc.  See the CMS web site for
-// a full list of configuration options.
-//
-//  http://activemq.apache.org/cms/
-//
-#define TAMQ_BROKER_URI "failover:(tcp://127.0.0.1:61616)"
-
-//============================================================
-// This is the Destination Name and URI options.  Use this to
-// customize where the consumer listens, to have the consumer
-// use a topic or queue set the 'useTopics' flag.
-//============================================================
-#define TAMQ_DEST_URI "instructions"
-
-//============================================================
-// set to true to use topics instead of queues
-// Note in the code above that this causes createTopic or
-// createQueue to be used in the consumer.
-//============================================================
-#define TAMQ_USE_TOPICS false
-
-//============================================================
-// set to true if you want the consumer to use client ack mode
-// instead of the default auto ack mode.
-//============================================================
-#define TAMQ_CLIENT_ACK false
-
 #define TAMQ_CONFIG_FIELD_LEN 64
 
 /** Talos ActiveMQ specific configurations */
@@ -69,7 +38,7 @@ typedef struct _tamq_config
     char dest_uri[TAMQ_CONFIG_FIELD_LEN];       /** The name of the topic/queue the client will listen to */
     bool use_topics;                            /** When true, TAMQ will consume from a topic, rather than a queue */
     bool client_ack;                            /** When true, TAMQ will not automatically send back an ack after consuming a message from the broker. */
-} TAMQ_Config;
+} TAMQ_Configuration;
 
 /** ID numbers of various AMQ message types */
 typedef enum _tamq_message_type
