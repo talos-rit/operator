@@ -40,15 +40,11 @@ public:
     int ProcessQueue();
     int RegisterSubscriber(Subscriber* sub);
 
+    /**
+     * @brief Function that is called by the parent Arm thread in a timed loop;
+     *        Used miscellaneous tasks that need to be regularly executed.
+     * @details Primary purpose is to log data received from Scorbot.
+     * Flushes buffer after receiving a line terminator, or after a fixed length of time
+    */
     virtual void Poll() = 0;
 };
-
-#ifdef __cplusplus
-extern "C" {
-#endif
-
-
-
-#ifdef __cplusplus
-}
-#endif

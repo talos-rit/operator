@@ -44,7 +44,7 @@ int ACL_enqueue_manual_mode_toggle_cmd(S_List *cmd_queue)
 
     ACL_Command* cmd = DATA_LIST_GET_OBJ(node, ACL_Command, node);
     cmd->type = ACL_CMD_MANUAL;
-    cmd->len = sprintf(&cmd->payload[0], ACL_TOGGLE_MANUAL);
+    cmd->len = sprintf(&cmd->payload[0], ACL_TOGGLE_MANUAL_FMT);
 
     DATA_S_List_append(cmd_queue, &cmd->node);
     return 0;
@@ -83,11 +83,11 @@ int ACL_calc_enqueue_shift_cmd(S_List *cmd_queue, ACL_Axis axis, float degree_co
     switch (axis)
     {
         case ACL_AXIS_BASE:
-            conversion_factor = BASE_CONVERSION_FACTOR;
+            conversion_factor = ACL_BASE_CONVERSION_FACTOR;
             break;
 
         case ACL_AXIS_WRIST_PITCH:
-            conversion_factor = WRIST_CONVERSION_FACTOR;
+            conversion_factor = ACL_WRIST_CONVERSION_FACTOR;
             break;
 
         default:
@@ -97,7 +97,7 @@ int ACL_calc_enqueue_shift_cmd(S_List *cmd_queue, ACL_Axis axis, float degree_co
 
     encoder_count = (int)(degree_count * conversion_factor);
 
-    cmd->len = sprintf(&cmd->payload[0], ACL_SHIFT, VAR_POS, axis, encoder_count);
+    cmd->len = sprintf(&cmd->payload[0], ACL_SHIFT_FMT, ACL_VAR_POS, axis, encoder_count);
     cmd->type = ACL_CMD_SHIFT;
 
     DATA_S_List_append(cmd_queue, &cmd->node);
@@ -112,7 +112,7 @@ int ACL_generate_enqueue_here_cmd(S_List *cmd_queue)
 
     ACL_Command* cmd = DATA_LIST_GET_OBJ(node, ACL_Command, node);
 
-    cmd->len = sprintf(&cmd->payload[0], ACL_HERE, VAR_POS);
+    cmd->len = sprintf(&cmd->payload[0], ACL_HERE_FMT, ACL_VAR_POS);
     cmd->type = ACL_CMD_HERE;
 
     DATA_S_List_append(cmd_queue, &cmd->node);
@@ -127,7 +127,7 @@ int ACL_generate_enqueue_move_cmd(S_List *cmd_queue)
 
     ACL_Command* cmd = DATA_LIST_GET_OBJ(node, ACL_Command, node);
 
-    cmd->len = sprintf(&cmd->payload[0], ACL_MOVE, VAR_POS);
+    cmd->len = sprintf(&cmd->payload[0], ACL_MOVE_FMT, ACL_VAR_POS);
     cmd->type = ACL_CMD_MOVE;
 
     DATA_S_List_append(cmd_queue, &cmd->node);
@@ -142,7 +142,7 @@ int ACL_generate_enqueue_home_cmd(S_List *cmd_queue)
 
     ACL_Command* cmd = DATA_LIST_GET_OBJ(node, ACL_Command, node);
 
-    cmd->len = sprintf(&cmd->payload[0], ACL_HOME);
+    cmd->len = sprintf(&cmd->payload[0], ACL_HOME_FMT);
     cmd->type = ACL_CMD_HOME;
 
     DATA_S_List_append(cmd_queue, &cmd->node);
@@ -157,7 +157,7 @@ int ACL_generate_enqueue_defp_cmd(S_List *cmd_queue)
 
     ACL_Command* cmd = DATA_LIST_GET_OBJ(node, ACL_Command, node);
 
-    cmd->len = sprintf(&cmd->payload[0], ACL_DEFP, VAR_POS);
+    cmd->len = sprintf(&cmd->payload[0], ACL_DEFP_FMT, ACL_VAR_POS);
     cmd->type = ACL_CMD_DEFP;
 
     DATA_S_List_append(cmd_queue, &cmd->node);
