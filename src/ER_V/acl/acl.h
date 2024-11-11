@@ -21,7 +21,7 @@
 
 /** (Bytes_s * delay_us) / (10^6) */
 // #define ACL_BYTES_PER_DELAY ((ACL_DEFAULT_COMMAND_DELAY_USEC) * (ACL_DEV_BYTES_PER_SEC) / (1000 * 1000))
-#define ACL_MANUAL_MOVE_SIZE 10
+#define ACL_MANUAL_MOVE_SIZE 1
 
 /** ACL Command Types */
 typedef enum _acl_command_type
