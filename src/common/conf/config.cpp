@@ -175,14 +175,33 @@ int Config::ParseConfig()
     return 0;
 }
 
-int Config::AddKey(const char* key, CONF_Data_Type type)
+int Config::AddKey(const char* key, const char* deflt, CONF_Data_Type type)
 {
     if (!key) STD_FAIL;
+    if (!deflt) STD_FAIL;
     if (CONF_PAIR_LIMIT <= key_count) STD_FAIL;
 
     pairs[key_count].type = type;
     strcpy(&pairs[key_count].key[0], key);
+    strcpy(&pairs[key_count].val[0], deflt);
     return key_count++;
+}
+
+int Config::AddKey(const char* key, const char* deflt)
+{
+    return AddKey(key, deflt, CONF_DATA_STRING);
+}
+
+int Config::AddKey(const char* key, int deflt)
+{
+    char val[10];
+    sprintf(&val[0], "%d", deflt);
+    return AddKey(key, val, CONF_DATA_INT);
+}
+
+int Config::AddKey(const char* key, bool deflt)
+{
+    return AddKey(key, deflt ? "true" : "false", CONF_DATA_BOOL);
 }
 
 const char* Config::GetVal(uint8_t idx)

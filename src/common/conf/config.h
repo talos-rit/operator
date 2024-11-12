@@ -105,10 +105,38 @@ class Config
         /**
          * @brief Appends a key to the list of keys
          * @param key Key to add
-         * @param type Data type of value
+         * @param deflt Default value of key; Will remain the value in the case of missing key/error
+         * @param type Data type of the key's value
+         * @returns -1 on failure, the index of the new key-value pair on success
+        */
+        int AddKey(const char* key, const char* deflt, CONF_Data_Type type);
+
+        /**
+         * @brief Appends a key to the list of keys
+         * @details Assumes value is a string
+         * @param key Key to add
+         * @param deflt Default value of configuration; (Named to avoid keyword conflict)
          * @returns -1 on failure, key index on success
         */
-        int AddKey(const char* key, CONF_Data_Type type);
+        int AddKey(const char* key, const char* deflt);
+
+        /**
+         * @brief Appends a key to the list of keys
+         * @details Assumes value is a boolean
+         * @param key Key to add
+         * @param deflt Default value of configuration; (Named to avoid keyword conflict)
+         * @returns -1 on failure, key index on success
+        */
+        int AddKey(const char* key, bool deflt);
+
+        /**
+         * @brief Appends a key to the list of keys
+         * @details Assumes value is a integer
+         * @param key Key to add
+         * @param deflt Default value of configuration; (Named to avoid keyword conflict)
+         * @returns -1 on failure, key index on success
+        */
+        int AddKey(const char* key, int deflt);
 
 
         /**
