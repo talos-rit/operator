@@ -23,7 +23,7 @@
 #define LOG_USE_LOCATION false
 #define LOG_USE_COLOR true
 #define LOG_USE_STDERR true
-#define LOG_FILE_PATH "/media/brooke/Vault/Dev/RIT/Fall2024/SWEN561/operator/operator.log"
+#define LOG_FILE_PATH "/etc/talos/logs/operator.log"
 #define LOG_FILE_FLAG (O_CREAT | O_WRONLY | O_TRUNC | O_APPEND)
 #define LOG_FILE_PERM 0666
 
