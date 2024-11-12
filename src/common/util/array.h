@@ -8,7 +8,7 @@
 
 #include "util/comm.h"
 
-#define UTIL_len(arr) (sizeof(arr)/arr[0])
+#define UTIL_len(arr) (sizeof(arr) / sizeof(arr[0]))
 #define UTIL_modulo(a,b) (((a%b) + b) % b)
 #define STRLEN(s) sizeof(s)
 #define UTIL_BYTE_FMT "0x%02X, "

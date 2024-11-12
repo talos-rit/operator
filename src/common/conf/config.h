@@ -61,7 +61,6 @@ class Config
         bool fail_get_bool(int idx);
 
     protected:
-
         /**
          * @brief Overrides a value in the key-value table at the given index
          * @param key_idx index of Key-Value pair to override
