@@ -1,6 +1,6 @@
 #pragma once
 
-#define CONF_DEFAULT_LOCATION "/media/brooke/Vault/Dev/RIT/Fall2024/SWEN561/operator/src/common/conf/example.conf"
+#define CONF_DEFAULT_LOCATION "/etc/talos/configs/operator.conf"
 #define CONF_MEMBER_LEN 128
 #define CONF_KEY_LEN 32
 #define CONF_VAL_LEN 32
