@@ -18,11 +18,20 @@
 #define LOG_FILE_THRESHOLD_THIS     LOG_THRESHOLD_MAX
 #define LOG_CONSOLE_THRESHOLD_THIS  LOG_THRESHOLD_MAX
 
-int main()
+int main(int argc, char* argv[])
 {
     // Initalize program; Setup Logging
     ERVConfig conf = ERVConfig();
-    conf.SetFilePath(CONF_DEFAULT_LOCATION);
+
+    // Setup config priority
+    const char* conf_loc[] = {NULL, CONF_DEFAULT_LOCATION};
+    uint8_t conf_loc_len = UTIL_len(conf_loc);
+    if (argc > 1) conf_loc[0] = argv[1];
+
+    for (uint8_t iter = 0; iter < conf_loc_len; iter++)
+        if(!conf.SetFilePath(conf_loc[iter]))
+            break; // If file is successfully set, break loop
+
     conf.ParseConfig();
 
     LOG_init(conf.GetLogLocation());

@@ -43,13 +43,27 @@ const char* Config::GetFilePath()
 int Config::SetFilePath(const char* file_path)
 {
     if (!file_path) STD_FAIL;
+
     if (strlen(file_path) >= CONF_MEMBER_LEN)
     {
         LOG_WARN("Config path too long; Max path length: %d", CONF_MEMBER_LEN);
         return -1;
     }
 
+    if (access(file_path, F_OK))
+    {
+        LOG_WARN("Error setting config file: \"%s\": Does not exist.", file_path);
+        return -1;
+    }
+
+    if (access(file_path, R_OK))
+    {
+        LOG_WARN("Error setting config file: \"%s\": Permission denied.", file_path);
+        return -1;
+    }
+
     strcpy(&this->path[0], file_path);
+    LOG_VERBOSE(0, "Config file set: %s", file_path);
     return 0;
 }
 
@@ -299,9 +313,10 @@ void Config::DumpToLog(int log_level)
     LOG_write(log_level, delim);
     LOG_write(log_level, "Config parameters:");
 
-    if (conf_errno)
+    if (conf_errno || strlen(path) == 0)
     {
-        LOG_ERROR("Error opening config: (%d) %s", conf_errno, strerror(conf_errno));
+        if (conf_errno)     LOG_ERROR("Error opening config: (%d) %s", conf_errno, strerror(conf_errno));
+        else if (strlen(path) == 0)   LOG_ERROR("Error opening config: failed to set config path");
         LOG_WARN("Using default values");
     }
     LOG_write(log_level, "path: %s", path);
