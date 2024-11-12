@@ -1,3 +1,9 @@
+/**
+ * Generic Base class for parsing basic configuration files.
+ * Intended to be very easy to extend into child configuration classes that automatically populate the key list,
+ * and implement their own accessors/mutators
+*/
+
 #pragma once
 
 #define CONF_DEFAULT_LOCATION "/etc/talos/configs/operator.conf"
@@ -5,6 +11,7 @@
 #define CONF_KEY_LEN 32
 #define CONF_VAL_LEN 32
 #define CONF_PAIR_LIMIT 16
+
 #define CONF_FILE_PERM O_RDONLY
 #define CONF_ENTRY_FMT "^([^:]*): (.*)$"
 #define CONF_REGEX_FLAGS (REG_NEWLINE | REG_EXTENDED)
@@ -27,6 +34,7 @@ typedef struct _conf_entry
 class Config
 {
     private:
+        int         conf_errno;              /** Stores any errors that happen during initialization */
         char        path[CONF_MEMBER_LEN];   /** File Path */
         CONF_Entry  pairs[CONF_PAIR_LIMIT];  /** Stored pairs */
         uint8_t     key_count;               /** Length of key-value table*/
@@ -141,5 +149,11 @@ class Config
          * @brief Clears key-value table
         */
         void ClearKeyVals();
+
+        /**
+         * @brief Gives a detailed list of every added key and their value, and dumps it into the logging system
+         * @param log_level Determines the log priority level to print at (e.g. LOG_INFO, LOG_VERBOSE + 2)
+        */
+        virtual void DumpToLog(int log_level);
 };
 

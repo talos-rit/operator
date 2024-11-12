@@ -28,6 +28,7 @@ int main()
     LOG_init(conf.GetLogLocation());
     LOG_start();
 
+    conf.DumpToLog(LOG_INFO);
 
     // Init Modules
     Subscriber hermes = Subscriber();
