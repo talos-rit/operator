@@ -9,7 +9,7 @@
 
 ERVConfig::ERVConfig()
 {
-    dev_idx = AddKey(ERV_CONF_DEV_KEY, CONF_DATA_STRING);
+    dev_idx = AddKey(ERV_CONF_DEV_KEY, ERV_CONF_DEV_DEFAULT);
 }
 
 ERVConfig::~ERVConfig()
@@ -24,7 +24,6 @@ const char* ERVConfig::GetScorbotDevicePath()
 
 int ERVConfig::LoadDefaults()
 {
-    dev_idx = AddKey(ERV_CONF_DEV_KEY, CONF_DATA_STRING);
-    if(OverrideValue(dev_idx, ERV_CONF_DEV_DEFAULT)) STD_FAIL;
+    dev_idx = AddKey(ERV_CONF_DEV_KEY, ERV_CONF_DEV_DEFAULT);
     return 0;
 }

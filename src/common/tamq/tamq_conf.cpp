@@ -9,13 +9,13 @@
 
 TAMQ_Config::TAMQ_Config()
 {
-    address_idx = AddKey(TAMQ_CONF_ADDR_KEY,    CONF_DATA_STRING);
-    cmd_uri_idx = AddKey(TAMQ_CONF_CMD_URI_KEY, CONF_DATA_STRING);
-    ret_uri_idx = AddKey(TAMQ_CONF_RET_URI_KEY, CONF_DATA_STRING);
-    log_uri_idx = AddKey(TAMQ_CONF_LOG_URI_KEY, CONF_DATA_STRING);
+    address_idx = AddKey(TAMQ_CONF_ADDR_KEY,    TAMQ_CONF_ADDR_DEFAULT);
+    cmd_uri_idx = AddKey(TAMQ_CONF_CMD_URI_KEY, TAMQ_CONF_CMD_URI_DEFAULT);
+    ret_uri_idx = AddKey(TAMQ_CONF_RET_URI_KEY, TAMQ_CONF_RET_URI_DEFAULT);
+    log_uri_idx = AddKey(TAMQ_CONF_LOG_URI_KEY, TAMQ_CONF_LOG_URI_DEFAULT);
 
-    use_topics_idx = AddKey(TAMQ_CONF_USE_TOPICS_KEY, CONF_DATA_BOOL);
-    client_ack_idx = AddKey(TAMQ_CONF_CLIENT_ACK_KEY, CONF_DATA_BOOL);
+    use_topics_idx = AddKey(TAMQ_CONF_USE_TOPICS_KEY, TAMQ_CONF_USE_TOPICS_DEFAULT);
+    client_ack_idx = AddKey(TAMQ_CONF_CLIENT_ACK_KEY, TAMQ_CONF_CLIENT_ACK_DEFAULT);
 }
 
 TAMQ_Config::~TAMQ_Config()
