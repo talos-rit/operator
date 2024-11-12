@@ -165,7 +165,7 @@ int Config::ParseConfig()
     int fd = open(path, CONF_FILE_PERM);
     if (fd < 0)
     {
-        LOG_ERROR("Could not open config: (%d) %s", errno, strerror(errno));
+        conf_errno = errno;
         return -1;
     }
 
@@ -272,4 +272,23 @@ int Config::OverrideValue(uint8_t key_idx, bool val)
 {
     const char* str_val = val ? "true" : "false";
     return OverrideValue(key_idx, str_val);
+}
+
+void Config::DumpToLog(int log_level)
+{
+    const char* delim = "=============================================================";
+    LOG_write(log_level, delim);
+    LOG_write(log_level, "Config parameters:");
+
+    if (conf_errno)
+    {
+        LOG_ERROR("Error opening config: (%d) %s", conf_errno, strerror(conf_errno));
+        LOG_WARN("Using default values");
+    }
+    LOG_write(log_level, "path: %s", path);
+    for(uint8_t iter = 0; iter < key_count; iter++)
+    {
+        LOG_write(log_level, "%s: %s", pairs[iter].key, pairs[iter].val);
+    }
+    LOG_write(log_level, delim);
 }
