@@ -114,7 +114,6 @@ static int8_t LOG_Buffer_init(LOG_Buffer *buf)
     if (!buf) return -1;
     memset(buf, 0, sizeof(LOG_Buffer));
     DATA_S_List_Node_init(&buf->node);
-    DATA_S_List_append(&the_log.free_queue, &buf->node);
 
     return 0;
 }
@@ -131,6 +130,7 @@ void LOG_thread_poll()
 
     pthread_mutex_lock (&the_log.free_lock);
     LOG_Buffer_init(buf);
+    DATA_S_List_append(&the_log.free_queue, &buf->node);
     pthread_mutex_unlock (&the_log.free_lock);
 }
 
@@ -243,6 +243,7 @@ static int8_t init_log_lists(Log *log)
     for (uint16_t i = 0; i < LOG_MAX_BUFFER; i++)
     {
         if (LOG_Buffer_init(&log->buffer_pool[i]) == -1) return -1;
+        DATA_S_List_append(&the_log.free_queue, &log->buffer_pool[i].node);
     }
 
     return 0;
