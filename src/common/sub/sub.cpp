@@ -132,7 +132,6 @@ int SUB_init_buffer(SUB_Buffer *buf)
 
 SUB_Buffer* Subscriber::DequeueBuffer(SUB_Queue queue_idx)
 {
-    if (SUB_State::RUN != status)           STD_FAIL_VOID_PTR;
     if ((uint8_t) queue_idx >= SUB_MSG_LEN) STD_FAIL_VOID_PTR;
 
     S_List_Node* node = NULL;

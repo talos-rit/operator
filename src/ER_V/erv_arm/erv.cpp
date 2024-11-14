@@ -7,6 +7,7 @@
 #include <stddef.h>
 #include <time.h>
 #include <termios.h>
+#include <signal.h>
 
 #include "erv_arm/erv.h"
 #include "log/log.h"
@@ -23,7 +24,12 @@ Scorbot::Scorbot(const char* dev)
     LOG_VERBOSE(4, "Scorbot device path: %s", dev);
     strcpy(&this->dev[0], &dev[0]);
     fd = open(dev, O_RDWR | O_NOCTTY | O_NDELAY);
-    if (fd < 0) LOG_ERROR("Could not open file: %s", strerror(errno));
+    if (fd < 0)
+    {
+        LOG_ERROR("Could not open Scorbot device path: %s", strerror(errno));
+        raise(SIGABRT);
+        return;
+    }
     ACL_init();
     polar_pan_cont = '\0';
     manual_mode = false;
@@ -31,7 +37,7 @@ Scorbot::Scorbot(const char* dev)
 
 Scorbot::~Scorbot()
 {
-    if(close(fd)) LOG_ERROR("Scorbot: Could not close device descriptor: %s", strerror(errno));
+    if(-1 != fd && close(fd)) LOG_ERROR("Scorbot: Could not close device descriptor: %s", strerror(errno));
 }
 
 /**

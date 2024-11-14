@@ -2,6 +2,8 @@
 #include <stdio.h>
 #include <endian.h>
 #include <string.h>
+#include <signal.h>
+#include <execinfo.h>
 
 #include "util/comm.h"
 #include "util/array.h"
@@ -18,8 +20,79 @@
 #define LOG_FILE_THRESHOLD_THIS     LOG_THRESHOLD_MAX
 #define LOG_CONSOLE_THRESHOLD_THIS  LOG_THRESHOLD_MAX
 
+const char* app_name;
+volatile int loop = 1;
+
+static void quit_handler(int signum)
+{
+    char deflt[4];
+    const char* signal_name;
+
+    loop = 0;   // quit control loop
+    switch (signum)
+    {
+        case SIGQUIT:
+            signal_name = "SIGQUIT";
+            break;
+        case SIGABRT:
+            signal_name = "SIGABRT";
+            break;
+        default:
+            sprintf(&deflt[0], "%d", signum);
+            signal_name = (const char*) deflt;
+            return;
+    }
+
+    LOG_VERBOSE(0, "Received Signal: %s; Quitting...", signal_name);
+}
+
+static void segv_handler(int signum)
+{
+    void *array[10];
+    // char **messages = (char **)NULL;
+    size_t size;
+
+    // print out all the frames to stderr
+    fprintf(stderr, "Error: signal %d:\n", signum);
+
+    // get void*'s for all entries on the stack
+    size = backtrace(array, 10);
+
+    // messages = backtrace_symbols(array, size);
+    backtrace_symbols_fd(array, size, STDERR_FILENO);
+
+    for (uint8_t frame = 1; frame < size; frame++)
+    {
+        char syscom[256];
+        sprintf(syscom,"addr2line -a -f --exe=%s +%p", app_name, array[frame]); //last parameter is the name of this app
+        printf("CALL: %s\n", syscom);
+        system(syscom);
+    }
+
+    exit(1);
+}
+
 int main(int argc, char* argv[])
 {
+    app_name = argv[0];
+
+    // Configure interrupt
+    struct sigaction sa;
+    sa.sa_handler = quit_handler;
+    sigemptyset(&sa.sa_mask);
+    sa.sa_flags = SA_RESTART; /* Restart functions if
+                                 interrupted by handler */
+
+    if (sigaction(SIGQUIT, &sa, NULL) == -1) return -1;
+    if (sigaction(SIGABRT, &sa, NULL) == -1) return -1;
+
+    sa.sa_handler = segv_handler;
+    sigemptyset(&sa.sa_mask);
+    sa.sa_flags = SA_RESTART; /* Restart functions if
+                                 interrupted by handler */
+
+    if (sigaction(SIGSEGV, &sa, NULL) == -1) return -1;
+
     // Initalize program; Setup Logging
     ERVConfig conf = ERVConfig();
 
@@ -54,24 +127,26 @@ int main(int argc, char* argv[])
     bot->RegisterSubscriber(&hermes);
 
     // Start
-    LOG_INFO("Staring demo...");
     hermes.Start();
-    bot->Start();
+    if(-1 == bot->Start()) quit_handler(SIGABRT);
     inbox->Start();
 
     // Loop
-    while(1);
+    if (loop) LOG_INFO("Ready.");
+    while(loop);
+    LOG_INFO("Shutting down...");
 
     // Cleanup running processes
     hermes.Stop();
     bot->Stop();
+    inbox->Stop();
 
     // Release resources
     delete bot;
-    bot = NULL;
+    delete inbox;
 
     // End demo
-    LOG_INFO("Demo Ending...");
+    LOG_INFO("End Program.");
     LOG_stop();
     LOG_destory();
 }

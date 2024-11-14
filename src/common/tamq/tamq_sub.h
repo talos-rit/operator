@@ -73,14 +73,16 @@ class TAMQ_Consumer :   public cms::ExceptionListener,
         TAMQ_Consumer( const TAMQ_Consumer& );
 
     public:
-
         TAMQ_Consumer& operator= ( const TAMQ_Consumer& );
         TAMQ_Consumer( const std::string& brokerURI,
                             const std::string& destURI,
                             bool useTopic = false,
                             bool clientAck = false );
 
-        virtual ~TAMQ_Consumer();
+        /**
+         * The close method must be run before destructor
+        */
+        ~TAMQ_Consumer();
         void close();
         void runConsumer();
 
@@ -97,7 +99,6 @@ class TAMQ_Consumer :   public cms::ExceptionListener,
         int RegisterSubscriber(Subscriber* sub);
 
     private:
-
         void cleanup();
 };
 

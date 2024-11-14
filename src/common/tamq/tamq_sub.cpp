@@ -73,8 +73,6 @@ TAMQ_Consumer::TAMQ_Consumer( const std::string& brokerURI,
     }
 
 TAMQ_Consumer::~TAMQ_Consumer() {
-    this->cleanup();
-
     if (0 == --counter)
     {
         activemq::library::ActiveMQCPP::shutdownLibrary();
