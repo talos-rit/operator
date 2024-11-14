@@ -8,8 +8,8 @@
 
 #define CONF_DEFAULT_LOCATION "/etc/talos/configs/operator.conf"
 #define CONF_MEMBER_LEN 128
-#define CONF_KEY_LEN 32
-#define CONF_VAL_LEN 32
+#define CONF_KEY_LEN 64
+#define CONF_VAL_LEN 64
 #define CONF_PAIR_LIMIT 16
 
 #define CONF_FILE_PERM O_RDONLY
