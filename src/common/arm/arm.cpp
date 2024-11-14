@@ -54,7 +54,9 @@ int Arm::Start()
 
 int Arm::Stop()
 {
-    STD_FAIL;
+    this->thread_enable = 0;
+    pthread_join(pid, NULL);
+    return 0;
 }
 
 int Arm::RegisterSubscriber(Subscriber* sub)
