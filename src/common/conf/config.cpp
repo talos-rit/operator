@@ -170,6 +170,7 @@ int Config::ParseYaml(int fd)
         line++;                                 // Increment line counter
     }
 
+    regfree(&entry);
     return 0;
 }
 
