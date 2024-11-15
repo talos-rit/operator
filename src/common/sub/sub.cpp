@@ -146,7 +146,7 @@ SUB_Buffer* Subscriber::DequeueBuffer(SUB_Queue queue_idx)
 
 int Subscriber::EnqueueBuffer(SUB_Queue queue_idx, SUB_Buffer* buf)
 {
-    if (SUB_State::RUN != status) STD_FAIL;
+    if (SUB_State::RUN != status) LOG_WARN("Enqueueing a buffer onto a stopped Subscriber.");
     if (!buf) STD_FAIL;
     if ((uint8_t) queue_idx >= SUB_MSG_LEN) STD_FAIL;
 

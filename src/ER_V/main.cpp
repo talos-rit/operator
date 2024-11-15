@@ -8,14 +8,14 @@
 #include "util/comm.h"
 #include "util/array.h"
 #include "log/log.h"
-#include "api/api.h"
 #include "sub/sub.h"
 #include "tamq/tamq_sub.h"
 #include "arm/arm.h"
 #include "erv_arm/erv.h"
 #include "conf/config.h"
 #include "erv_conf/erv_conf.h"
-#include "tamq/tamq_conf.h"
+
+#include "api/api.h"
 
 #define LOG_FILE_THRESHOLD_THIS     LOG_THRESHOLD_MAX
 #define LOG_CONSOLE_THRESHOLD_THIS  LOG_THRESHOLD_MAX
@@ -40,6 +40,26 @@ static int register_intr()
     if (sigaction(SIGQUIT, &sa, NULL) == -1) return -1;
     if (sigaction(SIGABRT, &sa, NULL) == -1) return -1;
     return 0;
+}
+
+static void dummy_msg(Subscriber* hermes)
+{
+    SUB_Buffer* buf = hermes->DequeueBuffer(SUB_QUEUE_FREE);
+    if (!buf) return;
+
+    API_Data_Wrapper* msg   = (API_Data_Wrapper*) &buf->body[0];
+
+    msg->header.cmd_id      = htobe32(0x0);
+    msg->header.reserved_1  = htobe16(0);
+    msg->header.cmd_val     = htobe16(API_CMD_HOME);
+    msg->header.len         = htobe16(sizeof(API_Data_Home));
+
+    API_Data_Home* cmd      = (API_Data_Home*) &msg->payload_head;
+
+    cmd->delay_ms = 0;
+
+    buf->len = sizeof(API_Data_Home) + sizeof(API_Data_Header) + 2;
+    hermes->EnqueueBuffer(SUB_QUEUE_COMMAND, buf);
 }
 
 int main(int argc, char* argv[])
@@ -69,37 +89,37 @@ int main(int argc, char* argv[])
 
     // Init Modules
     Subscriber hermes = Subscriber();
-    SUB_Messenger* inbox = new TAMQ_Consumer(
-        conf.GetBrokerAddress(),
-        conf.GetCommandURI(),
-        conf.GetUseTopics(),
-        conf.GetClientAck());
+    // SUB_Messenger* inbox = new TAMQ_Consumer(
+    //     conf.GetBrokerAddress(),
+    //     conf.GetCommandURI(),
+    //     conf.GetUseTopics(),
+    //     conf.GetClientAck());
 
     Arm* bot = new Scorbot(conf.GetScorbotDevicePath());
 
     // Register modules
-    inbox->RegisterSubscriber(&hermes);
+    // inbox->RegisterSubscriber(&hermes);
     bot->RegisterSubscriber(&hermes);
 
     // Start
     hermes.Start();
     if(-1 == bot->Start()) quit_handler(SIGABRT);
-    inbox->Start();
+    // inbox->Start();
 
     // Loop
     if (!quit_sig) LOG_INFO("Ready.");
-    while(!quit_sig);
+    for (int i = 0; i < 5; i++) dummy_msg(&hermes);
     LOG_VERBOSE(0, "Quit signal: %d", quit_sig);
     LOG_INFO("Shutting down...");
 
     // Cleanup running processes
     hermes.Stop();
     bot->Stop();
-    inbox->Stop();
+    // inbox->Stop();
 
     // Release resources
     delete bot;
-    delete inbox;
+    // delete inbox;
 
     // End demo
     LOG_INFO("End Program.");

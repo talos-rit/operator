@@ -126,8 +126,9 @@ int Config::ParseYaml(int fd)
     off_t offset;                                   // Tracks how far to back track for next read; used to line up to just after the first newline in the buffer
     char buffer[CONF_KEY_LEN + CONF_VAL_LEN + 4];   // buffer to store read calls in; ": " and "\n\0" require 4 additional characters
     char key[CONF_KEY_LEN];                         // buffer to temporarily hold keys/vals
-    int result;                                     // result of each read
+    int result = 0;                                 // result of each read
 
+    memset(&buffer[0], 0, sizeof(buffer));
     if (0 != regcomp(&entry, CONF_ENTRY_FMT, CONF_REGEX_FLAGS)) STD_FAIL;   // Compile regex pattern
     while(3 <= (result = read(fd, &buffer[0], sizeof(buffer) - 1)))         // Loop until file is empty
     {
