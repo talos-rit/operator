@@ -33,6 +33,8 @@
 #define LOG_HEADER_LEN 27 
 #define LOG_MESSAGE_LEN (LOG_BUFFER_LEN - LOG_HEADER_LEN)
 
+#define LOG_POLL_PERIOD_US (25*1000)
+
 // Preprocessor abuse
 #define LOG_LEVEL_ENTRIES       \
     LOG_LEVEL_ENTRY(FATAL),     \

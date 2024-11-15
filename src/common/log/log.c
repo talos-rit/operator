@@ -156,22 +156,29 @@ static int8_t push_buffer(Log *log, LOG_Buffer *buf)
 
 int8_t LOG_print(const char* file, uint16_t line, int8_t console_threshold, int8_t file_threshold, int8_t level, const char* fmt, ...)
 {
+    // Check if message is important enough to print
     uint8_t flags = 0;
     if (level <= console_threshold) flags |= (1 << LOG_BUFFER_FLAG_OUT_CONSOLE);
     if (level <= file_threshold)    flags |= (1 << LOG_BUFFER_FLAG_OUT_FILE);
-    if ((flags & (  (1 << LOG_BUFFER_FLAG_OUT_CONSOLE) | 
-                    (1 << LOG_BUFFER_FLAG_OUT_FILE))) == 0) return 0;
+    if (!flags) return 0;
 
+    // Get timestamp
     struct timespec ts;
     int ret = clock_gettime(LOG_CLOCK, &ts);
     if (ret == -1) return -1;
 
+    // Get buffer
     LOG_Buffer tmp;
     LOG_Buffer *buf;
 
     if (the_log.config.en)
     {
         buf = get_buffer(&the_log);
+        if(!buf)
+        {
+            printf("LOG OUT OF RESOURCES\n");
+            return -1;
+        }
     }
     else
     {
@@ -179,12 +186,7 @@ int8_t LOG_print(const char* file, uint16_t line, int8_t console_threshold, int8
         buf = &tmp;
     }
 
-    if(!buf)
-    {
-        printf("LOG OUT OF RESOURCES\n");
-        return -1;
-    }
-
+    // Populate buffer
     buf->timestamp = ts;
     buf->level = level;
     buf->flags = flags;
@@ -198,13 +200,16 @@ int8_t LOG_print(const char* file, uint16_t line, int8_t console_threshold, int8
     buf->len += vsprintf(&buf->msg[buf->len], fmt, list) + 1;
     va_end(list);
 
+    // Handle buffer
     if (the_log.config.en)
     {
+        // If the log is enabled, put on write queue
         ret = push_buffer(&the_log, buf);
         if (ret == -1) return -1;
     }
     else
     {
+        // If the log is disabled, print the buffer directly
         LOG_thread_print(buf);
     }
 
@@ -216,10 +221,10 @@ static void *LOG_run(void*)
     // TODO: add exit polling
     while(1)
     {
-        if (the_log.wr_queue.len == 0) 
+        if (0 == the_log.wr_queue.len)
         {
             if (!the_log.config.en) break;
-            usleep(25*1000);
+            usleep(LOG_POLL_PERIOD_US);
             continue;
         }
         LOG_thread_poll();
