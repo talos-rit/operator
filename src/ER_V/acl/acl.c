@@ -7,6 +7,7 @@
 #include "acl/acl_private.h"
 #include "util/comm.h"
 #include "log/log.h"
+#include "erv_arm/erv.h"
 
 #define LOG_CONSOLE_THRESHOLD_THIS  LOG_THRESHOLD_DEFAULT
 #define LOG_FILE_THRESHOLD_THIS     LOG_THRESHOLD_MAX
@@ -21,6 +22,8 @@ int ACL_Command_init(ACL_Command *cmd)
 
     DATA_S_List_Node_init(&cmd->node);
     DATA_S_List_append(&resources.free_queue, &cmd->node);
+
+    cmd->delay_ms = ACL_DEFAULT_COMMAND_DELAY_MS;
 
     return 1;
 }
@@ -37,8 +40,24 @@ int ACL_init()
     return 0;
 }
 
+int ACL_generate_enqueue_clrbuf_cmd(S_List *cmd_queue)
+{
+    if (!cmd_queue) STD_FAIL;
+    S_List_Node* node = DATA_S_List_pop(&resources.free_queue);
+    if (!node) STD_FAIL;
+
+    ACL_Command* cmd = DATA_LIST_GET_OBJ(node, ACL_Command, node);
+    cmd->type = ACL_CMD_ABORT;
+    cmd->len = sprintf(&cmd->payload[0], ACL_CLRBUF_FMT);
+    cmd->delay_ms = 100;
+
+    DATA_S_List_append(cmd_queue, &cmd->node);
+    return 0;
+}
+
 int ACL_enqueue_manual_mode_toggle_cmd(S_List *cmd_queue)
 {
+    if (!cmd_queue) STD_FAIL;
     S_List_Node* node = DATA_S_List_pop(&resources.free_queue);
     if (!node) STD_FAIL;
 
@@ -52,6 +71,7 @@ int ACL_enqueue_manual_mode_toggle_cmd(S_List *cmd_queue)
 
 char ACL_get_polar_pan_continuous_vector(API_Data_Polar_Pan_Start* payload)
 {
+    if (!payload) STD_FAIL;
     ACL_Manual_Axis vector;
 
     if (payload->delta_azimuth)
@@ -71,6 +91,7 @@ char ACL_get_polar_pan_continuous_vector(API_Data_Polar_Pan_Start* payload)
 
 int ACL_calc_enqueue_shift_cmd(S_List *cmd_queue, ACL_Axis axis, float degree_count)
 {
+    if (!cmd_queue) STD_FAIL;
     S_List_Node* node = DATA_S_List_pop(&resources.free_queue);
     if (!node) STD_FAIL;
 
@@ -105,8 +126,9 @@ int ACL_calc_enqueue_shift_cmd(S_List *cmd_queue, ACL_Axis axis, float degree_co
     return 0;
 }
 
-int ACL_generate_enqueue_here_cmd(S_List *cmd_queue)
+int ACL_enqueue_here_cmd(S_List *cmd_queue)
 {
+    if (!cmd_queue) STD_FAIL;
     S_List_Node* node = DATA_S_List_pop(&resources.free_queue);
     if (!node) STD_FAIL;
 
@@ -120,8 +142,55 @@ int ACL_generate_enqueue_here_cmd(S_List *cmd_queue)
     return 0;
 }
 
+int ACL_enqueue_delay(S_List *cmd_queue, uint16_t delay_ms)
+{
+    if (!cmd_queue) STD_FAIL;
+    S_List_Node* node = DATA_S_List_pop(&resources.free_queue);
+    if (!node) STD_FAIL;
+
+    ACL_Command* cmd = DATA_LIST_GET_OBJ(node, ACL_Command, node);
+
+    cmd->len = 0;
+    cmd->type = ACL_CMD_DELAY;
+    cmd->delay_ms = delay_ms;
+
+    DATA_S_List_append(cmd_queue, &cmd->node);
+
+    return 0;
+}
+
+int ACL_generate_enqueue_null_pos_cmd(S_List *cmd_queue)
+{
+    if (!cmd_queue) STD_FAIL;
+    S_List_Node* node = DATA_S_List_pop(&resources.free_queue);
+    if (!node) STD_FAIL;
+
+    ACL_Command* cmd = DATA_LIST_GET_OBJ(node, ACL_Command, node);
+
+    cmd->len = sprintf(&cmd->payload[0], "SETPV %s\r", ACL_VAR_POS);
+    cmd->type = ACL_CMD_HERE;
+    cmd->delay_ms = 1000;
+
+    DATA_S_List_append(cmd_queue, &cmd->node);
+
+    for (uint8_t axis = 0; axis < 6; axis++)
+    {
+        S_List_Node* node = DATA_S_List_pop(&resources.free_queue);
+        if (!node) STD_FAIL;
+
+        ACL_Command* cmd = DATA_LIST_GET_OBJ(node, ACL_Command, node);
+
+        cmd->len = sprintf(&cmd->payload[0], "0\r");
+        cmd->type = ACL_CMD_HERE;
+        cmd->delay_ms = 1000;
+    }
+
+    return 0;
+}
+
 int ACL_generate_enqueue_move_cmd(S_List *cmd_queue)
 {
+    if (!cmd_queue) STD_FAIL;
     S_List_Node* node = DATA_S_List_pop(&resources.free_queue);
     if (!node) STD_FAIL;
 
@@ -137,6 +206,7 @@ int ACL_generate_enqueue_move_cmd(S_List *cmd_queue)
 
 int ACL_generate_enqueue_home_cmd(S_List *cmd_queue)
 {
+    if (!cmd_queue) STD_FAIL;
     S_List_Node* node = DATA_S_List_pop(&resources.free_queue);
     if (!node) STD_FAIL;
 
@@ -144,6 +214,7 @@ int ACL_generate_enqueue_home_cmd(S_List *cmd_queue)
 
     cmd->len = sprintf(&cmd->payload[0], ACL_HOME_FMT);
     cmd->type = ACL_CMD_HOME;
+    // cmd->delay_ms = ACL_DEFAULT_HOME_DELAY_MS;
 
     DATA_S_List_append(cmd_queue, &cmd->node);
 
@@ -152,6 +223,7 @@ int ACL_generate_enqueue_home_cmd(S_List *cmd_queue)
 
 int ACL_generate_enqueue_defp_cmd(S_List *cmd_queue)
 {
+    if (!cmd_queue) STD_FAIL;
     S_List_Node* node = DATA_S_List_pop(&resources.free_queue);
     if (!node) STD_FAIL;
 
@@ -165,14 +237,37 @@ int ACL_generate_enqueue_defp_cmd(S_List *cmd_queue)
     return 0;
 }
 
-
-int ACL_convert_polar_pan(S_List *cmd_queue, const API_Data_Polar_Pan *pan)
+int ACL_convert_polar_pan_abort(S_List *cmd_queue, const API_Data_Polar_Pan *pan)
 {
     if (!cmd_queue || !pan) STD_FAIL;
 
     LOG_VERBOSE(4, "Convering polar pan command to ACL");
 
-    ACL_generate_enqueue_here_cmd(cmd_queue);
+    ACL_enqueue_here_cmd(cmd_queue);
+
+    if (pan->delta_azimuth != 0)
+    {
+        LOG_VERBOSE(4, "Converting Delta Azimuth");
+        ACL_calc_enqueue_shift_cmd(cmd_queue, ACL_AXIS_BASE, pan->delta_azimuth);
+    }
+
+    if (pan->delta_altitude != 0)
+    {
+        LOG_VERBOSE(4, "Converting Delta Altitude");
+        ACL_calc_enqueue_shift_cmd(cmd_queue, ACL_AXIS_WRIST_PITCH, pan->delta_altitude);
+    }
+
+    ACL_generate_enqueue_clrbuf_cmd(cmd_queue);
+    ACL_generate_enqueue_move_cmd(cmd_queue);
+
+    return 0;
+}
+
+int ACL_convert_polar_pan_direct(S_List *cmd_queue, const API_Data_Polar_Pan *pan)
+{
+    if (!cmd_queue || !pan) STD_FAIL;
+
+    LOG_VERBOSE(4, "Convering polar pan command to ACL");
 
     if (pan->delta_azimuth != 0)
     {
@@ -195,8 +290,10 @@ int ACL_home_sequence(S_List *cmd_queue)
 {
     if (!cmd_queue) STD_FAIL;
 
-    ACL_generate_enqueue_home_cmd(cmd_queue);
     ACL_generate_enqueue_defp_cmd(cmd_queue);
+    ACL_generate_enqueue_home_cmd(cmd_queue);
+    // ACL_generate_enqueue_null_pos_cmd(cmd_queue);
+    ACL_enqueue_here_cmd(cmd_queue);
 
     return 0;
 }

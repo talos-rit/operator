@@ -7,16 +7,19 @@
 #define ACL_SHOULDER_CONVERSION_FACTOR 33.2121f
 #define ACL_WRIST_CONVERSION_FACTOR 8.3555f
 
-#define ACL_CMD_COUNT 10
+#define ACL_CMD_COUNT 32
 
 /** ACL Command Formats */
+#define ACL_ABORT_FMT           "A\r"   // Aborts the current movment (but keeps the movement buffer in tact)
 #define ACL_SHIFT_FMT           "SHIFT %s BY %u %d\r" // Shift command to move a variable the Scorbot has stored
 #define ACL_HERE_FMT            "HERE %s\r" // Here command to set the input Scorbot position to its current position
 #define ACL_MOVE_FMT            "MOVE %s\r" // Move command to move to a set point
+#define ACL_MOVE_DUR_FMT        "MOVE %s %u\r" // Move command to move to a set point, within a specific duration
 #define ACL_HOME_FMT            "HOME\r" // Home command homes the robot
 #define ACL_DEFP_FMT            "DEFP %s\r" // Defp command sets an internal variable to the current position for Scorbot
 #define ACL_TOGGLE_MANUAL_FMT   "~" // While the scorbot controller is in direct mode, this command allows manual control of the position (like a joystick)
 #define ACL_MOVE_MANUAL_FMT     "%c"
+#define ACL_CLRBUF_FMT          "clrbuf\r"  // Clears the movement buffer, and halts all motor movement
 
 /** Scorbot axes representation in ACL */
 typedef enum _acl_axis
@@ -61,11 +64,11 @@ typedef struct _acl_resources
 int ACL_calc_enqueue_shift_cmd(S_List *cmd_queue, ACL_Axis axis, float degree_count);
 
 /**
- * @brief Allocates and enqueues ACL HOME Command in input cmd_queue
+ * @brief Allocates and enqueues ACL SETPV Command in input cmd_queue, setting it to the home position
  * @param cmd_queue S_List to append to
  * @returns 0 on success, -1 on failure
  */
-int ACL_generate_enqueue_here_cmd(S_List *cmd_queue);
+int ACL_generate_enqueue_null_pos_cmd(S_List *cmd_queue);
 
 /**
  * @brief Allocates and enqueues ACL MOVE Command in input cmd_queue
@@ -73,4 +76,12 @@ int ACL_generate_enqueue_here_cmd(S_List *cmd_queue);
  * @returns 0 on success, -1 on failure
  */
 int ACL_generate_enqueue_move_cmd(S_List *cmd_queue);
+
+/**
+ * @brief Allocates and enqueues ACL ABORT Command in input cmd_queue
+ * @details Aborts all movement/running programs on the ER V controller
+ * @param cmd_queue S_List to append to
+ * @returns 0 on success, -1 on failure
+*/
+int ACL_generate_enqueue_clrbuf_cmd(S_List *cmd_queue);
 

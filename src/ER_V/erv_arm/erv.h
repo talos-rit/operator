@@ -7,11 +7,24 @@
 
 class Scorbot : public Arm
 {
+    public:
+        enum ERV_Oversteer_config
+        {
+            ERV_OVERSTEER_NONE,
+            ERV_OVERSTEER_ABORT,
+        };
+
+        Scorbot(const char* dev);
+        ~Scorbot();
+
     private:
         char dev[32];
         int fd;
         char polar_pan_cont;
         bool manual_mode;
+        ERV_Oversteer_config oversteer;
+        S_List cmd_buffer;
+
 
         int HandShake();
         int PolarPan(API_Data_Polar_Pan *pan);
@@ -20,8 +33,4 @@ class Scorbot : public Arm
         int Home(API_Data_Home *home);
         int WriteCommandQueue(S_List *cmd_list);
         void Poll();
-
-    public:
-        Scorbot(const char* dev);
-        ~Scorbot();
 };

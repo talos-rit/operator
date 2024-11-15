@@ -57,6 +57,15 @@ int8_t DATA_S_List_deinit (S_List *list);
 int8_t DATA_S_List_append (S_List *list, S_List_Node *node);
 
 /**
+ * @brief Appends the first element of the child list to the last element of the parent list
+ * @details Reinitalizes child list
+ * @param parent Parent S_List to append elements onto
+ * @param child Child S_List to move elements from
+ * @returns 0 on success, -1 on failure
+*/
+int8_t DATA_S_List_append_list(S_List *parent, S_List *child);
+
+/**
  * @brief Inserts node into a Singly Linked List at a specific index
  * @param node Node to insert
  * @param index Index to insert node at

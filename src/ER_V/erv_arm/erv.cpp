@@ -5,7 +5,7 @@
 #include <err.h>
 #include <errno.h>
 #include <stddef.h>
-#include <time.h>
+#include <sys/time.h>
 #include <termios.h>
 #include <signal.h>
 
@@ -13,11 +13,13 @@
 #include "log/log.h"
 #include "acl/acl.h"
 
-#define LOG_CONSOLE_THRESHOLD_THIS  LOG_VERBOSE + 2
+#define LOG_CONSOLE_THRESHOLD_THIS  LOG_THRESHOLD_MAX
 #define LOG_FILE_THRESHOLD_THIS     LOG_THRESHOLD_MAX
 
 #define ERV_DEFAULT_COMMAND_DELAY 200000
 #define ERV_TTY_BUFFER_LEN 127
+
+#define ERV_CLOCK CLOCK_REALTIME
 
 Scorbot::Scorbot(const char* dev)
 {
@@ -33,6 +35,8 @@ Scorbot::Scorbot(const char* dev)
     ACL_init();
     polar_pan_cont = '\0';
     manual_mode = false;
+    oversteer = ERV_OVERSTEER_ABORT;
+    DATA_S_List_init(&cmd_buffer);
 }
 
 Scorbot::~Scorbot()
@@ -153,13 +157,66 @@ static void poll_tty_rx(int fd)
         last_print = clock();
     }
 }
+
+static uint16_t tval_diff_ms(struct timeval* end, struct timeval* start)
+{
+    time_t start_ms = (start->tv_sec * 1000) + (start->tv_usec / 1000);
+    time_t end_ms = (end->tv_sec * 1000) + (end->tv_usec / 1000);
+    return end_ms - start_ms;
+}
+
+static void execute_acl_cmd(int fd, ACL_Command* command)
+{
+    write(fd, &command->payload[0], command->len);
+    LOG_VERBOSE(4, "Sending Command: %s", &command->payload[0]);
+    LOG_VERBOSE(4, "Delay_ms: %u", command->delay_ms);
+    ACL_Command_init(command);
+}
+
+static void poll_cmd_buffer(int fd, S_List* cmd_buffer)
+{
+    static bool init = false;
+    static uint16_t last_delay_ms = 0;
+    static struct timeval last_cmd_ts;
+
+    if (0 == cmd_buffer->len) return;
+    if(!init)
+    {
+        gettimeofday(&last_cmd_ts, NULL);
+        init = true;
+    }
+
+    struct timeval now;
+    gettimeofday(&now, NULL);
+
+    // Check if enough time has elapsed to overcome the delay
+    uint16_t elapsed_ms = tval_diff_ms(&now, &last_cmd_ts);
+    if (elapsed_ms < last_delay_ms)
+    {
+        // Wait longer
+        LOG_VERBOSE(6, "elapsed_ms: %u", elapsed_ms);
+        return;
+    }
+
+    // Execute next command
+    S_List_Node* node = DATA_S_List_pop(cmd_buffer);
+    if(!node) STD_FAIL_VOID;
+
+    ACL_Command *cmd = DATA_LIST_GET_OBJ(node, ACL_Command, node);
+    last_delay_ms = cmd->delay_ms;
+    gettimeofday(&last_cmd_ts, NULL);
+    execute_acl_cmd(fd, cmd);
+
+    return;
+}
+
 void Scorbot::Poll()
 {
-    if (-1 != fd)
-    {
-        poll_polar_pan(fd, polar_pan_cont, &manual_mode);
-        poll_tty_rx(fd);
-    }
+    if (-1 != fd) return;
+
+    poll_polar_pan(fd, polar_pan_cont, &manual_mode);
+    poll_tty_rx(fd);
+    poll_cmd_buffer(fd, &cmd_buffer);
 }
 
 int Scorbot::HandShake()
@@ -175,7 +232,18 @@ int Scorbot::PolarPan(API_Data_Polar_Pan *pan)
 
     S_List cmd_list;
     DATA_S_List_init(&cmd_list);
-    ACL_convert_polar_pan(&cmd_list, pan);
+
+    switch(oversteer)
+    {
+        case ERV_OVERSTEER_NONE:
+            ACL_convert_polar_pan_direct(&cmd_list, pan);
+            break;
+        case ERV_OVERSTEER_ABORT:
+            ACL_convert_polar_pan_abort(&cmd_list, pan);
+            break;
+        default:
+            STD_FAIL;
+    }
 
     WriteCommandQueue(&cmd_list);
 
@@ -208,6 +276,13 @@ int Scorbot::PolarPanStart(API_Data_Polar_Pan_Start *pan)
 int Scorbot::PolarPanStop()
 {
     polar_pan_cont = '\0';
+
+    S_List cmd_list;
+    DATA_S_List_init(&cmd_list);
+    ACL_enqueue_delay(&cmd_list, 500);
+    ACL_enqueue_here_cmd(&cmd_list);
+    WriteCommandQueue(&cmd_list);
+
     return 0;
 }
 
@@ -232,20 +307,10 @@ int Scorbot::Home(API_Data_Home* home)
 
 int Scorbot::WriteCommandQueue(S_List* cmd_list)
 {
+    if (!cmd_list) STD_FAIL;
+
     polar_pan_cont = '\0';
+    DATA_S_List_append_list(&cmd_buffer, cmd_list);
 
-    ACL_Command *command;
-    while (cmd_list->len)
-    {
-        S_List_Node* node = DATA_S_List_pop(cmd_list);
-        if (!node) STD_FAIL;
-
-        command = DATA_LIST_GET_OBJ(node, ACL_Command, node);
-        write(fd, &command->payload[0], command->len);
-        LOG_VERBOSE(4, "Sending Command: %s", &command->payload[0]);
-
-        usleep(ACL_DEFAULT_COMMAND_DELAY_USEC);
-        ACL_Command_init(command);
-    }
     return 0;
 }

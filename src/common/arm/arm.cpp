@@ -36,7 +36,7 @@ static void* ARM_run(void* arg)
         {
             arm->Poll();
             if (!arm->GetThreadEnable()) break;
-            usleep(25*1000);
+            usleep(ARM_POLL_PERIOD_MS * 1000);
             continue;
         }
     }

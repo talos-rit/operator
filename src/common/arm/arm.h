@@ -10,6 +10,8 @@
 #include "sub/sub.h"
 #include "api/api.h"
 
+#define ARM_POLL_PERIOD_MS (25)
+
 class Arm
 {
 private:
