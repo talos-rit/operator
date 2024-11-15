@@ -75,6 +75,13 @@ extern const char* const log_level_names[];
 int8_t LOG_print(const char* file, uint16_t line, int8_t console_threshold, int8_t file_threshold, int8_t level, const char* fmt, ...);
 
 /**
+ * @brief Prepares the logs functions; Should be one of the very first lines in an application
+ * @details Prepares the log resources, so logs can be written whether the Log module has been initialized/started, or not
+ * @returns 0 on success, -1 on failure
+*/
+int8_t LOG_prep();
+
+/**
  * @brief Initializes the Log thread for running
  * @param log_loc Location of the log file
  * @return 0 on success, -1 on failure

@@ -64,8 +64,9 @@ TAMQ_Consumer::TAMQ_Consumer( const std::string& brokerURI,
     {
         LOG_VERBOSE(4, "TAMQ Broker Address: %s",   brokerURI.c_str());
         LOG_VERBOSE(4, "TAMQ Command URI: %s",      destURI.c_str());
-        LOG_VERBOSE(4, "TAMQ Use Topics: %s",       useTopic ? "true" : "false");
+        LOG_VERBOSE(4, "TAMQ Use Topics: %s",       useTopic  ? "true" : "false");
         LOG_VERBOSE(4, "TAMQ Client ACK: %s",       clientAck ? "true" : "false");
+
         if (0 == counter++)
         {
             activemq::library::ActiveMQCPP::initializeLibrary();

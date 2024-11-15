@@ -15,6 +15,7 @@
 
 Config::Config()
 {
+    conf_errno = 0;
     ClearKeyVals();
 }
 

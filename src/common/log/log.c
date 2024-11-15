@@ -7,6 +7,7 @@
 #include <stddef.h>
 #include <unistd.h>
 #include <fcntl.h>
+#include <errno.h>
 
 #include "log/log.h"
 #include "log/log_private.h"
@@ -20,8 +21,6 @@
 #define LOG_FILE_THRESHOLD_THIS     LOG_THRESHOLD_MAX
 
 Log the_log;
-
-
 
 static int8_t LOG_timestamp(char* dst_str)
 {
@@ -86,7 +85,7 @@ static uint16_t format_log_entry(char* dst, LOG_Buffer *buf, bool use_color)
 }
 
 void LOG_thread_print(LOG_Buffer *buf)
-{    
+{
     char msg[1024];
 
     // Console out
@@ -103,7 +102,7 @@ void LOG_thread_print(LOG_Buffer *buf)
     }
 
     // File out
-    if (buf->flags & (1 << LOG_BUFFER_FLAG_OUT_FILE))
+    if (-1 != the_log.fd && buf->flags & (1 << LOG_BUFFER_FLAG_OUT_FILE))
     {
         uint16_t len = format_log_entry(&msg[0], buf, false) + 1;
         write(the_log.fd, &msg[0], len-1);
@@ -157,7 +156,6 @@ static int8_t push_buffer(Log *log, LOG_Buffer *buf)
 
 int8_t LOG_print(const char* file, uint16_t line, int8_t console_threshold, int8_t file_threshold, int8_t level, const char* fmt, ...)
 {
-    if (!the_log.config.en) return -1;
     uint8_t flags = 0;
     if (level <= console_threshold) flags |= (1 << LOG_BUFFER_FLAG_OUT_CONSOLE);
     if (level <= file_threshold)    flags |= (1 << LOG_BUFFER_FLAG_OUT_FILE);
@@ -168,7 +166,19 @@ int8_t LOG_print(const char* file, uint16_t line, int8_t console_threshold, int8
     int ret = clock_gettime(LOG_CLOCK, &ts);
     if (ret == -1) return -1;
 
-    LOG_Buffer *buf = get_buffer(&the_log);
+    LOG_Buffer tmp;
+    LOG_Buffer *buf;
+
+    if (the_log.config.en)
+    {
+        buf = get_buffer(&the_log);
+    }
+    else
+    {
+        LOG_Buffer_init(&tmp);
+        buf = &tmp;
+    }
+
     if(!buf)
     {
         printf("LOG OUT OF RESOURCES\n");
@@ -188,8 +198,15 @@ int8_t LOG_print(const char* file, uint16_t line, int8_t console_threshold, int8
     buf->len += vsprintf(&buf->msg[buf->len], fmt, list) + 1;
     va_end(list);
 
-    ret = push_buffer(&the_log, buf);
-    if (ret == -1) return -1;
+    if (the_log.config.en)
+    {
+        ret = push_buffer(&the_log, buf);
+        if (ret == -1) return -1;
+    }
+    else
+    {
+        LOG_thread_print(buf);
+    }
 
     return 0;
 }
@@ -226,19 +243,24 @@ static int8_t init_log_lists(Log *log)
     return 0;
 }
 
-int8_t LOG_init(const char* log_loc)
+int8_t LOG_prep()
 {
-    if (!log_loc) return -1;
     memset(&the_log, 0, sizeof(Log));
     if (-1 == pthread_mutex_init(&the_log.gen_lock,  NULL)) return -1;
     if (-1 == pthread_mutex_init(&the_log.wr_lock,   NULL)) return -1;
     if (-1 == pthread_mutex_init(&the_log.free_lock, NULL)) return -1;
     if (-1 == init_log_lists(&the_log)) return -1;
     the_log.config.print_loc = LOG_USE_LOCATION;
+    the_log.fd = -1;
+    return 0;
+}
 
+int8_t LOG_init(const char* log_loc)
+{
+    if (!log_loc) STD_FAIL;
     the_log.config.path = log_loc;
     the_log.fd = open(the_log.config.path, LOG_FILE_FLAG, LOG_FILE_PERM);
-
+    if (-1 == the_log.fd) LOG_WARN("Invalid log file path: (%d) %s", errno, strerror(errno));
     LOG_INFO("Log Module Initialized.");
     return 0;
 }
@@ -247,7 +269,6 @@ int8_t LOG_start()
 {
     pthread_create(&the_log.ptid, NULL, LOG_run, NULL);
     the_log.config.en = true;
-    LOG_VERBOSE(4, "Log Location: %s", the_log.config.path);
     LOG_INFO("Log Module Running...");
     return 0;
 }
@@ -261,7 +282,7 @@ int8_t LOG_stop()
 
 int8_t LOG_destory()
 {
-    close(the_log.fd);
+    if(-1 != the_log.fd) close(the_log.fd);
     pthread_mutex_destroy(&the_log.gen_lock);
     return -1;
 }
