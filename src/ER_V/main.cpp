@@ -42,6 +42,7 @@ static int register_intr()
     return 0;
 }
 
+#if VALGRIND
 static void dummy_msg(Subscriber* hermes)
 {
     SUB_Buffer* buf = hermes->DequeueBuffer(SUB_QUEUE_FREE);
@@ -61,6 +62,7 @@ static void dummy_msg(Subscriber* hermes)
     buf->len = sizeof(API_Data_Home) + sizeof(API_Data_Header) + 2;
     hermes->EnqueueBuffer(SUB_QUEUE_COMMAND, buf);
 }
+#endif
 
 int main(int argc, char* argv[])
 {
@@ -89,37 +91,37 @@ int main(int argc, char* argv[])
 
     // Init Modules
     Subscriber hermes = Subscriber();
-    // SUB_Messenger* inbox = new TAMQ_Consumer(
-    //     conf.GetBrokerAddress(),
-    //     conf.GetCommandURI(),
-    //     conf.GetUseTopics(),
-    //     conf.GetClientAck());
+    SUB_Messenger* inbox = new TAMQ_Consumer(
+        conf.GetBrokerAddress(),
+        conf.GetCommandURI(),
+        conf.GetUseTopics(),
+        conf.GetClientAck());
 
     Arm* bot = new Scorbot(conf.GetScorbotDevicePath());
 
     // Register modules
-    // inbox->RegisterSubscriber(&hermes);
+    inbox->RegisterSubscriber(&hermes);
     bot->RegisterSubscriber(&hermes);
 
     // Start
     hermes.Start();
     if(-1 == bot->Start()) quit_handler(SIGABRT);
-    // inbox->Start();
+    inbox->Start();
 
     // Loop
     if (!quit_sig) LOG_INFO("Ready.");
-    for (int i = 0; i < 5; i++) dummy_msg(&hermes);
+    while(!quit_sig);
     LOG_VERBOSE(0, "Quit signal: %d", quit_sig);
     LOG_INFO("Shutting down...");
 
     // Cleanup running processes
     hermes.Stop();
     bot->Stop();
-    // inbox->Stop();
+    inbox->Stop();
 
     // Release resources
     delete bot;
-    // delete inbox;
+    delete inbox;
 
     // End demo
     LOG_INFO("End Program.");
