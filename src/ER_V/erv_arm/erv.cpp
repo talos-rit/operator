@@ -155,8 +155,11 @@ static void poll_tty_rx(int fd)
 }
 void Scorbot::Poll()
 {
-    poll_polar_pan(fd, polar_pan_cont, &manual_mode);
-    poll_tty_rx(fd);
+    if (-1 != fd)
+    {
+        poll_polar_pan(fd, polar_pan_cont, &manual_mode);
+        poll_tty_rx(fd);
+    }
 }
 
 int Scorbot::HandShake()
