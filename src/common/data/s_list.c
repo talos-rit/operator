@@ -55,6 +55,32 @@ int8_t DATA_S_List_append (S_List *list, S_List_Node *node)
     return 0;
 }
 
+int8_t DATA_S_List_append_list(S_List *parent, S_List *child)
+{
+    if (!parent) STD_FAIL;
+    if (!child)  STD_FAIL;
+
+    if (0 == child->len)
+    {
+        return 0;
+    }
+
+    if (0 == parent->len)
+    {
+        *parent = *child;
+    }
+
+    else
+    {
+        parent->tail->next = child->head;
+        parent->tail = child->tail;
+        parent->len += child->len;
+    }
+
+    DATA_S_List_init(child);
+    return 0;
+}
+
 int8_t DATA_S_List_insert (S_List *list, S_List_Node *node, uint16_t index)
 {
     if (!list || !node) STD_FAIL;
