@@ -11,6 +11,7 @@ class Scorbot : public Arm
         enum ERV_Oversteer_config
         {
             ERV_OVERSTEER_NONE,
+            ERV_OVERSTEER_IGNORE,
             ERV_OVERSTEER_ABORT,
         };
 

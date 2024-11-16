@@ -85,6 +85,16 @@ int ACL_convert_polar_pan_abort(S_List *cmd_queue, const API_Data_Polar_Pan *pan
 int ACL_convert_polar_pan_direct(S_List *cmd_queue, const API_Data_Polar_Pan *pan);
 
 /**
+ * @brief Populates cmd_queue with a formatted queue for executing a polar pan, according to contents of pan. Drops movements while the current one is finishing.
+ * @details Polar Pan command struct is processed and turned into a set of ACL commands
+ * ACL Commands are stored in the input empty S_List
+ * @param cmd_queue S_List pointer to be manipulated into a queue of ACL Commands
+ * @param pan Polar Pan command struct pointer
+ * @returns 0 on success, -1 on failure
+ */
+int ACL_convert_polar_pan_ignore(S_List *cmd_queue, const API_Data_Polar_Pan *pan);
+
+/**
  * @brief Populates cmd_queue with a formatted queue for toggle manual mode on the controller unit
  * @details Only works when the Scorbot ER V controller is in DIRECT mode
  * @returns 0 on success, -1 on failure

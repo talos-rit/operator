@@ -13,7 +13,7 @@
 #include "log/log.h"
 #include "acl/acl.h"
 
-#define LOG_CONSOLE_THRESHOLD_THIS  LOG_THRESHOLD_MAX
+#define LOG_CONSOLE_THRESHOLD_THIS  LOG_THRESHOLD_DEFAULT
 #define LOG_FILE_THRESHOLD_THIS     LOG_THRESHOLD_MAX
 
 #define ERV_DEFAULT_COMMAND_DELAY 200000
@@ -173,6 +173,11 @@ static void execute_acl_cmd(int fd, ACL_Command* command)
     ACL_Command_init(command);
 }
 
+/**
+ * @brief Helper function used to asynchronously execute ACL Commands
+ * @param fd File descriptor to write commands to
+ * @param cmd_buffer List of commands to execute
+*/
 static void poll_cmd_buffer(int fd, S_List* cmd_buffer)
 {
     static bool init = false;
@@ -237,6 +242,9 @@ int Scorbot::PolarPan(API_Data_Polar_Pan *pan)
     {
         case ERV_OVERSTEER_NONE:
             ACL_convert_polar_pan_direct(&cmd_list, pan);
+            break;
+        case ERV_OVERSTEER_IGNORE:
+            ACL_convert_polar_pan_ignore(&cmd_list, pan);
             break;
         case ERV_OVERSTEER_ABORT:
             ACL_convert_polar_pan_abort(&cmd_list, pan);
