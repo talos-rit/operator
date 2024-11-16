@@ -15,6 +15,8 @@
 #define ACL_HERE_FMT            "HERE %s\r" // Here command to set the input Scorbot position to its current position
 #define ACL_MOVE_FMT            "MOVE %s\r" // Move command to move to a set point
 #define ACL_MOVE_DUR_FMT        "MOVE %s %u\r" // Move command to move to a set point, within a specific duration
+#define ACL_MOVED_FMT           "MOVED %s\r" // Move command to move to a set point
+#define ACL_MOVED_DUR_FMT       "MOVED %s %u\r" // Move command to move to a set point, within a specific duration
 #define ACL_HOME_FMT            "HOME\r" // Home command homes the robot
 #define ACL_DEFP_FMT            "DEFP %s\r" // Defp command sets an internal variable to the current position for Scorbot
 #define ACL_TOGGLE_MANUAL_FMT   "~" // While the scorbot controller is in direct mode, this command allows manual control of the position (like a joystick)
@@ -61,21 +63,14 @@ typedef struct _acl_resources
  * @param degree_count Amount of degrees to convert to Encoder Count
  * @returns 0 on success, -1 on failure
  */
-int ACL_calc_enqueue_shift_cmd(S_List *cmd_queue, ACL_Axis axis, float degree_count);
-
-/**
- * @brief Allocates and enqueues ACL SETPV Command in input cmd_queue, setting it to the home position
- * @param cmd_queue S_List to append to
- * @returns 0 on success, -1 on failure
- */
-int ACL_generate_enqueue_null_pos_cmd(S_List *cmd_queue);
+int ACL_enqueue_shift_cmd(S_List *cmd_queue, ACL_Axis axis, float degree_count);
 
 /**
  * @brief Allocates and enqueues ACL MOVE Command in input cmd_queue
  * @param cmd_queue S_List to append to
  * @returns 0 on success, -1 on failure
  */
-int ACL_generate_enqueue_move_cmd(S_List *cmd_queue);
+int ACL_enqueue_move_cmd(S_List *cmd_queue);
 
 /**
  * @brief Allocates and enqueues ACL ABORT Command in input cmd_queue
@@ -83,5 +78,5 @@ int ACL_generate_enqueue_move_cmd(S_List *cmd_queue);
  * @param cmd_queue S_List to append to
  * @returns 0 on success, -1 on failure
 */
-int ACL_generate_enqueue_clrbuf_cmd(S_List *cmd_queue);
+int ACL_enqueue_clrbuf_cmd(S_List *cmd_queue);
 
