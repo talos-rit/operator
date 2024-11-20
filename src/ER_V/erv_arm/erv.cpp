@@ -217,7 +217,7 @@ static void poll_cmd_buffer(int fd, S_List* cmd_buffer)
 
 void Scorbot::Poll()
 {
-    if (-1 != fd) return;
+    if (-1 == fd) return;
 
     poll_polar_pan(fd, polar_pan_cont, &manual_mode);
     poll_tty_rx(fd);
@@ -316,6 +316,7 @@ int Scorbot::Home(API_Data_Home* home)
 int Scorbot::WriteCommandQueue(S_List* cmd_list)
 {
     if (!cmd_list) STD_FAIL;
+    if (-1 == fd) STD_FAIL;
 
     polar_pan_cont = '\0';
     DATA_S_List_append_list(&cmd_buffer, cmd_list);
