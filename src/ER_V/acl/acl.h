@@ -12,7 +12,7 @@
 #include "api/api.h"
 #include "data/s_list.h"
 
-#define ACL_CMD_SIZE 32
+#define ACL_CMD_SIZE 64
 
 #define ACL_DEFAULT_COMMAND_DELAY_MS 200
 #define ACL_DEFAULT_HOME_DELAY_MS 30000
