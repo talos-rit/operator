@@ -28,13 +28,14 @@ typedef enum _acl_command_type
 {
     ACL_CMD_INVALID,
     ACL_CMD_DELAY,
-    ACL_CMD_HOME,
-    ACL_CMD_MOVE,
-    ACL_CMD_SHIFT,
+    ACL_CMD_FLUSH,
+    ACL_CMD_ABORT,
     ACL_CMD_DEFP,
     ACL_CMD_HERE,
+    ACL_CMD_SHIFT,
     ACL_CMD_MANUAL,
-    ACL_CMD_ABORT,
+    ACL_CMD_HOME,
+    ACL_CMD_MOVE,
 } ACL_Command_Type;
 
 /** ACL Command Map for the command string, length, and node */
@@ -53,6 +54,14 @@ typedef struct _acl_command
   * @returns 0 on success, -1 on failure
  */
 int ACL_init();
+
+/**
+ * @brief Clears the tx buffer to the Scorbot to ensure a blank slate
+ * @details Used on startup to clear unknown state of scorbot serial receiver
+ * @param cmd_queue S_List pointer to be manipulated into a queue of ACL Commands
+ * @returns 0 on success, -1 on failure
+*/
+int ACL_flush_tx(S_List *cmd_queue);
 
 /**
  * @brief Allocates memory for a single ACL_Command and initializes its S_List node

@@ -43,6 +43,8 @@ Scorbot::Scorbot(const char* dev)
     ACL_init();
     DATA_S_List_init(&cmd_buffer);
     gettimeofday(&last_start, NULL);
+
+    ACL_flush_tx(&cmd_buffer);
 }
 
 Scorbot::~Scorbot()
@@ -270,7 +272,7 @@ int Scorbot::PolarPan(API_Data_Polar_Pan *pan)
     WriteCommandQueue(&cmd_list);
 
     iter += sprintf(&text[iter], "Polar Pan Payload:\n");
-    iter += sprintf(&text[iter], "\tΔ Azimuth: \t%d\n",     pan->delta_azimuth);
+    iter += sprintf(&text[iter], "\tΔ Azimuth: \t\t%d\n",     pan->delta_azimuth);
     iter += sprintf(&text[iter], "\tΔ Altitude: \t%d\n",    pan->delta_altitude);
     iter += sprintf(&text[iter], "\tDelay: \t\t%d\n",       pan->delay_ms);
     iter += sprintf(&text[iter], "\tTime: \t\t%d\n",        pan->time_ms);

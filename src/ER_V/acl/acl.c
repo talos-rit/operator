@@ -52,6 +52,19 @@ static ACL_Command* get_cmd(S_List *cmd_queue)
     return DATA_LIST_GET_OBJ(node, ACL_Command, node);
 }
 
+int ACL_flush_tx(S_List *cmd_queue)
+{
+    ACL_Command* cmd = get_cmd(cmd_queue);
+    if(!cmd) STD_FAIL;
+
+    cmd->type = ACL_CMD_FLUSH;
+    cmd->len = sprintf(&cmd->payload[0], "\r");
+    cmd->delay_ms = 100;
+
+    DATA_S_List_append(cmd_queue, &cmd->node);
+    return 0;
+}
+
 int ACL_enqueue_clrbuf_cmd(S_List *cmd_queue)
 {
     ACL_Command* cmd = get_cmd(cmd_queue);
