@@ -21,8 +21,6 @@
 
 #define ERV_CLOCK CLOCK_REALTIME
 
-static struct timeval last_start; // Should be a part of the class; Causes free error when attempted
-
 Scorbot::Scorbot(const char* dev)
 {
     // Setup device
@@ -106,13 +104,13 @@ static uint16_t tval_diff_ms(struct timeval* end, struct timeval* start)
  * @param polar_pan_cont Character describing the angular vector that the polar pan is executing
  * @param manual_mode Pointer to the bool tracking the current mode of the controller
 */
-static void poll_polar_pan(int fd, char* polar_pan_cont, bool* manual_mode)
+static void poll_polar_pan(int fd, char* polar_pan_cont, struct timeval *last_start, bool* manual_mode)
 {
     static char last_pan_cont;
 
     struct timeval now;
     gettimeofday(&now, NULL);
-    if ('\0' != *polar_pan_cont && tval_diff_ms(&now, &last_start) > ERV_CONT_POLAR_PAN_TIMEOUT_MS)
+    if (*polar_pan_cont && tval_diff_ms(&now, last_start) > ERV_CONT_POLAR_PAN_TIMEOUT_MS)
     {
         LOG_WARN("Continuous Polar Pan timeout");
         *polar_pan_cont = '\0';
@@ -235,7 +233,7 @@ void Scorbot::Poll()
 {
     if (-1 == fd) return;
 
-    poll_polar_pan(fd, &polar_pan_cont, &manual_mode);
+    poll_polar_pan(fd, &polar_pan_cont, &last_start, &manual_mode);
     poll_tty_rx(fd);
     poll_cmd_buffer(fd, &cmd_buffer);
 }

@@ -27,7 +27,7 @@ class Scorbot : public Arm
 
         char polar_pan_cont;
         bool manual_mode;
-
+        struct timeval last_start;
 
         int HandShake();
         int PolarPan(API_Data_Polar_Pan *pan);
