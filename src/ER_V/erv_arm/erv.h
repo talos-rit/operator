@@ -4,6 +4,7 @@
 #include "acl/acl.h"
 
 #define ERV_RX_TIMEOUT_MS 500
+#define ERV_CONT_POLAR_PAN_TIMEOUT_MS 500
 
 class Scorbot : public Arm
 {
@@ -21,10 +22,11 @@ class Scorbot : public Arm
     private:
         char dev[32];
         int fd;
-        char polar_pan_cont;
-        bool manual_mode;
         ERV_Oversteer_config oversteer;
         S_List cmd_buffer;
+
+        char polar_pan_cont;
+        bool manual_mode;
 
 
         int HandShake();

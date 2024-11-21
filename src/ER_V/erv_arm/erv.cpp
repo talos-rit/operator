@@ -21,8 +21,11 @@
 
 #define ERV_CLOCK CLOCK_REALTIME
 
+static struct timeval last_start; // Should be a part of the class; Causes free error when attempted
+
 Scorbot::Scorbot(const char* dev)
 {
+    // Setup device
     LOG_VERBOSE(4, "Scorbot device path: %s", dev);
     strcpy(&this->dev[0], &dev[0]);
     fd = open(dev, O_RDWR | O_NOCTTY | O_NDELAY);
@@ -32,11 +35,16 @@ Scorbot::Scorbot(const char* dev)
         raise(SIGABRT);
         return;
     }
-    ACL_init();
+
+    // Setup config
     polar_pan_cont = '\0';
     manual_mode = false;
     oversteer = ERV_OVERSTEER_ABORT;
+
+    // Setup ACL
+    ACL_init();
     DATA_S_List_init(&cmd_buffer);
+    gettimeofday(&last_start, NULL);
 }
 
 Scorbot::~Scorbot()
@@ -83,6 +91,13 @@ static void flush_buffer(char* tty_buffer, uint16_t len)
     LOG_VERBOSE(0, "SCOR: %s", tty_buffer);
 }
 
+static uint16_t tval_diff_ms(struct timeval* end, struct timeval* start)
+{
+    time_t start_ms = (start->tv_sec * 1000) + (start->tv_usec / 1000);
+    time_t end_ms = (end->tv_sec * 1000) + (end->tv_usec / 1000);
+    return end_ms - start_ms;
+}
+
 /**
  * @brief Helper function used to handle continuous polar pan commands during polling
  * @details Continuous polar pan has to run in a loop, independent of the command bus, to allow asyncrounous commands.
@@ -91,15 +106,23 @@ static void flush_buffer(char* tty_buffer, uint16_t len)
  * @param polar_pan_cont Character describing the angular vector that the polar pan is executing
  * @param manual_mode Pointer to the bool tracking the current mode of the controller
 */
-static void poll_polar_pan(int fd, char polar_pan_cont, bool* manual_mode)
+static void poll_polar_pan(int fd, char* polar_pan_cont, bool* manual_mode)
 {
     static char last_pan_cont;
 
-    if (last_pan_cont != polar_pan_cont)
+    struct timeval now;
+    gettimeofday(&now, NULL);
+    if ('\0' != *polar_pan_cont && tval_diff_ms(&now, &last_start) > ERV_CONT_POLAR_PAN_TIMEOUT_MS)
+    {
+        LOG_WARN("Continuous Polar Pan timeout");
+        *polar_pan_cont = '\0';
+    }
+
+    if (last_pan_cont != *polar_pan_cont)
     {
         //flush write buffer
         tcflush(fd, TCOFLUSH);
-        if (!last_pan_cont || !polar_pan_cont)
+        if (!last_pan_cont || !*polar_pan_cont)
         {
             // Manual mode is toggling
             write(fd, "~", 1);
@@ -108,13 +131,13 @@ static void poll_polar_pan(int fd, char polar_pan_cont, bool* manual_mode)
     }
 
     char manual[ACL_MANUAL_MOVE_SIZE];
-    if (polar_pan_cont)
+    if (*polar_pan_cont)
     {
-        memset(&manual[0], polar_pan_cont, sizeof(manual));
+        memset(&manual[0], *polar_pan_cont, sizeof(manual));
         write(fd, &manual, sizeof(manual));
     }
 
-    last_pan_cont = polar_pan_cont;
+    last_pan_cont = *polar_pan_cont;
 }
 
 /**
@@ -156,13 +179,6 @@ static void poll_tty_rx(int fd)
         len = 0;
         last_print = clock();
     }
-}
-
-static uint16_t tval_diff_ms(struct timeval* end, struct timeval* start)
-{
-    time_t start_ms = (start->tv_sec * 1000) + (start->tv_usec / 1000);
-    time_t end_ms = (end->tv_sec * 1000) + (end->tv_usec / 1000);
-    return end_ms - start_ms;
 }
 
 static void execute_acl_cmd(int fd, ACL_Command* command)
@@ -219,7 +235,7 @@ void Scorbot::Poll()
 {
     if (-1 == fd) return;
 
-    poll_polar_pan(fd, polar_pan_cont, &manual_mode);
+    poll_polar_pan(fd, &polar_pan_cont, &manual_mode);
     poll_tty_rx(fd);
     poll_cmd_buffer(fd, &cmd_buffer);
 }
@@ -276,6 +292,7 @@ int Scorbot::PolarPanStart(API_Data_Polar_Pan_Start *pan)
     LOG_VERBOSE(4, "%s", text);
 
     polar_pan_cont = ACL_get_polar_pan_continuous_vector(pan);
+    gettimeofday(&last_start, NULL);
 
     if('\0' == polar_pan_cont) return -1;
     return 0;
