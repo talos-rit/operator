@@ -44,7 +44,6 @@ static void* socket_poll (void* arg)
 {
     Socket_Props *props = (Socket_Props*) arg;
     Subscriber* sub = props->sub;
-    SUB_Buffer* tx = NULL;
 
     int ret = 0;
     int buf_iter = 0;
@@ -52,17 +51,28 @@ static void* socket_poll (void* arg)
     char buffer[SOCKET_BUF_LEN];
     bool idle = true;
 
-    while(1)
+    while(props->thread_en)
     {
         if (idle) usleep (SOCKET_POLL_PERIOD_MS * 1000);
         idle = true;
 
         // Handle rx
         ret = read(props->connfd, &buffer[buf_iter], sizeof(buffer) - buf_iter);
-        if (-1 == ret) STD_FAIL_VOID;
+        if (-1 == ret)
+        {
+            LOG_IEC();
+            break;
+        }
+
+        if (0 == ret) continue;
+
         buf_len += ret;
+        LOG_VERBOSE(4, "Ret: %d", ret);
         while (buf_len > 0)
         {
+            LOG_VERBOSE(4, "Socket received data");
+            buffer[buf_len] = '\0';
+            LOG_VERBOSE(6, "Message: %s", &buffer[0]);
             // Received data
             idle = false;
 
@@ -75,7 +85,7 @@ static void* socket_poll (void* arg)
             }
 
             API_Data_Wrapper* msg = (API_Data_Wrapper*) &buffer[buf_iter];
-            if (sizeof(msg->header) + msg->header.len + 2 > ret)
+            if (sizeof(msg->header) + msg->header.len + 2 > (uint16_t) ret)
             {
                 // Incomplete message
                 idle = true;
@@ -86,12 +96,15 @@ static void* socket_poll (void* arg)
 
             rx->len = sizeof(msg->header) + msg->header.len + 2;
             memcpy(&rx->body[0], &msg, rx->len);
+            rx->body[rx->len] = '\0';
             buf_iter += rx->len;
             buf_len  -= rx->len;
-
+            LOG_VERBOSE(2, "Socket received: %s", &rx->body[0]);
             sub->EnqueueBuffer(SUB_QUEUE_COMMAND, rx);
         }
     }
+
+    return NULL;
 }
 
 int Socket::Start()
@@ -101,20 +114,31 @@ int Socket::Start()
     socklen_t len = sizeof(props.client);
 
     // Accept connection
+    LOG_INFO("Waiting for client...");
     props.connfd = accept(props.sockfd, (struct sockaddr *) &props.client, &len);
     if (-1 == props.connfd)
+    {
         LOG_ERROR("Socket accept failed: (%d) %s", errno, strerror(errno));
+        STD_FAIL;
+    }
 
-    pthread_create(&pid, NULL, socket_poll, sub);
+    props.thread_en = true;
+    pthread_create(&pid, NULL, socket_poll, &props);
+    return 0;
 }
 
 int Socket::Stop()
 {
+    props.thread_en = false;
+    pthread_join(pid, NULL);
     if (-1 != props.connfd) close(props.connfd);
+    return 0;
 }
 
 int Socket::RegisterSubscriber(Subscriber* sub)
 {
+    if (!sub) STD_FAIL;
     this->sub = sub;
     props.sub = sub;
+    return 0;
 }

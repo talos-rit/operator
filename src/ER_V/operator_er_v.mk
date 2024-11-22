@@ -37,6 +37,7 @@ EXTS		+= data/s_list.c
 EXTS		+= api/api.c
 
 EXTS_CPP	:= tamq/tamq_sub.cpp
+EXTS_CPP	+= socket/socket.cpp
 EXTS_CPP	+= sub/sub.cpp
 EXTS_CPP	+= arm/arm.cpp
 EXTS_CPP	+= conf/config.cpp

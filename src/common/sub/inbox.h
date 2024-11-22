@@ -2,6 +2,8 @@
 
 #include "sub/sub.h"
 
+class Subscriber;
+
 /**
  * @class Subscriber Messenger Interface
  * @details Serves to separate the rest of the Talos Operator system from the messenger implementation (AMQ, HTTP, etc...)

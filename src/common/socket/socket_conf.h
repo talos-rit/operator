@@ -5,7 +5,7 @@
 #define SOCKET_CONF_ADDR_KEY        "socket_address"
 #define SOCKET_CONF_ADDR_DEFAULT    "0.0.0.0"
 #define SOCKET_CONF_PORT_KEY        "socket_port"
-#define SOCKET_CONF_PORT_DEFAULT    61616
+#define SOCKET_CONF_PORT_DEFAULT    12345
 
 class Socket_Config: virtual public Config
 {

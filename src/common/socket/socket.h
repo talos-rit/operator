@@ -21,7 +21,9 @@ typedef struct _sock_props
     int port;
     struct sockaddr_in server;
     struct sockaddr_in client;
+
     Subscriber *sub;
+    bool thread_en;
 }Socket_Props;
 
 class Socket : public Inbox
@@ -35,17 +37,20 @@ class Socket : public Inbox
         void* Poll(void* arg);
 
     public:
+        Socket();
+        ~Socket();
+
         /**
          * @brief Starts the Messenger service
          * @return 0 on success, -1 on failure
         */
-        virtual int Start() = 0;
+        int Start();
 
         /**
          * @brief Stops the Messenger service
          * @return 0 on success, -1 on failure
         */
-        virtual int Stop() = 0;
+        int Stop();
 
-        virtual int RegisterSubscriber(Subscriber* sub) = 0;
+        int RegisterSubscriber(Subscriber* sub);
 };
