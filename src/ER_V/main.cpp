@@ -91,7 +91,7 @@ int main(int argc, char* argv[])
 
     // Init Modules
     Subscriber hermes = Subscriber();
-    SUB_Messenger* inbox = new TAMQ_Consumer(
+    Inbox* inbox = new TAMQ_Consumer(
         conf.GetBrokerAddress(),
         conf.GetCommandURI(),
         conf.GetUseTopics(),
