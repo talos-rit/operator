@@ -146,6 +146,32 @@ int ACL_enqueue_here_cmd(S_List *cmd_queue)
     return 0;
 }
 
+int ACL_enqueue_listpv_cmd(S_List *cmd_queue, char* position)
+{
+    ACL_Command* cmd = get_cmd(cmd_queue);
+    if(!cmd) STD_FAIL;
+
+    cmd->len = sprintf(&cmd->payload[0], ACL_LISTPV_FMT, position);
+    cmd->type = ACL_CMD_LISTPV;
+
+    DATA_S_List_append(cmd_queue, &cmd->node);
+
+    return 0;
+}
+
+int ACL_enqueue_listpv_pos_cmd(S_List *cmd_queue)
+{
+    ACL_Command* cmd = get_cmd(cmd_queue);
+    if(!cmd) STD_FAIL;
+
+    cmd->len = sprintf(&cmd->payload[0], ACL_LISTPV_FMT, "POSITION");
+    cmd->type = ACL_CMD_LISTPV;
+
+    DATA_S_List_append(cmd_queue, &cmd->node);
+
+    return 0;
+}
+
 int ACL_enqueue_delay(S_List *cmd_queue, uint16_t delay_ms)
 {
     ACL_Command* cmd = get_cmd(cmd_queue);
@@ -279,3 +305,4 @@ int ACL_home_sequence(S_List *cmd_queue)
 
     return 0;
 }
+

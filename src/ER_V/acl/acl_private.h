@@ -1,6 +1,7 @@
 #include "acl/acl.h"
 
-#define ACL_VAR_POS "DELTA" /** variable position moniker for ACL commands */
+#define ACL_VAR_POS     "DELTA"     // variable position moniker for ACL commands
+#define ACL_CURRENT_POS "POSITION" // current position moniker in ACL
 
 /** Conversion factors for Encoder Count */
 #define ACL_BASE_CONVERSION_FACTOR 42.5666f
@@ -10,18 +11,19 @@
 #define ACL_CMD_COUNT 32
 
 /** ACL Command Formats */
-#define ACL_ABORT_FMT           "A\r"   // Aborts the current movment (but keeps the movement buffer in tact)
+#define ACL_ABORT_FMT           "A\r"                 // Aborts the current movment (but keeps the movement buffer in tact)
 #define ACL_SHIFT_FMT           "SHIFT %s BY %u %d\r" // Shift command to move a variable the Scorbot has stored
-#define ACL_HERE_FMT            "HERE %s\r" // Here command to set the input Scorbot position to its current position
-#define ACL_MOVE_FMT            "MOVE %s\r" // Move command to move to a set point
-#define ACL_MOVE_DUR_FMT        "MOVE %s %u\r" // Move command to move to a set point, within a specific duration
-#define ACL_MOVED_FMT           "MOVED %s\r" // Move command to move to a set point
-#define ACL_MOVED_DUR_FMT       "MOVED %s %u\r" // Move command to move to a set point, within a specific duration
-#define ACL_HOME_FMT            "HOME\r" // Home command homes the robot
-#define ACL_DEFP_FMT            "DEFP %s\r" // Defp command sets an internal variable to the current position for Scorbot
-#define ACL_TOGGLE_MANUAL_FMT   "~" // While the scorbot controller is in direct mode, this command allows manual control of the position (like a joystick)
-#define ACL_MOVE_MANUAL_FMT     "%c"
-#define ACL_CLRBUF_FMT          "clrbuf\r"  // Clears the movement buffer, and halts all motor movement
+#define ACL_HERE_FMT            "HERE %s\r"           // Here command to set the input Scorbot position to its current position
+#define ACL_MOVE_FMT            "MOVE %s\r"           // Move command to move to a set point
+#define ACL_MOVE_DUR_FMT        "MOVE %s %u\r"        // Move command to move to a set point, within a specific duration
+#define ACL_MOVED_FMT           "MOVED %s\r"          // Move command to move to a set point
+#define ACL_MOVED_DUR_FMT       "MOVED %s %u\r"       // Move command to move to a set point, within a specific duration
+#define ACL_HOME_FMT            "HOME\r"              // Home command homes the robot
+#define ACL_DEFP_FMT            "DEFP %s\r"           // Defp command sets an internal variable to the current position for Scorbot
+#define ACL_LISTPV_FMT          "LISTPV %s\r"         // ListPV command requests scorbot to display the input (registered) point's
+#define ACL_TOGGLE_MANUAL_FMT   "~"                   // While the scorbot controller is in direct mode, this command allows manual control of the position (like a joystick)
+#define ACL_MOVE_MANUAL_FMT     "%c"                  // Position holder for moving in ACL manual mode
+#define ACL_CLRBUF_FMT          "clrbuf\r"            // Clears the movement buffer, and halts all motor movement
 
 /** Scorbot axes representation in ACL */
 typedef enum _acl_axis
@@ -79,4 +81,3 @@ int ACL_enqueue_move_cmd(S_List *cmd_queue);
  * @returns 0 on success, -1 on failure
 */
 int ACL_enqueue_clrbuf_cmd(S_List *cmd_queue);
-

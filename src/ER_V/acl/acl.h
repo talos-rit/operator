@@ -35,6 +35,7 @@ typedef enum _acl_command_type
     ACL_CMD_HERE,
     ACL_CMD_MANUAL,
     ACL_CMD_ABORT,
+    ACL_CMD_LISTPV
 } ACL_Command_Type;
 
 /** ACL Command Map for the command string, length, and node */
@@ -50,7 +51,7 @@ typedef struct _acl_command
 /**
  * @brief Allocates memory for an ACL_Resources' array of ACL_Commands
  * @details Iterates through command pool in global ACL_Resources and populates with dummy data
-  * @returns 0 on success, -1 on failure
+ * @returns 0 on success, -1 on failure
  */
 int ACL_init();
 
@@ -59,7 +60,7 @@ int ACL_init();
  * @details Fills the input cmd with dummy data in the form of 0's
  * Initializes cmd's S_List_Node; appends node to global resource's S_List
  * @param cmd ACL_Command to initialize
-  * @returns 0 on success, -1 on failure
+ * @returns 0 on success, -1 on failure
  */
 int ACL_Command_init(ACL_Command *cmd);
 
@@ -106,6 +107,21 @@ int ACL_enqueue_manual_mode_toggle_cmd(S_List *cmd_queue);
  * @returns 0 on success, -1 on failure
  */
 int ACL_enqueue_here_cmd(S_List *cmd_queue);
+
+/**
+ * @brief Allocates and enqueues ACL LISTPV Command in input cmd_queue
+ * @param cmd_queue S_List to append to
+ * @param position Position to request listpv of
+ * @returns 0 on success, -1 on failure
+ */
+int ACL_enqueue_listpv_cmd(S_List *cmd_queue, char* position);
+
+/**
+ * @brief Allocates and enqueues ACL LISTPV POSITION (for arm current pos) command in input cmd_queue
+ * @param cmd_queue S_List to append to
+ * @returns 0 on success, -1 on failure
+ */
+int ACL_enqueue_listpv_pos_cmd(S_List *cmd_queue);
 
 /**
  * @brief Inserts a delay into the cmd_queue sequence
