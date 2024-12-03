@@ -9,35 +9,52 @@
 #define LOG_CONSOLE_THRESHOLD_THIS  LOG_THRESHOLD_MAX
 #define LOG_FILE_THRESHOLD_THIS     LOG_THRESHOLD_MAX
 
-Socket::Socket()
+static int init_socket(Socket_Props* props)
 {
-    // Create socket
-    props.sockfd = socket(AF_INET, SOCK_STREAM, 0);
-    if (props.sockfd < 0)
+    props->sockfd = socket(AF_INET, SOCK_STREAM | SOCK_NONBLOCK, 0);
+    if (props->sockfd < 0)
     {
         LOG_ERROR("Could not open socket: (%d) %s", errno, strerror(errno));
-        status = -1;
-        return;
+        STD_FAIL;
     }
 
     // Set up server address
-    memset(&props.server, 0, sizeof(props.server));
-    props.port = 61616;
-    props.server.sin_family = AF_INET;
-    props.server.sin_addr.s_addr = INADDR_ANY;
-    props.server.sin_port = htons(props.port);
+    memset(&props->server, 0, sizeof(props->server));
+    props->port = 61616;
+    props->server.sin_family = AF_INET;
+    props->server.sin_addr.s_addr = INADDR_ANY;
+    props->server.sin_port = htons(props->port);
 
-    if (bind(props.sockfd, (struct sockaddr *) &props.server, sizeof(props.server)) < 0)
+    if (bind(props->sockfd, (struct sockaddr *) &props->server, sizeof(props->server)) < 0)
     {
         LOG_ERROR("Could not bind socket: (%d) %s", errno, strerror(errno));
-        status = -1;
-        return;
+        STD_FAIL;
     }
+
+    return 0;
+}
+
+static int abort_connection(Socket_Props* props)
+{
+    // LOG_VERBOSE(4, "Close socket: %d", close(props->sockfd)); // Unblocks accept syscall
+    // shutdown(props->sockfd, SHUT_RDWR);
+
+    // props->sockfd = -1;
+    // return init_socket(props); // reinit socket for new accept
+    LOG_IEC();
+    return 0;
+}
+
+Socket::Socket()
+{
+    // Create socket
+    init_socket(&props);
+    props.connfd = -2;
 }
 
 Socket::~Socket()
 {
-    if (-1 != props.sockfd) close(props.sockfd);
+    status = init_socket(&props);
 }
 
 static void* socket_poll (void* arg)
@@ -50,6 +67,24 @@ static void* socket_poll (void* arg)
     int buf_len = 0;
     char buffer[SOCKET_BUF_LEN];
     bool idle = true;
+
+    // Accept connection
+    socklen_t len = sizeof(props->client);
+    LOG_INFO("Waiting for client...");
+
+    while(props->thread_en && props->connfd < 0)
+    {
+        props->connfd = accept(props->sockfd, (struct sockaddr *) &props->client, &len);
+        usleep(1000);
+        if (-1 == props->connfd && errno != EAGAIN)
+        {
+            LOG_ERROR("Socket accept failed: (%d) %s", errno, strerror(errno));
+            STD_FAIL_VOID_PTR;
+        }
+    }
+
+    if (props->connfd > 0) LOG_INFO ("Connection Established.");
+    else LOG_INFO("Connection Failed.");
 
     while(props->thread_en)
     {
@@ -111,16 +146,6 @@ int Socket::Start()
 {
     // Listen for connections
     listen(props.sockfd, 5);
-    socklen_t len = sizeof(props.client);
-
-    // Accept connection
-    LOG_INFO("Waiting for client...");
-    props.connfd = accept(props.sockfd, (struct sockaddr *) &props.client, &len);
-    if (-1 == props.connfd)
-    {
-        LOG_ERROR("Socket accept failed: (%d) %s", errno, strerror(errno));
-        STD_FAIL;
-    }
 
     props.thread_en = true;
     pthread_create(&pid, NULL, socket_poll, &props);
@@ -130,8 +155,9 @@ int Socket::Start()
 int Socket::Stop()
 {
     props.thread_en = false;
-    pthread_join(pid, NULL);
-    if (-1 != props.connfd) close(props.connfd);
+    if (-2 == props.connfd) abort_connection(&props);   // Accept call is still blocking; abort
+    if (-1 != props.connfd) close(props.connfd);        // Otherwise, close connection
+    pthread_join(pid, NULL);                            // Wait for thread to exit
     return 0;
 }
 
