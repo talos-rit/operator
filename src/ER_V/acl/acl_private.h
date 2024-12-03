@@ -21,6 +21,7 @@
 #define ACL_HOME_FMT            "HOME\r"              // Home command homes the robot
 #define ACL_DEFP_FMT            "DEFP %s\r"           // Defp command sets an internal variable to the current position for Scorbot
 #define ACL_LISTPV_FMT          "LISTPV %s\r"         // ListPV command requests scorbot to display the input (registered) point's
+#define ACL_SPEED_ALL_AXES_FMT  "SPEED %d\r"            // Sets the speed of all axes on the scorbot
 #define ACL_TOGGLE_MANUAL_FMT   "~"                   // While the scorbot controller is in direct mode, this command allows manual control of the position (like a joystick)
 #define ACL_MOVE_MANUAL_FMT     "%c"                  // Position holder for moving in ACL manual mode
 #define ACL_CLRBUF_FMT          "clrbuf\r"            // Clears the movement buffer, and halts all motor movement

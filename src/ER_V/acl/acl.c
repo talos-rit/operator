@@ -197,6 +197,18 @@ int ACL_enqueue_move_cmd(S_List *cmd_queue)
     return 0;
 }
 
+int ACL_enqueue_set_speed_cmd(S_List *cmd_queue, int speed)
+{
+    ACL_Command* cmd = get_cmd(cmd_queue);
+    if(!cmd) STD_FAIL;
+
+    cmd->len = sprintf(&cmd->payload[0], ACL_SPEED_ALL_AXES_FMT, speed);
+    cmd->type = ACL_CMD_SET_SPEED;
+
+    DATA_S_List_append(cmd_queue, &cmd->node);
+    return 0;
+}
+
 int ACL_generate_enqueue_moved_cmd(S_List *cmd_queue)
 {
     ACL_Command* cmd = get_cmd(cmd_queue);

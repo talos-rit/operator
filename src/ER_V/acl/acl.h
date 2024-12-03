@@ -35,7 +35,8 @@ typedef enum _acl_command_type
     ACL_CMD_HERE,
     ACL_CMD_MANUAL,
     ACL_CMD_ABORT,
-    ACL_CMD_LISTPV
+    ACL_CMD_LISTPV,
+    ACL_CMD_SET_SPEED
 } ACL_Command_Type;
 
 /** ACL Command Map for the command string, length, and node */
@@ -122,6 +123,14 @@ int ACL_enqueue_listpv_cmd(S_List *cmd_queue, char* position);
  * @returns 0 on success, -1 on failure
  */
 int ACL_enqueue_listpv_pos_cmd(S_List *cmd_queue);
+
+/**
+ * @brief Allocates and enqueues ACL SPEED (speed) to the input cmd_queue
+ * @param cmd_queue S_List to append to
+ * @param speed Speed value to include in command
+ * @returns 0 on success, -1 on failure
+ */
+int ACL_enqueue_set_speed_cmd(S_List *cmd_queue, int speed);
 
 /**
  * @brief Inserts a delay into the cmd_queue sequence
