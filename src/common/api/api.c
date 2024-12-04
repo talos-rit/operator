@@ -5,6 +5,7 @@
 #include "api/api.h"
 #include "api/api_private.h"
 #include "util/comm.h"
+#include "util/array.h"
 
 #define LOG_CONSOLE_THRESHOLD_THIS  LOG_THRESHOLD_MAX
 #define LOG_FILE_THRESHOLD_THIS     LOG_THRESHOLD_MAX
@@ -44,7 +45,7 @@ int API_validate_command (const uint8_t *buf, uint16_t len)
     // TODO: Check for duplicate cmd_ids
 
     // Check length
-    if (len < API_WRAPPER_HEAD_LEN + cmd->header.len) STD_FAIL
+    if (len < sizeof(API_Data_Header) + cmd->header.len) STD_FAIL
 
     // Command specific preparation
     switch (cmd->header.cmd_val)

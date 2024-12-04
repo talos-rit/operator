@@ -24,7 +24,7 @@ typedef struct _sock_props
 
     Subscriber *sub;
     bool thread_en;
-}Socket_Props;
+} Socket_Props;
 
 class Socket : public Inbox
 {
