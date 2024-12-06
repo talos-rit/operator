@@ -124,6 +124,16 @@ static void* socket_poll (void* arg)
         }
     }
 
+    // Empty receive buffer; avoid TIME_WAIT on socket
+    LOG_IEC();
+    if(-1 == shutdown(props->connfd, SHUT_RDWR)) LOG_ERROR("Error shutting donw socket: (%d) %s", errno, strerror(errno));
+    while (recv(props->connfd, &buffer[0], sizeof(buffer), 0) > 0);
+    if (-1 == props->connfd)
+    {
+        close (props->connfd);
+        props->connfd = -1;
+    }
+
     return NULL;
 }
 
@@ -140,14 +150,6 @@ int Socket::Start()
 int Socket::Stop()
 {
     props.thread_en = false;
-
-    if (-1 != props.connfd)
-    {
-        // Close connection
-        close(props.connfd);
-        props.connfd = -1;
-    }
-
     pthread_join(pid, NULL);    // Wait for thread to exit
     return 0;
 }

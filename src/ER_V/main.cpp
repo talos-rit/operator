@@ -117,9 +117,9 @@ int main(int argc, char* argv[])
     LOG_INFO("Shutting down...");
 
     // Cleanup running processes
+    inbox->Stop();
     hermes.Stop();
     bot->Stop();
-    inbox->Stop();
 
     // Release resources
     delete bot;
