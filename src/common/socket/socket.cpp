@@ -38,39 +38,28 @@ static int init_socket(Socket_Props* props)
     return 0;
 }
 
-static int abort_connection(Socket_Props* props)
-{
-    // LOG_VERBOSE(4, "Close socket: %d", close(props->sockfd)); // Unblocks accept syscall
-    // shutdown(props->sockfd, SHUT_RDWR);
-
-    // props->sockfd = -1;
-    // return init_socket(props); // reinit socket for new accept
-    LOG_IEC();
-    return 0;
-}
-
 Socket::Socket()
 {
     // Create socket
     init_socket(&props);
-    props.connfd = -2;
+    props.connfd = -1;
 }
 
 Socket::~Socket()
 {
-    status = init_socket(&props);
+    if (-1 != props.connfd) close(props.connfd);
+    if (-1 != props.sockfd) close(props.sockfd);
 }
 
 static void* socket_poll (void* arg)
 {
-    Socket_Props *props = (Socket_Props*) arg;
+    Socket_Props* props = (Socket_Props*) arg;
     Subscriber* sub = props->sub;
 
+    bool idle = true;
     int ret = 0;
     uint16_t buf_iter = 0;
-    uint16_t buf_len = 0;
     char buffer[SOCKET_BUF_LEN];
-    bool idle = true;
 
     memset(&buffer[0], 0, SOCKET_BUF_LEN);
 
@@ -98,28 +87,31 @@ static void* socket_poll (void* arg)
         idle = true;
 
         // Handle rx
-        ret = read(props->connfd, &buffer[buf_iter], sizeof(buffer) - buf_iter);
+        ret = recv(props->connfd, &buffer[buf_iter], sizeof(buffer) - buf_iter, MSG_DONTWAIT);
         if (-1 == ret)
         {
-            LOG_ERROR("Socket read error: (%d) %s", errno, strerror(errno));
+            // errno will be set to EAGAIN if no message was received
+            if (EAGAIN == errno) continue;
+
+            // Some other error; Exit execution
+            LOG_FATAL("Socket read error: (%d) %s", errno, strerror(errno));
             LOG_IEC();
             break;
         }
 
+        LOG_VERBOSE(6, "SOCKET ITER");
         if (0 == ret) continue;
 
         idle = false;
-        buf_len  += ret;
         buf_iter += ret;
 
-        if(raw_conn > 0) write(raw_conn, &buffer[buf_iter], ret);
-        while (buf_len >= sizeof(API_Data_Header) + 2)
+        while (buf_iter >= sizeof(API_Data_Header) + 2)
         {
             API_Data_Wrapper* msg = (API_Data_Wrapper*) &buffer[0];
 
             // Check length
             uint16_t len = sizeof(API_Data_Header) + be16toh(msg->header.len) + 2;
-            if (buf_len < len) break;
+            if (buf_iter < len) break;
 
             SUB_Buffer* buf = sub->DequeueBuffer(SUB_QUEUE_FREE);
             buf->len = len;
@@ -127,9 +119,8 @@ static void* socket_poll (void* arg)
             sub->EnqueueBuffer(SUB_QUEUE_COMMAND, buf);
             LOG_VERBOSE(2, "Received ICD command");
 
-            buf_len  -= len;
             buf_iter -= len;
-            memcpy(&buffer[0], &buffer[len], buf_len);
+            memcpy(&buffer[0], &buffer[len], buf_iter);
         }
     }
 
@@ -149,9 +140,15 @@ int Socket::Start()
 int Socket::Stop()
 {
     props.thread_en = false;
-    if (-2 == props.connfd) abort_connection(&props);   // Accept call is still blocking; abort
-    if (-1 != props.connfd) close(props.connfd);        // Otherwise, close connection
-    pthread_join(pid, NULL);                            // Wait for thread to exit
+
+    if (-1 != props.connfd)
+    {
+        // Close connection
+        close(props.connfd);
+        props.connfd = -1;
+    }
+
+    pthread_join(pid, NULL);    // Wait for thread to exit
     return 0;
 }
 
