@@ -73,17 +73,14 @@ static int wait_for_connection(Socket_Props* props)
         }
     }
 
-    if (props->connfd > 0)
-    {
-        LOG_INFO ("Connection Established.");
-        return 0;
-    }
-
-    else
+    if (props->connfd < 0)
     {
         LOG_INFO("Connection Failed.");
         STD_FAIL;
     }
+
+    LOG_INFO ("Connection Established.");
+    return 0;
 }
 
 int send_response(Socket_Props* props)
