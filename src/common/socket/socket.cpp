@@ -1,6 +1,8 @@
 #include <stdint.h>
 #include <errno.h>
 #include <fcntl.h>
+#include <sys/time.h>
+#include <signal.h>
 
 #include "socket/socket.h"
 #include "util/comm.h"
@@ -103,6 +105,7 @@ static void* socket_poll (void* arg)
     Socket_Props* props = (Socket_Props*) arg;
     Subscriber* sub = props->sub;
 
+    struct timeval last_ping;
     bool idle = true;
     int ret = 0;
     uint16_t buf_iter = 0;
@@ -117,6 +120,7 @@ static void* socket_poll (void* arg)
         return NULL;
     }
 
+    gettimeofday(&last_ping, NULL);
     while(props->thread_en)
     {
         if (idle) usleep (SOCKET_POLL_PERIOD_MS * 1000);
@@ -152,6 +156,7 @@ static void* socket_poll (void* arg)
             continue; // continue receiving after reconnection
         }
 
+        gettimeofday(&last_ping, NULL);
         idle = false;
         buf_iter += ret;
 
@@ -163,12 +168,14 @@ static void* socket_poll (void* arg)
             uint16_t len = sizeof(API_Data_Header) + be16toh(msg->header.len) + 2;
             if (buf_iter < len) break;
 
+            // Enqueue copied message to command buffer
             SUB_Buffer* buf = sub->DequeueBuffer(SUB_QUEUE_FREE);
             buf->len = len;
             memcpy(&buf->body[0], msg, buf->len);
             sub->EnqueueBuffer(SUB_QUEUE_COMMAND, buf);
             LOG_VERBOSE(2, "Received ICD command");
 
+            // Re-align buffer
             buf_iter -= len;
             memcpy(&buffer[0], &buffer[len], buf_iter);
 
