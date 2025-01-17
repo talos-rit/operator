@@ -1,6 +1,8 @@
 #include <stdint.h>
 #include <errno.h>
 #include <fcntl.h>
+#include <sys/time.h>
+#include <signal.h>
 
 #include "socket/socket.h"
 #include "util/comm.h"
@@ -56,6 +58,7 @@ static void* socket_poll (void* arg)
     Socket_Props* props = (Socket_Props*) arg;
     Subscriber* sub = props->sub;
 
+    struct timeval last_ping;
     bool idle = true;
     int ret = 0;
     uint16_t buf_iter = 0;
@@ -78,9 +81,7 @@ static void* socket_poll (void* arg)
         }
     }
 
-    if (props->connfd > 0) LOG_INFO ("Connection Established.");
-    else LOG_INFO("Connection Failed.");
-
+    gettimeofday(&last_ping, NULL);
     while(props->thread_en)
     {
         if (idle) usleep (SOCKET_POLL_PERIOD_MS * 1000);
@@ -100,8 +101,19 @@ static void* socket_poll (void* arg)
         }
 
         LOG_VERBOSE(6, "SOCKET ITER");
-        if (0 == ret) continue;
+        if (0 == ret)
+        {
+            struct timeval duration;
+            gettimeofday(&duration, NULL);
 
+            int16_t msecs = (1000 * (duration.tv_sec - last_ping.tv_sec)) + ((duration.tv_usec - last_ping.tv_usec) / 1000);
+            if (msecs < SOCKET_TIMEOUT_MS) continue;
+
+            LOG_ERROR("Connection drop detected; Terminating socket.");
+            raise(SIGABRT);
+        }
+
+        gettimeofday(&last_ping, NULL);
         idle = false;
         buf_iter += ret;
 
@@ -113,12 +125,14 @@ static void* socket_poll (void* arg)
             uint16_t len = sizeof(API_Data_Header) + be16toh(msg->header.len) + 2;
             if (buf_iter < len) break;
 
+            // Enqueue copied message to command buffer
             SUB_Buffer* buf = sub->DequeueBuffer(SUB_QUEUE_FREE);
             buf->len = len;
             memcpy(&buf->body[0], msg, buf->len);
             sub->EnqueueBuffer(SUB_QUEUE_COMMAND, buf);
             LOG_VERBOSE(2, "Received ICD command");
 
+            // Re-align buffer
             buf_iter -= len;
             memcpy(&buffer[0], &buffer[len], buf_iter);
         }
@@ -126,7 +140,7 @@ static void* socket_poll (void* arg)
 
     // Empty receive buffer; avoid TIME_WAIT on socket
     LOG_IEC();
-    if(-1 == shutdown(props->connfd, SHUT_RDWR)) LOG_ERROR("Error shutting donw socket: (%d) %s", errno, strerror(errno));
+    if(-1 == shutdown(props->connfd, SHUT_RDWR)) LOG_ERROR("Error shutting down socket: (%d) %s", errno, strerror(errno));
     while (recv(props->connfd, &buffer[0], sizeof(buffer), 0) > 0);
     if (-1 == props->connfd)
     {

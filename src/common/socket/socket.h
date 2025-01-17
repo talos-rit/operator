@@ -13,6 +13,8 @@
 
 #define SOCKET_BUF_LEN 1024
 #define SOCKET_POLL_PERIOD_MS 25
+#define SOCKET_PING_FREQ_MS 63
+#define SOCKET_TIMEOUT_MS (4 * SOCKET_PING_FREQ_MS)
 
 typedef struct _sock_props
 {
