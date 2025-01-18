@@ -2,9 +2,9 @@
 # Modified by Brooke Leinberger
 ####################################### BEG_3 ####
 
-NAME        := erv
+NAME        := ichor
 
-SUB_DIR		:= src/ER_V
+SUB_DIR		:= src/Ichor
 EXT_DIR 	:= src/common
 
 INT_SRC_DIR := $(SUB_DIR)
@@ -27,8 +27,7 @@ FLAGS 		:= $(CPP_FLAGS) $(CPP_LIB) $(CPP_INC) $(AMQ_LIB) $(AMQ_INC)
 SRCS        := acl/acl.c
 
 MAIN_CPP    := main.cpp
-SRCS_CPP    := erv_arm/erv.cpp
-SRCS_CPP	+= erv_conf/erv_conf.cpp
+SRCS_CPP    := conf/ichor_conf.cpp
 
 # External sources (Common)
 EXTS		:= log/log.c
