@@ -4,87 +4,53 @@
 
 NAME        := ichor
 
-SUB_DIR		:= src/Ichor
-EXT_DIR 	:= src/common
-
-INT_SRC_DIR := $(SUB_DIR)
-EXT_SRC_DIR := $(EXT_DIR)
-OBJ_DIR     := build/obj
-BIN_DIR		:= build/bin
+SUB_DIR		:= $(SRC_DIR)/Ichor
 TEST 		:= $(BIN_DIR)/$(NAME)_test
 BINS		:= $(BIN_DIR)/$(NAME)
 
 # Compiler options
-CC          := g++
-CPP_FLAGS   := -g -Wall -Wextra -Wno-deprecated-declarations -D _DEFAULT_SOURCE
-CPP_LIB 	:= -lpthread
-CPP_INC     := -I include -I$(INT_SRC_DIR) -I$(EXT_SRC_DIR)
-AMQ_LIB 	:= -luuid -lssl -lcrypto -lapr-1 -lactivemq-cpp
-AMQ_INC 	:= -I/usr/include/apr-1.0/ -I/usr/local/include/activemq-cpp-3.10.0/
-FLAGS 		:= $(CPP_FLAGS) $(CPP_LIB) $(CPP_INC) $(AMQ_LIB) $(AMQ_INC)
+# CC          := g++
+# CPP_FLAGS   := -g -Wall -Wextra -Wno-deprecated-declarations -D _DEFAULT_SOURCE
+# CPP_LIB 	:= -lpthread
+# CPP_INC     := -I include -I$(COMMON_DIR) -I$(SUB_DIR)
+# AMQ_LIB 	:= -luuid -lssl -lcrypto -lapr-1 -lactivemq-cpp
+# AMQ_INC 	:= -I/usr/include/apr-1.0/ -I/usr/local/include/activemq-cpp-3.10.0/
+# FLAGS 		:= $(CFLAGS) $(CPP_FLAGS) $(CPP_LIB) $(CPP_INC) $(AMQ_LIB) $(AMQ_INC)
 
 # Internal sources (ER_V)
-SRCS        := acl/acl.c
+SRCS        :=
 
 MAIN_CPP    := main.cpp
-SRCS_CPP    := conf/ichor_conf.cpp
-
-# External sources (Common)
-EXTS		:= log/log.c
-EXTS		+= util/timestamp.c
-EXTS		+= data/s_list.c
-EXTS		+= api/api.c
-
-EXTS_CPP	:= tamq/tamq_sub.cpp
-EXTS_CPP	+= socket/socket.cpp
-EXTS_CPP	+= sub/sub.cpp
-EXTS_CPP	+= arm/arm.cpp
-EXTS_CPP	+= conf/config.cpp
-EXTS_CPP	+= log/log_config.cpp
-EXTS_CPP	+= tamq/tamq_conf.cpp
-EXTS_CPP	+= tmp/tmp.cpp
+SRCS_CPP    := arm/ichor.cpp
+SRCS_CPP	+= conf/ichor_conf.cpp
 
 # Automated reformatting
-SRCS 		:= $(SRCS:%=$(INT_SRC_DIR)/%)
-EXTS 		:= $(EXTS:%=$(EXT_SRC_DIR)/%)
-SRCS_CPP 	:= $(SRCS_CPP:%=$(INT_SRC_DIR)/%)
-MAIN_CPP	:= $(MAIN_CPP:%=$(INT_SRC_DIR)/%)
-EXTS_CPP 	:= $(EXTS_CPP:%=$(EXT_SRC_DIR)/%)
+SRCS 		:= $(SRCS:%=$(SUB_DIR)/%)
+SRCS_CPP 	:= $(SRCS_CPP:%=$(SUB_DIR)/%)
+MAIN_CPP	:= $(MAIN_CPP:%=$(SUB_DIR)/%)
 
-OBJS := $(SRCS:$(INT_SRC_DIR)/%.c=$(OBJ_DIR)/$(SUB_DIR)/%.o)
-OBJS += $(EXTS:$(EXT_SRC_DIR)/%.c=$(OBJ_DIR)/$(EXT_DIR)/%.o)
-OBJS += $(SRCS_CPP:$(INT_SRC_DIR)/%.cpp=$(OBJ_DIR)/$(SUB_DIR)/%.o)
-OBJS += $(EXTS_CPP:$(EXT_SRC_DIR)/%.cpp=$(OBJ_DIR)/$(EXT_DIR)/%.o)
-MAIN := $(MAIN_CPP:$(INT_SRC_DIR)/%.cpp=$(OBJ_DIR)/$(SUB_DIR)/%.o)
+OBJS := $(SRCS:$(SUB_DIR)/%.c=$(MAKE_DIR)/$(OBJ_DIR)/$(SUB_DIR)/%.o)
+OBJS += $(SRCS_CPP:$(SUB_DIR)/%.cpp=$(MAKE_DIR)/$(OBJ_DIR)/$(SUB_DIR)/%.o)
+MAIN := $(MAIN_CPP:$(SUB_DIR)/%.cpp=$(MAKE_DIR)/$(OBJ_DIR)/$(SUB_DIR)/%.o)
 
-
-RM          := rm -f
-# MAKEFLAGS   += --no-print-directory
-DIR_DUP     = mkdir -p $(@D)
+RM        	:= rm -f
+DIR_DUP      = mkdir -p $(@D)
 
 all: $(NAME)
 
+
 # Executable
 $(NAME): $(MAIN) $(OBJS)
-	$(CC) $(MAIN) $(OBJS) $(FLAGS) -o $(BIN_DIR)/$(NAME)
+	$(CC) $(MAIN) $(OBJS) $(CFLAGS) $(FLAGS) -L$(MAKE_DIR)/$(BIN_DIR) -l$(COMMON_LIB) -o $(MAKE_DIR)/$(BIN_DIR)/$(NAME)
+	@echo "    Target created: $@"
 
 # Internal source compilation
-$(OBJ_DIR)/$(SUB_DIR)/%.o: $(INT_SRC_DIR)/%.c
+$(MAKE_DIR)/$(OBJ_DIR)/$(SUB_DIR)/%.o: $(MAKE_DIR)/$(SUB_DIR)/%.c
 	$(DIR_DUP)
-	$(CC) $(FLAGS) -c -o $@ $<
-
-# External source compilation
-$(OBJ_DIR)/$(EXT_DIR)/%.o: $(EXT_SRC_DIR)/%.c
-	$(DIR_DUP)
-	$(CC) $(FLAGS) -c -o $@ $<
+	$(CC) $(CFLAGS) $(FLAGS) -c -o $@ $<
 
 # Internal source compilation
-$(OBJ_DIR)/$(SUB_DIR)/%.o: $(INT_SRC_DIR)/%.cpp
-	$(DIR_DUP)
-	$(CC) $(FLAGS) -c -o $@ $<
-
-# External source compilation
-$(OBJ_DIR)/$(EXT_DIR)/%.o: $(EXT_SRC_DIR)/%.cpp
+$(MAKE_DIR)/$(OBJ_DIR)/$(SUB_DIR)/%.o: $(MAKE_DIR)/$(SUB_DIR)/%.cpp
 	$(DIR_DUP)
 	$(CC) $(FLAGS) -c -o $@ $<
 
@@ -93,8 +59,6 @@ clean:
 
 fclean: clean
 	$(RM) $(NAME)
-	mkdir -p $(BIN_DIR)
-	mkdir -p $(OBJ_DIR)
 
 re:
 	$(MAKE) fclean
@@ -109,14 +73,14 @@ INT_UTEST_CPP := all_tests.cpp
 
 EXT_UTEST_CPP := tmp/tests/tmp_test.cpp
 
-INT_UTESTS_CPP	:= $(INT_UTEST_CPP:%=$(INT_SRC_DIR)/%)
+INT_UTESTS_CPP	:= $(INT_UTEST_CPP:%=$(SUB_DIR)/%)
 EXT_UTESTS_CPP	:= $(EXT_UTEST_CPP:%=$(EXT_SRC_DIR)/%)
 
-UTEST_OBJS		:= $(INT_UTESTS_CPP:$(INT_SRC_DIR)/%.cpp=$(OBJ_DIR)/$(SUB_DIR)/%.o)
-UTEST_OBJS		+= $(EXT_UTESTS_CPP:$(EXT_SRC_DIR)/%.cpp=$(OBJ_DIR)/$(EXT_DIR)/%.o)
+ERV_UTEST_OBJS		:= $(INT_UTESTS_CPP:$(SUB_DIR)/%.cpp=$(OBJ_DIR)/$(SUB_DIR)/%.o)
+ERV_UTEST_OBJS		+= $(EXT_UTESTS_CPP:$(EXT_SRC_DIR)/%.cpp=$(OBJ_DIR)/$(EXT_DIR)/%.o)
 
-test: re $(OBJS) $(UTEST_OBJS)
-	g++ $(UTEST_OBJS) $(OBJS) -g -o $(TEST) $(FLAGS) -lCppUTest -lCppUTestExt -I$(INT_SRC_DIR) -I$(EXT_SRC_DIR)
+test: re $(OBJS) $(ERV_UTEST_OBJS)
+	g++ $(ERV_UTEST_OBJS) $(OBJS) -g -o $(TEST) $(FLAGS) -lCppUTest -lCppUTestExt -I$(SUB_DIR) -I$(EXT_SRC_DIR)
 	$(TEST)
 
 #------------------------------------------------#

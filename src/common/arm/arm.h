@@ -26,6 +26,13 @@ private:
     virtual int Home(API_Data_Home* home) = 0;
 
 public:
+    enum OversteerConfig
+    {
+        OVERSTEER_NONE,
+        OVERSTEER_IGNORE,
+        OVERSTEER_ABORT,
+    };
+
     Arm();
     virtual ~Arm();
 

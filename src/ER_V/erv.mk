@@ -3,87 +3,48 @@
 ####################################### BEG_3 ####
 
 NAME        := erv
+DIR			:= ER_V
 
-SUB_DIR		:= $(SRC_DIR)/ER_V
-TEST 		:= $(BIN_DIR)/$(NAME)_test
-BINS		:= $(BIN_DIR)/$(NAME)
-
-# Compiler options
-# CC          := g++
-# CPP_FLAGS   := -g -Wall -Wextra -Wno-deprecated-declarations -D _DEFAULT_SOURCE
-# CPP_LIB 	:= -lpthread
-# CPP_INC     := -I include -I$(COMMON_DIR) -I$(SUB_DIR)
-AMQ_LIB 	:= -luuid -lssl -lcrypto -lapr-1 -lactivemq-cpp
-AMQ_INC 	:= -I/usr/include/apr-1.0/ -I/usr/local/include/activemq-cpp-3.10.0/
-FLAGS 		:= $(CFLAGS) $(CPP_FLAGS) $(CPP_LIB) $(CPP_INC) $(AMQ_LIB) $(AMQ_INC)
-
-# Internal sources (ER_V)
+# C sources
 SRCS        := acl/acl.c
 
+# C++ sources
 MAIN_CPP    := main.cpp
 SRCS_CPP    := erv_arm/erv.cpp
 SRCS_CPP	+= erv_conf/erv_conf.cpp
 
-# Automated reformatting
-SRCS 		:= $(SRCS:%=$(SUB_DIR)/%)
-SRCS_CPP 	:= $(SRCS_CPP:%=$(SUB_DIR)/%)
-MAIN_CPP	:= $(MAIN_CPP:%=$(SUB_DIR)/%)
+# C++ test sources
+UTEST_CPP := all_tests.cpp
 
-OBJS := $(SRCS:$(SUB_DIR)/%.c=$(MAKE_DIR)/$(OBJ_DIR)/$(SUB_DIR)/%.o)
-OBJS += $(SRCS_CPP:$(SUB_DIR)/%.cpp=$(MAKE_DIR)/$(OBJ_DIR)/$(SUB_DIR)/%.o)
-MAIN := $(MAIN_CPP:$(SUB_DIR)/%.cpp=$(MAKE_DIR)/$(OBJ_DIR)/$(SUB_DIR)/%.o)
+# Object reformatting
+ERV_OBJS 		:= $(SRCS:%.c=$(OBJ_DIR)/$(DIR)/%.o)
+ERV_OBJS 		+= $(SRCS_CPP:%.cpp=$(OBJ_DIR)/$(DIR)/%.o)
+ERV_MAIN 		:= $(MAIN_CPP:%.cpp=$(OBJ_DIR)/$(DIR)/%.o)
+ERV_UTEST_OBJS	:= $(UTEST_CPP:%.cpp=$(OBJ_DIR)/$(DIR)/%.o)
 
-RM        	:= rm -f
+RM          := rm -rf
+# MAKEFLAGS   += --no-print-directory
 DIR_DUP      = mkdir -p $(@D)
+PHONIES 	:= all re clean fclean
 
-all: $(NAME)
-
+ex := re clean log bog fclean
+erv_print:
+	$(info PHONIES: )
 
 # Executable
-$(NAME): $(MAIN) $(OBJS)
-	$(CC) $(MAIN) $(OBJS) $(CFLAGS) $(FLAGS) -L$(MAKE_DIR)/$(BIN_DIR) -l$(COMMON_LIB) -o $(MAKE_DIR)/$(BIN_DIR)/$(NAME)
-	@echo "    Target created: $@"
+erv: $(COMMON_OBJS) $(ERV_OBJS) $(ERV_MAIN)
+	@mkdir -p $(BIN_DIR)
+	$(CC) $^ $(FLAGS) -o $(BIN_DIR)/$@
+	@echo "    Target    $@"
 
-# Internal source compilation
-$(MAKE_DIR)/$(OBJ_DIR)/$(SUB_DIR)/%.o: $(MAKE_DIR)/$(SUB_DIR)/%.c
-	$(DIR_DUP)
-	$(CC) $(CFLAGS) $(FLAGS) -c -o $@ $<
-
-# Internal source compilation
-$(MAKE_DIR)/$(OBJ_DIR)/$(SUB_DIR)/%.o: $(MAKE_DIR)/$(SUB_DIR)/%.cpp
-	$(DIR_DUP)
-	$(CC) $(FLAGS) -c -o $@ $<
-
-clean:
-	$(RM) $(OBJS)
-
-fclean: clean
-	$(RM) $(NAME)
-	mkdir -p $(BIN_DIR)
-	mkdir -p $(OBJ_DIR)
+erv_test: re $(COMMON_OBJS) $(COMMON_UTEST_OBJS) $(ERV_OBJS) $(ERV_UTEST_OBJS)
+	@mkdir -p $(BIN_DIR)
+	$(CC) $(filter-out $(PHONIES),$^) $(FLAGS) $(UTEST_LIB) -o $(BIN_DIR)/$@
+	$(BIN_DIR)/$@
 
 re:
 	$(MAKE) fclean
-	$(MAKE) all
-
-
-#------------------------------------------------#
-#   Tests                                        #
-#------------------------------------------------#
-
-INT_UTEST_CPP := all_tests.cpp
-
-EXT_UTEST_CPP := tmp/tests/tmp_test.cpp
-
-INT_UTESTS_CPP	:= $(INT_UTEST_CPP:%=$(SUB_DIR)/%)
-EXT_UTESTS_CPP	:= $(EXT_UTEST_CPP:%=$(EXT_SRC_DIR)/%)
-
-UTEST_OBJS		:= $(INT_UTESTS_CPP:$(SUB_DIR)/%.cpp=$(OBJ_DIR)/$(SUB_DIR)/%.o)
-UTEST_OBJS		+= $(EXT_UTESTS_CPP:$(EXT_SRC_DIR)/%.cpp=$(OBJ_DIR)/$(EXT_DIR)/%.o)
-
-test: re $(OBJS) $(UTEST_OBJS)
-	g++ $(UTEST_OBJS) $(OBJS) -g -o $(TEST) $(FLAGS) -lCppUTest -lCppUTestExt -I$(SUB_DIR) -I$(EXT_SRC_DIR)
-	$(TEST)
+	$(MAKE) erv
 
 #------------------------------------------------#
 #   SPEC                                         #
