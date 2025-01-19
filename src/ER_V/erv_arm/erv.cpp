@@ -35,7 +35,7 @@ Scorbot::Scorbot(const char* dev)
     ACL_init();
     polar_pan_cont = '\0';
     manual_mode = false;
-    oversteer = ERV_OVERSTEER_ABORT;
+    oversteer = OVERSTEER_ABORT;
     DATA_S_List_init(&cmd_buffer);
 }
 
@@ -240,13 +240,13 @@ int Scorbot::PolarPan(API_Data_Polar_Pan *pan)
 
     switch(oversteer)
     {
-        case ERV_OVERSTEER_NONE:
+        case OVERSTEER_NONE:
             ACL_convert_polar_pan_direct(&cmd_list, pan);
             break;
-        case ERV_OVERSTEER_IGNORE:
+        case OVERSTEER_IGNORE:
             ACL_convert_polar_pan_ignore(&cmd_list, pan);
             break;
-        case ERV_OVERSTEER_ABORT:
+        case OVERSTEER_ABORT:
             ACL_convert_polar_pan_abort(&cmd_list, pan);
             break;
         default:

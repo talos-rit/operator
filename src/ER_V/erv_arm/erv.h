@@ -8,12 +8,6 @@
 class Scorbot : public Arm
 {
     public:
-        enum ERV_Oversteer_config
-        {
-            ERV_OVERSTEER_NONE,
-            ERV_OVERSTEER_IGNORE,
-            ERV_OVERSTEER_ABORT,
-        };
 
         Scorbot(const char* dev);
         ~Scorbot();
@@ -23,7 +17,7 @@ class Scorbot : public Arm
         int fd;
         char polar_pan_cont;
         bool manual_mode;
-        ERV_Oversteer_config oversteer;
+        OversteerConfig oversteer;
         S_List cmd_buffer;
 
 
