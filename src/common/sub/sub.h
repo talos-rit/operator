@@ -50,7 +50,9 @@ typedef struct _sub_instance
     // Inbox*  cmd;                        /** Pointer to Concrete Subscriber instance */
     // SUB_Status      status;                     /** Current status of subscriber interface */
     // SUB_Concrete    sub_type;                   /** Stores the type of messenger being used (e.g.: TAMQ vs HTTP) */
-    SUB_Buffer      msg_pool[SUB_MSG_COUNT];    /** Statically allocated pool of Sub Messages */
+    // SUB_Buffer      msg_pool[SUB_MSG_COUNT];    /** Statically allocated pool of Sub Messages */
+    uint32_t        pool_len;                   /** Number of SUB_Buffers in the message pool */
+    SUB_Buffer*     msg_pool;                   /** Dynamically allocated pool of Sub Messages */
     pthread_mutex_t locks[SUB_QUEUE_LEN];       /** Subscriber queue locks; Indeces correspond to the SUB_Queue enum */
     S_List          queues[SUB_QUEUE_LEN];      /** Subscriber queues; Indeces correspond to the SUB_Queue enum */
 } SUB_Instance;

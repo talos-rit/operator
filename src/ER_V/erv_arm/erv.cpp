@@ -50,6 +50,7 @@ Scorbot::Scorbot(const char* dev)
 Scorbot::~Scorbot()
 {
     if(-1 != fd && close(fd)) LOG_ERROR("Scorbot: Could not close device descriptor: %s", strerror(errno));
+    ACL_destroy();
 }
 
 /**

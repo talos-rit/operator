@@ -31,12 +31,29 @@ int ACL_Command_init(ACL_Command *cmd)
 int ACL_init()
 {
     memset(&resources, 0, sizeof(resources));
+    resources.cmd_pool = (ACL_Command*) malloc (ACL_CMD_COUNT * sizeof(ACL_Command));
+    resources.cmd_count = ACL_CMD_COUNT;
+
     for(uint16_t iter = 0; iter < ACL_CMD_COUNT; iter++)
     {
         ACL_Command_init(&resources.cmd_pool[iter]);
     }
 
     resources.manaul_mode = 0;  // Default is not manual mode
+    return 0;
+}
+
+
+int ACL_destroy()
+{
+    DATA_S_List_deinit(&resources.free_queue);
+    resources.cmd_count = 0;
+    if (resources.cmd_pool)
+    {
+        free(resources.cmd_pool);
+        resources.cmd_pool = NULL;
+    }
+
     return 0;
 }
 
@@ -105,7 +122,7 @@ char ACL_get_polar_pan_continuous_vector(API_Data_Polar_Pan_Start* payload)
     }
     else
     {
-        //LOG_IEC();
+        // LOG_IEC(); // A directionless start should not be issued
         return '\0';
     }
 
