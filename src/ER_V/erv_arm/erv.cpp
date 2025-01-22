@@ -42,6 +42,7 @@ Scorbot::Scorbot(const char* dev)
 Scorbot::~Scorbot()
 {
     if(-1 != fd && close(fd)) LOG_ERROR("Scorbot: Could not close device descriptor: %s", strerror(errno));
+    ACL_destroy();
 }
 
 /**
@@ -277,7 +278,7 @@ int Scorbot::PolarPanStart(API_Data_Polar_Pan_Start *pan)
 
     polar_pan_cont = ACL_get_polar_pan_continuous_vector(pan);
 
-    if('\0' == polar_pan_cont) return -1;
+    if('\0' == polar_pan_cont) PolarPanStop();
     return 0;
 }
 

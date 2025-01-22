@@ -1,3 +1,4 @@
+#include <stdlib.h>
 #include <stdarg.h>
 #include <stdio.h>
 #include <stdint.h>
@@ -252,6 +253,9 @@ static int8_t init_log_lists(Log *log)
 int8_t LOG_prep()
 {
     memset(&the_log, 0, sizeof(Log));
+    the_log.buffer_pool = (LOG_Buffer*) malloc(LOG_MAX_BUFFER * sizeof(LOG_Buffer));
+    the_log.pool_count = LOG_MAX_BUFFER;
+
     if (-1 == pthread_mutex_init(&the_log.gen_lock,  NULL)) return -1;
     if (-1 == pthread_mutex_init(&the_log.wr_lock,   NULL)) return -1;
     if (-1 == pthread_mutex_init(&the_log.free_lock, NULL)) return -1;
@@ -290,5 +294,12 @@ int8_t LOG_destory()
 {
     if(-1 != the_log.fd) close(the_log.fd);
     pthread_mutex_destroy(&the_log.gen_lock);
+    DATA_S_List_deinit(&the_log.free_queue);
+    the_log.pool_count = 0;
+    if(the_log.buffer_pool)
+    {
+        free(the_log.buffer_pool);
+        the_log.buffer_pool = NULL;
+    }
     return -1;
 }

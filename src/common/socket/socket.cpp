@@ -23,6 +23,9 @@ static int init_socket(Socket_Props* props)
         STD_FAIL;
     }
 
+    int optval = 1;
+    setsockopt(props->sockfd, SOL_SOCKET, SO_REUSEADDR, &optval, sizeof(optval));
+
     // Set up server address configuration
     memset(&props->server, 0, sizeof(props->server));
     props->port = 61616;
@@ -100,20 +103,20 @@ static void* socket_poll (void* arg)
             break;
         }
 
-        LOG_VERBOSE(6, "SOCKET ITER");
         if (0 == ret)
         {
-            struct timeval duration;
-            gettimeofday(&duration, NULL);
+            // Getting to this point should mean that the connection closed (otherwise recv would return -1 for a lack of a message)
+            // struct timeval duration;
+            // gettimeofday(&duration, NULL);
 
-            int16_t msecs = (1000 * (duration.tv_sec - last_ping.tv_sec)) + ((duration.tv_usec - last_ping.tv_usec) / 1000);
-            if (msecs < SOCKET_TIMEOUT_MS) continue;
+            // int16_t msecs = (1000 * (duration.tv_sec - last_ping.tv_sec)) + ((duration.tv_usec - last_ping.tv_usec) / 1000);
+            // if (msecs < SOCKET_TIMEOUT_MS) continue;
 
             LOG_ERROR("Connection drop detected; Terminating socket.");
             raise(SIGABRT);
         }
 
-        gettimeofday(&last_ping, NULL);
+        // gettimeofday(&last_ping, NULL);
         idle = false;
         buf_iter += ret;
 
@@ -127,6 +130,12 @@ static void* socket_poll (void* arg)
 
             // Enqueue copied message to command buffer
             SUB_Buffer* buf = sub->DequeueBuffer(SUB_QUEUE_FREE);
+            if (!buf)
+            {
+                LOG_WARN ("No free network buffers"); // You DDOS'd yourself.
+                break;
+            }
+
             buf->len = len;
             memcpy(&buf->body[0], msg, buf->len);
             sub->EnqueueBuffer(SUB_QUEUE_COMMAND, buf);
@@ -142,7 +151,7 @@ static void* socket_poll (void* arg)
     LOG_IEC();
     if(-1 == shutdown(props->connfd, SHUT_RDWR)) LOG_ERROR("Error shutting down socket: (%d) %s", errno, strerror(errno));
     while (recv(props->connfd, &buffer[0], sizeof(buffer), 0) > 0);
-    if (-1 == props->connfd)
+    if (-1 != props->connfd)
     {
         close (props->connfd);
         props->connfd = -1;

@@ -48,18 +48,25 @@ typedef struct _acl_command
 } ACL_Command;
 
 /**
- * @brief Allocates memory for an ACL_Resources' array of ACL_Commands
+ * @brief Allocates memory for an ACL_Resource's array of ACL_Commands
  * @details Iterates through command pool in global ACL_Resources and populates with dummy data
-  * @returns 0 on success, -1 on failure
+ * @returns 0 on success, -1 on failure
  */
 int ACL_init();
+
+/**
+ * @brief Dellocates memory for an ACL_Resource's array of ACL_Commands
+ * @details Iterates through command pool in global ACL_Resources and populates with dummy data
+ * @returns 0 on success, -1 on failure
+ */
+int ACL_destroy();
 
 /**
  * @brief Allocates memory for a single ACL_Command and initializes its S_List node
  * @details Fills the input cmd with dummy data in the form of 0's
  * Initializes cmd's S_List_Node; appends node to global resource's S_List
  * @param cmd ACL_Command to initialize
-  * @returns 0 on success, -1 on failure
+ * @returns 0 on success, -1 on failure
  */
 int ACL_Command_init(ACL_Command *cmd);
 
