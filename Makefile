@@ -1,6 +1,3 @@
-# include src/ER_4U/operator_er4u.mk
-# include src/ActiveMQ_Demo/demo.mk
-
 MAKE_DIR	 = $(PWD)
 OBJ_DIR     := build/obj
 BIN_DIR		:= build/bin
@@ -15,6 +12,8 @@ AMQ_LIB 	:= -luuid -lssl -lcrypto -lapr-1 -lactivemq-cpp
 AMQ_INC 	:= -I/usr/include/apr-1.0/ -I/usr/local/include/activemq-cpp-3.10.0/
 FLAGS 		:= $(CPP_FLAGS) $(CPP_LIB) $(CPP_INC) $(AMQ_LIB) $(AMQ_INC)
 UTEST_LIB 	:= -lCppUTest -lCppUTestExt
+
+PHONIES := clean
 
 .PHONY: clean
 clean:
@@ -35,3 +34,4 @@ $(OBJ_DIR)/%.o: $(SRC_DIR)/%.cpp
 
 include src/common/common.mk
 include src/ER_V/erv.mk
+include src/Ichor/ichor.mk

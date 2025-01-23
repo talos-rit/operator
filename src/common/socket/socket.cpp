@@ -114,6 +114,7 @@ static void* socket_poll (void* arg)
 
             LOG_ERROR("Connection drop detected; Terminating socket.");
             raise(SIGABRT);
+            break;
         }
 
         // gettimeofday(&last_ping, NULL);
