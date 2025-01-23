@@ -3,7 +3,7 @@
 ####################################### BEG_3 ####
 
 NAME        := erv
-DIR			:= ER_V
+ERV_DIR			:= ER_V
 
 # C sources
 SRCS        := acl/acl.c
@@ -17,17 +17,16 @@ SRCS_CPP	+= erv_conf/erv_conf.cpp
 UTEST_CPP := all_tests.cpp
 
 # Object reformatting
-ERV_OBJS 		:= $(SRCS:%.c=$(OBJ_DIR)/$(DIR)/%.o)
-ERV_OBJS 		+= $(SRCS_CPP:%.cpp=$(OBJ_DIR)/$(DIR)/%.o)
-ERV_MAIN 		:= $(MAIN_CPP:%.cpp=$(OBJ_DIR)/$(DIR)/%.o)
-ERV_UTEST_OBJS	:= $(UTEST_CPP:%.cpp=$(OBJ_DIR)/$(DIR)/%.o)
+ERV_OBJS 		:= $(SRCS:%.c=$(OBJ_DIR)/$(ERV_DIR)/%.o)
+ERV_OBJS 		+= $(SRCS_CPP:%.cpp=$(OBJ_DIR)/$(ERV_DIR)/%.o)
+ERV_MAIN 		:= $(MAIN_CPP:%.cpp=$(OBJ_DIR)/$(ERV_DIR)/%.o)
+ERV_UTEST_OBJS	:= $(UTEST_CPP:%.cpp=$(OBJ_DIR)/$(ERV_DIR)/%.o)
 
 RM          := rm -rf
 # MAKEFLAGS   += --no-print-directory
 DIR_DUP      = mkdir -p $(@D)
-PHONIES 	:= all re clean fclean
+PHONIES 	+= erv erv_test erv_re
 
-ex := re clean log bog fclean
 erv_print:
 	$(info PHONIES: )
 
@@ -37,14 +36,14 @@ erv: $(COMMON_OBJS) $(ERV_OBJS) $(ERV_MAIN)
 	$(CC) $^ $(FLAGS) -o $(BIN_DIR)/$@
 	@echo "    Target    $@"
 
-erv_test: re $(COMMON_OBJS) $(COMMON_UTEST_OBJS) $(ERV_OBJS) $(ERV_UTEST_OBJS)
+erv_test: common_re erv_re $(COMMON_OBJS) $(COMMON_UTEST_OBJS) $(ERV_OBJS) $(ERV_UTEST_OBJS)
 	@mkdir -p $(BIN_DIR)
 	$(CC) $(filter-out $(PHONIES),$^) $(FLAGS) $(UTEST_LIB) -o $(BIN_DIR)/$@
 	$(BIN_DIR)/$@
 
-re:
-	$(MAKE) fclean
-	$(MAKE) erv
+erv_re:
+	@$(RM) $(OBJ_DIR)/$(ERV_DIR)
+
 
 #------------------------------------------------#
 #   SPEC                                         #

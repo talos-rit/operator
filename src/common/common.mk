@@ -1,4 +1,6 @@
-# External sources (Common)
+COMMON_DIR 	 = common
+
+
 COMMON		:= log/log.c
 COMMON		+= util/timestamp.c
 COMMON		+= data/s_list.c
@@ -19,3 +21,8 @@ ODIR := $(OBJ_DIR)/common
 COMMON_OBJS := $(COMMON:%.c=$(ODIR)/%.o)
 COMMON_OBJS += $(COMMON_CPP:%.cpp=$(ODIR)/%.o)
 COMMON_UTEST_OBJS := $(UTEST_CPP:%.cpp=$(ODIR)/%.o)
+
+PHONIES += common_re
+
+common_re:
+	@$(RM) $(OBJ_DIR)/$(COMMON_DIR)
