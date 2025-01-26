@@ -75,7 +75,7 @@ int Config::SetFilePath(const char* file_path)
 */
 static int is_term(char ch)
 {
-    switch (ch)
+    switch ((signed char) ch)
     {
         //Intentional fallthroughs
         case '\n':
