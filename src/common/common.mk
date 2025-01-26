@@ -11,6 +11,7 @@ COMMON_CPP	+= sub/sub.cpp
 COMMON_CPP	+= arm/arm.cpp
 COMMON_CPP	+= conf/config.cpp
 COMMON_CPP	+= log/log_config.cpp
+COMMON_CPP	+= socket/socket_conf.cpp
 COMMON_CPP	+= tmp/tmp.cpp
 
 ifeq ($(USE_ACTIVEMQ), 1)

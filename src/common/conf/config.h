@@ -173,6 +173,24 @@ class Config
         bool GetBool(const char* key);
 
         /**
+         * @brief Returns the value associated with the given index as an integer
+         * @details Uses index to directly access value, rather than linear search
+         * @param idx Index of value in key-value table
+         * @param deflt Default value of configuration
+         * @returns Integer value of configuration
+        */
+        int GetInt(int idx);
+
+        /**
+         * @brief Returns the value of the given key as an integer
+         * @details Uses linear search to find and access the value, as opposed to direct access with an index
+         * @param key Key associated with desired value
+         * @param deflt Default value of configuration
+         * @returns Integer value of configuration
+        */
+        int GetInt(const char* key);
+
+        /**
          * @brief Clears key-value table
         */
         void ClearKeyVals();

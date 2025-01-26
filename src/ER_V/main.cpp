@@ -9,7 +9,6 @@
 #include "util/array.h"
 #include "log/log.h"
 #include "sub/sub.h"
-#include "tamq/tamq_sub.h"
 #include "socket/socket.h"
 #include "arm/arm.h"
 #include "erv_arm/erv.h"
@@ -92,11 +91,6 @@ int main(int argc, char* argv[])
 
     // Init Modules
     Subscriber hermes = Subscriber();
-    // Inbox* inbox = new TAMQ_Consumer(
-    //     conf.GetBrokerAddress(),
-    //     conf.GetCommandURI(),
-    //     conf.GetUseTopics(),
-    //     conf.GetClientAck());
     Inbox* inbox = new Socket();
 
     Arm* bot = new Scorbot(conf.GetScorbotDevicePath());
