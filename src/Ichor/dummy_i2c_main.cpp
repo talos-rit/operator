@@ -44,10 +44,12 @@ int main(int argc, char* argv[])
 
     int fd = open(conf.GetI2CDev(), O_RDWR);
     if (fd < 0) LOG_WARN("Failed to open I2C bus");
-    DummyI2C* dummy = new DummyI2C(fd, 0x80);
+    DummyI2C* dummy = new DummyI2C(fd, 0x60);
 
-    const uint8_t msg[] = {0xDE, 0xAD, 0xBE, 0xEF};
-    LOG_INFO("Echo result: %d", dummy->Echo(15, msg, 4));
+    uint8_t msg[5];
+    memset(&msg, 0, 5);
+    LOG_INFO("Read result: %d", dummy->ReadReg(0, msg, 5));
+
 
     // End demo
     LOG_INFO("End Program.");
