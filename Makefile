@@ -37,7 +37,6 @@ $(OBJ_DIR)/%.o: $(SRC_DIR)/%.cpp
 	@$(CC) $(FLAGS) -c -o $(MAKE_DIR)/$@ $<
 	@echo "    CC        $@"
 
-
 include src/common/common.mk
 include src/ER_V/erv.mk
 include src/Ichor/ichor.mk
