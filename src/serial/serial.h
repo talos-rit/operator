@@ -11,7 +11,7 @@
 
 class SerialDevice
 {
-private:
+protected:
     // Internal queue management stuff
     typedef struct queue_node
     {
@@ -19,13 +19,19 @@ private:
         S_List_Node node;
     } QueueNode;
 
+    /**
+     * @brief Pops the next queue to process
+     * @returns Pointer of next queue on success, NULL on failure
+    */
+    S_List* PopQueue();
+
+private:
+
     int InitQueueNode(QueueNode* node);
 
     QueueNode queue_nodes[SERIAL_QUEUE_NODE_COUNT]; // Used to tie queues together without mixing
     S_List free_queue_nodes;    // List of free queues to use
-    S_List queue;               // Lists of frames wait here to be tranceived on the bus;
-
-protected:
+    S_List queue;   // Lists of frames wait here to be tranceived on the bus;
 
 public:
     /**
@@ -44,12 +50,12 @@ public:
     */
     typedef struct _serial_frame
     {
-        uint8_t* tx_buf;        /** Buffer to read transmitted data from */
+        const uint8_t* tx_buf;  /** Buffer to read transmitted data from */
         uint8_t* rx_buf;        /** Buffer to put received data in*/
         uint8_t len;            /** Number of bytes of transaction */
         uint32_t delay_ms;      /** Delay in milliseconds between this frame and the next */
 
-        void* callback(void);   /** Callback function for when transaction is complete */
+        void (*callback)(void);   /** Callback function for when transaction is complete */
         SerialState state;      /** The node's current state*/
         S_List_Node node;       /** Used to link frames into a list */
     } SerialFrame;
