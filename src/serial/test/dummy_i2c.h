@@ -9,4 +9,5 @@ public:
     ~DummyI2C();
 
     int Echo(uint8_t reg, const uint8_t* msg, uint8_t len);
+    int ReadReg(uint8_t reg, uint8_t* msg, uint8_t len);
 };

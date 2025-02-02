@@ -3,6 +3,7 @@
 #include <stddef.h>
 #include <stdint.h>
 #include <string.h>
+#include <errno.h>
 #include <linux/i2c-dev.h>
 #include <linux/i2c.h>
 #include <sys/ioctl.h>
@@ -49,9 +50,9 @@ int I2CDev::FlushQueue()
         struct i2c_rdwr_ioctl_data payload = {.msgs = &msgs[0], .nmsgs = msg_iter };
         int ret = 0;
         ret = ioctl(fd, I2C_SLAVE, addr);
-        if (-1 == ret) LOG_WARN ("Failed to set I2C device address");
-        else LOG_VERBOSE(2, "Set I2C device address: %u", addr);
-        ioctl(fd, I2C_RDWR, &payload);
+        if (-1 == ret) LOG_WARN ("Failed to set I2C device address: (%d) %s", errno, strerror(errno));
+        else LOG_INFO("Set I2C device address: %u", addr);
+        ret = ioctl(fd, I2C_RDWR, &payload);
     }
 
     return 0;
