@@ -9,11 +9,17 @@
 
 IchorConfig::IchorConfig()
 {
+    AddKey(ICHOR_CONF_I2C_DEV_KEY, ICHOR_CONF_I2C_DEV_DEFAULT);
 }
 
 IchorConfig::~IchorConfig()
 {
 
+}
+
+const char* IchorConfig::GetI2CDev()
+{
+    return GetVal(ICHOR_CONF_I2C_DEV_KEY);
 }
 
 int IchorConfig::LoadDefaults()
