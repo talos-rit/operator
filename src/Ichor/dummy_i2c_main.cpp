@@ -48,8 +48,13 @@ int main(int argc, char* argv[])
 
     uint8_t msg[5];
     memset(&msg, 0, 5);
-    LOG_INFO("Read result: %d", dummy->ReadReg(0, msg, 5));
+    char bytes[5 * 5];
+    uint8_t iter = 0;
 
+    LOG_INFO("Read result: %d", dummy->ReadReg(0, msg, 5));
+    for (uint8_t i = 0; i < 5; i++)
+        iter += sprintf(&bytes[iter], "0x%02X,", msg[i]);
+    LOG_INFO("Register contents: %s", bytes);
 
     // End demo
     LOG_INFO("End Program.");
