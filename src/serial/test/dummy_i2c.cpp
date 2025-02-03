@@ -57,9 +57,9 @@ int DummyI2C::ReadReg(uint8_t reg, uint8_t* msg, uint8_t len)
     config[0] = 0;
     config[1] = 0b00100001;     // Enable auto increment, disable sleep, otherwise use default values
 
-    frames[1].tx_buf = &config[0];
-    frames[1].rx_buf = NULL;
-    frames[1].len = 2;
+    frames[0].tx_buf = &config[0];
+    frames[0].rx_buf = NULL;
+    frames[0].len = 2;
 
     tx = reg;
     frames[1].tx_buf = &tx;
@@ -72,6 +72,7 @@ int DummyI2C::ReadReg(uint8_t reg, uint8_t* msg, uint8_t len)
 
     DATA_S_List_append(&commands, &frames[0].node);
     DATA_S_List_append(&commands, &frames[1].node);
+    DATA_S_List_append(&commands, &frames[2].node);
 
     QueueFrames(&commands);
     FlushQueue();

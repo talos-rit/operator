@@ -36,7 +36,7 @@ int I2CDev::FlushQueue()
     {
         memset(msgs, 0, sizeof(msgs));
         uint8_t msg_iter = 0;
-        for(S_List_Node *node = list->head; node != list->tail; node = node->next)
+        for(S_List_Node *node = list->head; node; node = node->next)
         {
             SerialFrame* frame = DATA_LIST_GET_OBJ(node, SerialFrame, node);
             // 0 is write, 1 is read
