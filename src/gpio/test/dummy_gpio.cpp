@@ -41,52 +41,64 @@ DummyGPIO::~DummyGPIO()
 
 static void* poll_thread(void *arg)
 {
-    DummyArgs* args = (DummyArgs*) arg;
+   DummyArgs* args = (DummyArgs*) arg;
 
-    struct gpioevent_request event_request;
-    memset(&event_request, 0, sizeof(gpioevent_request));
-    event_request.lineoffset = args->pin;
-    event_request.eventflags = GPIOEVENT_REQUEST_BOTH_EDGES;
-    event_request.handleflags = GPIOHANDLE_REQUEST_INPUT | GPIOHANDLE_REQUEST_BIAS_PULL_DOWN;
+   struct gpio_v2_line_request line_request;
+   memset(&line_request, 0, sizeof(gpioevent_request));
+   line_request.offsets[0] = args->pin;
+   line_request.num_lines = 1;
+   line_request.config.flags =  GPIO_V2_LINE_FLAG_INPUT                |
+	                              GPIO_V2_LINE_FLAG_EDGE_RISING          |
+	                              GPIO_V2_LINE_FLAG_EDGE_FALLING         |
+                                 GPIO_V2_LINE_FLAG_BIAS_PULL_DOWN       |
+                                 GPIO_V2_LINE_FLAG_EVENT_CLOCK_REALTIME |
+                                 0;
 
-    int res = ioctl(args->chip_fd, GPIO_GET_LINEEVENT_IOCTL, &event_request);
+   gpio_v2_line_config_attribute* debounce = &line_request.config.attrs[0];
+   debounce->mask = _BITULL(0);
+   debounce->attr.id = GPIO_V2_LINE_ATTR_ID_DEBOUNCE;
+   debounce->attr.debounce_period_us = 100;
 
-    if (res < 0) {
-       LOG_WARN("Failed requesting events");
-       close(args->chip_fd);
-       return NULL;
-    }
+   line_request.config.num_attrs = 1;
 
-    else LOG_INFO("Established GPIO request on line %d", args->pin);
+   int res = ioctl(args->chip_fd, GPIO_V2_GET_LINE_IOCTL, &line_request);
 
-    #if 0
-    struct gpio_v2_line_config config;
-    memset(&config, 0, sizeof(struct gpio_v2_line_config));
-    config.attrs[0].attr.id = GPIO_V2_LINE_ATTR_ID_DEBOUNCE;
-    config.attrs[0].attr.debounce_period_us = 25;
-    config.attrs[0].mask = 1;
-    config.num_attrs = 1;
-    res = ioctl(event_request.fd, GPIO_V2_LINE_SET_CONFIG_IOCTL, &config);
+   if (res < 0) {
+      LOG_WARN("Failed requesting events");
+      close(args->chip_fd);
+      return NULL;
+   }
 
-    res = ioctl(event_request.fd, GPIO_V2_LINE_SET_CONFIG_IOCTL, &config);
-    if (res < 0) {
-       LOG_WARN("Failed reconfiguring debounce.");
-       close(args->chip_fd);
-       return NULL;
-    }
-    #endif
+   else LOG_INFO("Established GPIO request on line %d", args->pin);
+
+   #if 0
+   struct gpio_v2_line_config config;
+   memset(&config, 0, sizeof(struct gpio_v2_line_config));
+   config.attrs[0].attr.id = GPIO_V2_LINE_ATTR_ID_DEBOUNCE;
+   config.attrs[0].attr.debounce_period_us = 25;
+   config.attrs[0].mask = 1;
+   config.num_attrs = 1;
+   res = ioctl(line_request.fd, GPIO_V2_LINE_SET_CONFIG_IOCTL, &config);
+
+   res = ioctl(line_request.fd, GPIO_V2_LINE_SET_CONFIG_IOCTL, &config);
+   if (res < 0) {
+      LOG_WARN("Failed reconfiguring debounce.");
+      close(args->chip_fd);
+      return NULL;
+   }
+   #endif
 
    __u64 first_event_timestamp = 0;
    __u64 last_event_timestamp = 0;
 
-    struct gpioevent_data event_data;
-    struct pollfd poll_file_descriptor;
-    memset(&poll_file_descriptor, 0, sizeof(pollfd));
-    poll_file_descriptor.fd = event_request.fd;
-    poll_file_descriptor.events = POLLIN;
+   struct gpio_v2_line_event event_data;
+   struct pollfd poll_file_descriptor;
+   memset(&poll_file_descriptor, 0, sizeof(pollfd));
+   poll_file_descriptor.fd = line_request.fd;
+   poll_file_descriptor.events = POLLIN;
 
-    while(1)
-    {
+   while(1)
+   {
       int poll_result = poll(&poll_file_descriptor, 1, 1); // time out after 1 milliseconds
 
       if (poll_result == 0) {
@@ -105,31 +117,31 @@ static void* poll_thread(void *arg)
 
       // The "revents" field counts returned events.
       // The "POLLIN" constant seems to be a bitmask.
-      LOG_INFO("Event detected");
+      LOG_INFO("revents: %04X", poll_file_descriptor.revents);
       if (poll_file_descriptor.revents & POLLIN) {
 
          int read_result = read(poll_file_descriptor.fd, &event_data, sizeof(event_data));
 
          if (read_result == -1) {
-            // printf("Read error.\n");
+            printf("Read error.\n");
             continue;
          }
 
-         if (event_data.id == GPIOEVENT_EVENT_RISING_EDGE) {
+         if (event_data.id == GPIO_V2_LINE_EVENT_RISING_EDGE) {
             args->count_rising++;
-            printf("Rising edge at %llu.\n", event_data.timestamp);
-         } else if (event_data.id == GPIOEVENT_EVENT_FALLING_EDGE) {
+            printf("Rising edge at %llu.\n", event_data.timestamp_ns);
+         } else if (event_data.id == GPIO_V2_LINE_EVENT_FALLING_EDGE) {
             args->count_falling++;
-            printf("Falling edge at %llu.\n",event_data.timestamp);
+            printf("Falling edge at %llu.\n",event_data.timestamp_ns);
          } else {
             // printf("Some other event?\n");
          }
 
          if (first_event_timestamp == 0) {
-            first_event_timestamp = event_data.timestamp;
+            first_event_timestamp = event_data.timestamp_ns;
          } else {
-            last_event_timestamp = event_data.timestamp;
+            last_event_timestamp = event_data.timestamp_ns;
          }
       }
-    }
+   }
 }
