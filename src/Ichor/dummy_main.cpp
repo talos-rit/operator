@@ -12,6 +12,7 @@
 #include "log/log.h"
 #include "conf/config.h"
 #include "serial/test/dummy_i2c.h"
+#include "gpio/test/dummy_gpio.h"
 
 #include "arm/ichor_arm.h"
 #include "conf/ichor_conf.h"
@@ -44,17 +45,20 @@ int main(int argc, char* argv[])
 
     int fd = open(conf.GetI2CDev(), O_RDWR);
     if (fd < 0) LOG_WARN("Failed to open I2C bus");
-    DummyI2C* dummy = new DummyI2C(fd, 0x60);
+    DummyI2C* dummy_i2c = new DummyI2C(fd, 0x60);
+    DummyGPIO* dummy_gpio = new DummyGPIO(4);
 
     uint8_t msg[5];
     memset(&msg, 0, 5);
     char bytes[5 * 5];
     uint8_t iter = 0;
 
-    LOG_INFO("Read result: %d", dummy->ReadReg(0, msg, 5));
+    LOG_INFO("Read result: %d", dummy_i2c->ReadReg(0, msg, 5));
     for (uint8_t i = 0; i < 5; i++)
         iter += sprintf(&bytes[iter], "0x%02X,", msg[i]);
     LOG_INFO("Register contents: %s", bytes);
+
+    while(1);
 
     // End demo
     LOG_INFO("End Program.");

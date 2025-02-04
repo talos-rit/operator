@@ -44,7 +44,7 @@ ichor_test: ichor_re $(COMMON_OBJS) $(COMMON_UTEST_OBJS) $(ICHOR_OBJS) $(ICHOR_U
 	$(CC) $(filter-out $(PHONIES),$^) $(FLAGS) $(UTEST_LIB) -o $(BIN_DIR)/$@
 	$(BIN_DIR)/$@
 
-dummy: $(COMMON_OBJS) $(ICHOR_OBJS) $(SRC_DIR)/$(ICHOR_DIR)/dummy_i2c_main.cpp
+dummy: $(COMMON_OBJS) $(ICHOR_OBJS) $(SRC_DIR)/$(ICHOR_DIR)/dummy_main.cpp
 	@mkdir -p $(BIN_DIR)
 	$(CC) $^ $(FLAGS) -o $(BIN_DIR)/$@
 	@echo "    Target    $@"
