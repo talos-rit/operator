@@ -13,6 +13,7 @@ DRIVER		:=
 DRIVER_CPP	:= serial/serial.cpp
 DRIVER_CPP	+= serial/i2c_dev.cpp
 DRIVER_CPP	+= serial/test/dummy_i2c.cpp
+DRIVER_CPP	+= gpio/test/dummy_gpio.cpp
 
 DRIVER_UTEST:=
 
