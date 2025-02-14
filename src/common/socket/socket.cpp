@@ -64,7 +64,7 @@ static int wait_for_connection(Socket_Props* props)
         if (-1 == props->connfd && errno != EAGAIN)
         {
             LOG_ERROR("Socket accept failed: (%d) %s", errno, strerror(errno));
-            return -1;
+            STD_FAIL_VOID_PTR;
         }
     }
 
@@ -77,7 +77,7 @@ static int wait_for_connection(Socket_Props* props)
     else
     {
         LOG_INFO("Connection Failed.");
-        return -1;
+        STD_FAIL_VOID_PTR;
     }
 }
 
