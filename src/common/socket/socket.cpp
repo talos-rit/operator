@@ -51,6 +51,36 @@ Socket::~Socket()
     if (-1 != props.sockfd) close(props.sockfd);
 }
 
+static int wait_for_connection(Socket_Props* props)
+{
+    // Accept connection
+    socklen_t len = sizeof(props->client);
+    LOG_INFO("Waiting for client...");
+
+    while(props->thread_en && props->connfd < 0)
+    {
+        props->connfd = accept(props->sockfd, (struct sockaddr *) &props->client, &len);
+        usleep(SOCKET_POLL_PERIOD_MS * 1000);
+        if (-1 == props->connfd && errno != EAGAIN)
+        {
+            LOG_ERROR("Socket accept failed: (%d) %s", errno, strerror(errno));
+            return -1;
+        }
+    }
+
+    if (props->connfd > 0)
+    {
+        LOG_INFO ("Connection Established.");
+        return 0;
+    }
+
+    else
+    {
+        LOG_INFO("Connection Failed.");
+        return -1;
+    }
+}
+
 static void* socket_poll (void* arg)
 {
     Socket_Props* props = (Socket_Props*) arg;
@@ -63,23 +93,12 @@ static void* socket_poll (void* arg)
 
     memset(&buffer[0], 0, SOCKET_BUF_LEN);
 
-    // Accept connection
-    socklen_t len = sizeof(props->client);
-    LOG_INFO("Waiting for client...");
-
-    while(props->thread_en && props->connfd < 0)
+    // Creates initial connection
+    if (wait_for_connection(props) != 0)
     {
-        props->connfd = accept(props->sockfd, (struct sockaddr *) &props->client, &len);
-        usleep(SOCKET_POLL_PERIOD_MS * 1000);
-        if (-1 == props->connfd && errno != EAGAIN)
-        {
-            LOG_ERROR("Socket accept failed: (%d) %s", errno, strerror(errno));
-            STD_FAIL_VOID_PTR;
-        }
+        LOG_ERROR("Connection initialization failed.");
+        return NULL;
     }
-
-    if (props->connfd > 0) LOG_INFO ("Connection Established.");
-    else LOG_INFO("Connection Failed.");
 
     while(props->thread_en)
     {
@@ -100,7 +119,21 @@ static void* socket_poll (void* arg)
         }
 
         LOG_VERBOSE(6, "SOCKET ITER");
-        if (0 == ret) continue;
+        if (0 == ret)
+        {
+            LOG_INFO("Connection closed by client.");
+
+            close(props->connfd);
+            props->connfd = -1;
+
+            if(wait_for_connection(props) != 0)
+            {
+                LOG_ERROR("Reconnection failed");
+                break;
+            }
+
+            continue; // continue receiving after reconnection
+        }
 
         idle = false;
         buf_iter += ret;
@@ -126,7 +159,7 @@ static void* socket_poll (void* arg)
 
     // Empty receive buffer; avoid TIME_WAIT on socket
     LOG_IEC();
-    if(-1 == shutdown(props->connfd, SHUT_RDWR)) LOG_ERROR("Error shutting donw socket: (%d) %s", errno, strerror(errno));
+    if(-1 == shutdown(props->connfd, SHUT_RDWR)) LOG_ERROR("Error shutting down socket: (%d) %s", errno, strerror(errno));
     while (recv(props->connfd, &buffer[0], sizeof(buffer), 0) > 0);
     if (-1 == props->connfd)
     {
