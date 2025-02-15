@@ -64,7 +64,7 @@ static int wait_for_connection(Socket_Props* props)
         if (-1 == props->connfd && errno != EAGAIN)
         {
             LOG_ERROR("Socket accept failed: (%d) %s", errno, strerror(errno));
-            STD_FAIL_VOID_PTR;
+            STD_FAIL;
         }
     }
 
@@ -77,8 +77,24 @@ static int wait_for_connection(Socket_Props* props)
     else
     {
         LOG_INFO("Connection Failed.");
-        STD_FAIL_VOID_PTR;
+        STD_FAIL;
     }
+}
+
+int send_response(Socket_Props* props)
+{
+    const char* response = "Message Received."; // placeholder response
+    int send_ret = send(props->connfd, response, strlen(response), 0);
+
+    if (send_ret < 0)
+    {
+        LOG_ERROR("Response failed to send.");
+    }
+    else
+    {
+        LOG_INFO("Response successfully sent");
+    }
+    return send_ret;
 }
 
 static void* socket_poll (void* arg)
@@ -128,7 +144,7 @@ static void* socket_poll (void* arg)
 
             if(wait_for_connection(props) != 0)
             {
-                LOG_ERROR("Reconnection failed");
+                LOG_ERROR("Reconnection failed.");
                 break;
             }
 
@@ -154,6 +170,8 @@ static void* socket_poll (void* arg)
 
             buf_iter -= len;
             memcpy(&buffer[0], &buffer[len], buf_iter);
+
+            int send_ret = send_response(props);
         }
     }
 
