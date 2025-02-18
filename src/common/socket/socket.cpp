@@ -89,12 +89,13 @@ int send_response(Socket_Props* props)
     if (send_ret < 0)
     {
         LOG_ERROR("Response failed to send.");
+        STD_FAIL;
     }
     else
     {
         LOG_INFO("Response successfully sent");
+        return 0;
     }
-    return send_ret;
 }
 
 static void* socket_poll (void* arg)
@@ -171,7 +172,7 @@ static void* socket_poll (void* arg)
             buf_iter -= len;
             memcpy(&buffer[0], &buffer[len], buf_iter);
 
-            int send_ret = send_response(props);
+            send_response(props);
         }
     }
 
