@@ -56,7 +56,7 @@ typedef enum _tamq_message_type
 class TAMQ_Consumer :   public cms::ExceptionListener,
                         public cms::MessageListener,
                         public activemq::transport::DefaultTransportListener,
-                        public SUB_Messenger
+                        public Inbox
 {
     private:
 

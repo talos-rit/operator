@@ -294,7 +294,7 @@ int Scorbot::PolarPanStart(API_Data_Polar_Pan_Start *pan)
     polar_pan_cont = ACL_get_polar_pan_continuous_vector(pan);
     gettimeofday(&last_start, NULL);
 
-    if('\0' == polar_pan_cont) return -1;
+    if('\0' == polar_pan_cont) PolarPanStop();
     return 0;
 }
 

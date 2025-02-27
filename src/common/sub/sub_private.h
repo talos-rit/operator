@@ -5,7 +5,7 @@
 #include "data/s_list.h"
 
 
-/** List of states the SUB_Messenger can be in */
+/** List of states the Inbox can be in */
 // typedef enum _sub_status
 // {
 //     SUB_MODE_DEAD,

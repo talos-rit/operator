@@ -10,6 +10,7 @@
 #include "log/log.h"
 #include "sub/sub.h"
 #include "tamq/tamq_sub.h"
+#include "socket/socket.h"
 #include "arm/arm.h"
 #include "erv_arm/erv.h"
 #include "conf/config.h"
@@ -91,11 +92,12 @@ int main(int argc, char* argv[])
 
     // Init Modules
     Subscriber hermes = Subscriber();
-    SUB_Messenger* inbox = new TAMQ_Consumer(
-        conf.GetBrokerAddress(),
-        conf.GetCommandURI(),
-        conf.GetUseTopics(),
-        conf.GetClientAck());
+    // Inbox* inbox = new TAMQ_Consumer(
+    //     conf.GetBrokerAddress(),
+    //     conf.GetCommandURI(),
+    //     conf.GetUseTopics(),
+    //     conf.GetClientAck());
+    Inbox* inbox = new Socket();
 
     Arm* bot = new Scorbot(conf.GetScorbotDevicePath());
 
@@ -115,9 +117,9 @@ int main(int argc, char* argv[])
     LOG_INFO("Shutting down...");
 
     // Cleanup running processes
+    inbox->Stop();
     hermes.Stop();
     bot->Stop();
-    inbox->Stop();
 
     // Release resources
     delete bot;

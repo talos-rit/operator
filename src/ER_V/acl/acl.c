@@ -105,7 +105,7 @@ char ACL_get_polar_pan_continuous_vector(API_Data_Polar_Pan_Start* payload)
     }
     else
     {
-        LOG_IEC();
+        //LOG_IEC();
         return '\0';
     }
 
