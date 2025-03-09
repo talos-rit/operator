@@ -47,7 +47,7 @@ static void* poll_thread(void *arg)
    memset(&line_request, 0, sizeof(gpioevent_request));
    line_request.offsets[0] = args->pin;
    line_request.num_lines = 1;
-   line_request.config.flags =  GPIO_V2_LINE_FLAG_INPUT                |
+   line_request.config.flags =   GPIO_V2_LINE_FLAG_INPUT                |
 	                              GPIO_V2_LINE_FLAG_EDGE_RISING          |
 	                              GPIO_V2_LINE_FLAG_EDGE_FALLING         |
                                  GPIO_V2_LINE_FLAG_BIAS_PULL_DOWN       |
