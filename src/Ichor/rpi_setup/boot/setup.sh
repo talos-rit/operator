@@ -13,6 +13,7 @@ set -x
 
 HOSTAPD_PACKAGES="hostapd dnsmasqsudo dhcpcd netfilter-persistent iptables-persistent"
 OPERATOR_PACKAGES="git cpputest"
+ICHOR_PACKAGES="linux-headers-generic gpiod"
 
 # Networking prereqs
 apt install -y "$HOSTAPD_PACKAGES" "$OPERATOR_PACKAGES"

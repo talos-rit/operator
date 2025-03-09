@@ -11,8 +11,9 @@
 #include "util/array.h"
 #include "log/log.h"
 #include "conf/config.h"
-#include "serial/test/dummy_i2c.h"
-#include "gpio/test/dummy_gpio.h"
+
+#include "gpio/pin.h"
+#include "gpio/isr.h"
 
 #include "arm/ichor_arm.h"
 #include "conf/ichor_conf.h"
@@ -43,22 +44,28 @@ int main(int argc, char* argv[])
 
     conf.DumpToLog(LOG_INFO);
 
-    int fd = open(conf.GetI2CDev(), O_RDWR);
-    if (fd < 0) LOG_WARN("Failed to open I2C bus");
-    DummyI2C* dummy_i2c = new DummyI2C(fd, 0x60);
-    DummyGPIO* dummy_gpio = new DummyGPIO(4);
+    /*************************************************************/
+    /************************START SANDBOX************************/
+    /*************************************************************/
 
-    uint8_t msg[5];
-    memset(&msg, 0, 5);
-    char bytes[5 * 5];
-    uint8_t iter = 0;
+    uint8_t enc_a = 24, enc_b = 25;
+    RotaryEncoder enc = RotaryEncoder();
+    GPIO_INTR_TARGET target = {.enc = &enc};
+    IchorISR isr = IchorISR("/dev/gpiochip0");
 
-    LOG_INFO("Read result: %d", dummy_i2c->ReadReg(0, msg, 5));
-    for (uint8_t i = 0; i < 5; i++)
-        iter += sprintf(&bytes[iter], "0x%02X,", msg[i]);
-    LOG_INFO("Register contents: %s", bytes);
+    isr.RegisterPin(enc_a, GPIO_INTR_TYPE_ENCODER_A, target);
+    isr.RegisterPin(enc_b, GPIO_INTR_TYPE_ENCODER_B, target);
+    isr.AllocatePins();
 
-    while(1);
+    usleep(5.0e6);                          // Sleep 5s
+    isr.ProcessEvents();                    // Process events stored in queue by GPIO kernel driver
+    int32_t val = enc.GetValue();           // Check how encoder has changed
+
+    LOG_INFO("Encoder value: %d", val);
+
+    /*************************************************************/
+    /*************************END SANDBOX*************************/
+    /*************************************************************/
 
     // End demo
     LOG_INFO("End Program.");
