@@ -18,6 +18,8 @@
 #define LOG_CONSOLE_THRESHOLD_THIS  LOG_THRESHOLD_DEFAULT
 #define LOG_FILE_THRESHOLD_THIS     LOG_THRESHOLD_MAX
 
+#define I2C_M_WR 0
+
 I2CDev::I2CDev(int fd, uint8_t addr)
 {
     this->fd = fd;
@@ -28,31 +30,57 @@ I2CDev::~I2CDev()
 {
 }
 
+
+int I2CDev::OverrideAddr(uint8_t addr)
+{
+    int ret = ioctl(fd, I2C_SLAVE, addr);
+    if (ret == -1) STD_FAIL;
+    this->addr = addr;
+    return 0;
+}
+
+int I2CDev::FlushQueue(S_List* list)
+{
+    memset(msgs, 0, sizeof(msgs));
+    uint8_t msg_iter = 0;
+    int ret = 0;
+
+    ret = ioctl(fd, I2C_SLAVE, addr);
+    if (-1 == ret) LOG_WARN ("Failed to set I2C device address: (%d) %s", errno, strerror(errno));
+    else LOG_INFO("Set I2C device address: %u", addr);
+
+    for(S_List_Node *node = list->head; node; node = node->next)
+    {
+        SerialFrame* frame = DATA_LIST_GET_OBJ(node, SerialFrame, node);
+        if (frame->tx_buf) msgs[msg_iter++] = {.addr = addr, .flags = I2C_M_WR, .len = frame->len, .buf = (uint8_t*) frame->tx_buf};
+        if (frame->rx_buf) msgs[msg_iter++] = {.addr = addr, .flags = I2C_M_RD, .len = frame->len, .buf = frame->rx_buf};
+
+        struct i2c_rdwr_ioctl_data payload = {.msgs = &msgs[0], .nmsgs = msg_iter };
+        msg_iter = 0;
+        ret = ioctl(fd, I2C_RDWR, &payload);
+        if (-1 == ret)
+        {
+            LOG_WARN ("Failed to complete I2C transaction: (%d) %s", errno, strerror(errno));
+            frame->state = SerialDevice::FAILED;
+        }
+        else
+        {
+            frame->state = SerialDevice::PROCESSED;
+        }
+
+        if (frame->callback) frame->callback();
+    }
+
+    return 0;
+}
+
 int I2CDev::FlushQueue()
 {
 
     S_List* list = NULL;
     while((list = PopQueue()))
     {
-        memset(msgs, 0, sizeof(msgs));
-        uint8_t msg_iter = 0;
-        for(S_List_Node *node = list->head; node; node = node->next)
-        {
-            SerialFrame* frame = DATA_LIST_GET_OBJ(node, SerialFrame, node);
-            // 0 is write, 1 is read
-            if (frame->tx_buf) msgs[msg_iter++] = {.addr = addr, .flags = 0, .len = frame->len, .buf = (uint8_t*) frame->tx_buf};
-            if (frame->rx_buf) msgs[msg_iter++] = {.addr = addr, .flags = I2C_M_RD, .len = frame->len, .buf = frame->rx_buf};
-
-            if (frame->callback) frame->callback();
-            frame->state = SerialDevice::PROCESSED;
-        }
-
-        struct i2c_rdwr_ioctl_data payload = {.msgs = &msgs[0], .nmsgs = msg_iter };
-        int ret = 0;
-        ret = ioctl(fd, I2C_SLAVE, addr);
-        if (-1 == ret) LOG_WARN ("Failed to set I2C device address: (%d) %s", errno, strerror(errno));
-        else LOG_INFO("Set I2C device address: %u", addr);
-        ret = ioctl(fd, I2C_RDWR, &payload);
+        if(FlushQueue(list)) STD_FAIL;
     }
 
     return 0;

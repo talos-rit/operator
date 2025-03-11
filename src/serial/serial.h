@@ -42,6 +42,7 @@ public:
         IDLE,       /** Waiting to be enqueued */
         ENQUEUED,   /** Enqueued to be processed */
         PROCESSED,  /** Finished processing; waiting to be reinitialized/used again */
+        FAILED,     /** Attempted to process, failed for some reason */
     } SerialState;
 
     /**
