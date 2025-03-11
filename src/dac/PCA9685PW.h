@@ -53,6 +53,7 @@ private:
         uint8_t TestMode;
     };
 
+    int fd;
     I2CDev dev;                                             // I2C bus to send values to
     PCA_Regs regs;                                          // Internal representation of registers
     PCA_Regs staged;                                        // Uncommited changes to push to the device
