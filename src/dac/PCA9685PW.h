@@ -6,6 +6,7 @@
 
 #define DAC_PCA_MISC_LEN 256
 #define DAC_PCA_FRAME_LEN 64
+#define DAC_PCA_QUEUE_LEN 256
 
 #define DAC_PCA_ALL_CALL 0
 
@@ -54,21 +55,26 @@ private:
 
     I2CDev dev;                                             // I2C bus to send values to
     PCA_Regs regs;                                          // Internal representation of registers
+    PCA_Regs staged;                                        // Uncommited changes to push to the device
     SerialDevice::SerialFrame frames[DAC_PCA_FRAME_LEN];    // Frame pool for constructing I2C transactions
     S_List free;                                            // Pop free frames from here
-    S_List queue;                                           // Enqueue frames for processing here
+    S_List queues[DAC_PCA_QUEUE_LEN];                       // Enqueue frames for processing here
+    uint8_t queue_iter;                                     // Amount of active queues; resets on flush
     uint8_t misc[DAC_PCA_MISC_LEN];                         // Used for miscellaneous data (e.g. transmitting a control register without dynamically allocating a single byte)
     uint8_t misc_iter;                                      // Iter; Misc cleared every flush
+    bool inited;                                            // Tracks whether the physical device has been initialized
+
+    int prep_queue_transaction(uint8_t addr, uint8_t len, bool read);
 
     /**
      * @brief Queue a read operation
      */
-    int QueueRD(uint8_t addr, uint8_t* dest, uint8_t len);
+    int QueueRD(uint8_t addr, uint8_t len);
 
     /**
      * @brief Queue a write operation
      */
-    int QueueWR(uint8_t addr, uint8_t* src, uint8_t len);
+    int QueueWR(uint8_t addr, uint8_t len);
 
 
 public:
@@ -101,20 +107,20 @@ public:
      * @param duty_cycle Pointer to duty cycle value to set
      * @returns 0 on success, -1 on failure
      */
-    int SetDutyCycle(uint8_t channel, uint16_t* duty_cycle);
+    int SetDutyCycle(uint8_t channel, uint16_t duty_cycle);
 
     /**
-     * @brief Queues getting the duty cycle of a given channel
-     * @details Value gets copied to local copy of register values
+     * @brief Reads the value of the register values from the local registers
+     * @details Valid range of values is [0, 4095]
      * @param channel Channel to write to
      * @param duty_cycle Pointer to duty cycle value destination
-     * @returns 0 on success, -1 on failure
+     * @returns -1 on failure, a number between 0 and 4096 on success
      */
-    int GetDutyCycle(uint8_t channel, uint16_t* duty_cycle);
+    int GetDutyCycle(uint8_t channel);
 
     /**
      * @brief Flushes queue of commands to serial bus
      * @returns 0 on success, -1 on failure
      */
-    int FlushQueue();
+    int FlushQueues();
 };
