@@ -8,7 +8,7 @@
 #include "gpio/pin.h"
 
 #define ISR_INPUT_DEBOUNCE_US   100     // TODO: figure out how to implement this (prevents vast majority of events from registering when active)
-// #define ISR_CHIP_PATH           "/dev/gpiochip0"
+#define ISR_CHIP_PATH           "/dev/gpiochip0"
 
 class IchorISR
 {

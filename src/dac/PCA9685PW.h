@@ -5,8 +5,12 @@
 #include "data/s_list.h"
 
 #define DAC_PCA_MISC_LEN 256
-#define DAC_PCA_FRAME_LEN 64
+#define DAC_PCA_FRAME_LEN 32        // first 16 are reserved for the 16 PWM channels
 #define DAC_PCA_QUEUE_LEN 256
+#define DAC_PCA_CHANNEL_COUNT 16
+
+// Completely on value
+#define DAC_PCA_MAX_DUTY_CYCLE 4096
 
 #define DAC_PCA_ALL_CALL 0
 
@@ -57,8 +61,9 @@ private:
     I2CDev dev;                                             // I2C bus to send values to
     PCA_Regs regs;                                          // Internal representation of registers
     PCA_Regs staged;                                        // Uncommited changes to push to the device
-    SerialDevice::SerialFrame frames[DAC_PCA_FRAME_LEN];    // Frame pool for constructing I2C transactions
-    S_List free;                                            // Pop free frames from here
+    SerialDevice::SerialFrame* frames;                      // Frame pool for constructing I2C transactions
+    uint16_t frames_len;
+    S_List free_queue;                                            // Pop free frames from here
     S_List queues[DAC_PCA_QUEUE_LEN];                       // Enqueue frames for processing here
     uint8_t queue_iter;                                     // Amount of active queues; resets on flush
     uint8_t misc[DAC_PCA_MISC_LEN];                         // Used for miscellaneous data (e.g. transmitting a control register without dynamically allocating a single byte)
@@ -118,6 +123,8 @@ public:
      * @returns -1 on failure, a number between 0 and 4096 on success
      */
     int GetDutyCycle(uint8_t channel);
+
+    int ClearQueues();
 
     /**
      * @brief Flushes queue of commands to serial bus

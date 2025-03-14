@@ -1,3 +1,4 @@
+#include <stdlib.h>
 #include <unistd.h>
 #include <string.h>
 #include <errno.h>
@@ -21,13 +22,15 @@ PCA9685PW::PCA9685PW(int fd, int addr)
     memset(&queues[0], 0, sizeof(queues));
     misc_iter = 0;
     queue_iter = 0;
-    DATA_S_List_init(&free);
+    DATA_S_List_init(&free_queue);
     this->fd = fd;
 
-    for (uint8_t frame_iter = 0; frame_iter < DAC_PCA_FRAME_LEN; frame_iter++)
+    frames_len = DAC_PCA_FRAME_LEN;
+    frames = (SerialDevice::SerialFrame*) malloc (frames_len * sizeof(SerialDevice::SerialFrame));
+    for (uint16_t frame_iter = 0; frame_iter < DAC_PCA_FRAME_LEN; frame_iter++)
     {
         SerialDevice::InitFrame(&frames[frame_iter]);
-        DATA_S_List_append(&free, &frames[frame_iter].node);
+        DATA_S_List_append(&free_queue, &frames[frame_iter].node);
     }
 
     InitDevice();
@@ -35,23 +38,25 @@ PCA9685PW::PCA9685PW(int fd, int addr)
 
 PCA9685PW::~PCA9685PW()
 {
+    if (frames) free(frames);
 }
 
-static int get_frames(S_List* free, SerialDevice::SerialFrame** reg_frames, uint8_t len)
+static int get_frames(S_List* free_queue, SerialDevice::SerialFrame** reg_frames, uint8_t len)
 {
     // Initialize frames
-    for (uint8_t i = 0; i < len; i++)
+    if (free_queue->len < len) STD_FAIL;
+    for (uint16_t i = 0; i < len; i++)
     {
-        S_List_Node* node = DATA_S_List_pop(free);
+        S_List_Node* node = DATA_S_List_pop(free_queue);
 
         // If S_List_Pop fails, re-free frames and return early
         if (!node)
         {
-            for (uint8_t frame_iter = 0; frame_iter < len; frame_iter++)
+            for (uint16_t frame_iter = 0; frame_iter < len; frame_iter++)
             {
                 if (!reg_frames[frame_iter]) continue;
                 SerialDevice::InitFrame(reg_frames[frame_iter]);
-                DATA_S_List_append(free, &reg_frames[frame_iter]->node);
+                DATA_S_List_append(free_queue, &reg_frames[frame_iter]->node);
                 reg_frames[frame_iter] = NULL;
             }
 
@@ -77,7 +82,8 @@ int PCA9685PW::prep_queue_transaction(uint8_t addr, uint8_t len, bool read)
     S_List* queue = &queues[queue_iter++];
     SerialDevice::SerialFrame* reg_frames[2];
     memset(&reg_frames, 0, sizeof(reg_frames));
-    get_frames(&free, &reg_frames[0], read ? 2 : 1);
+    int ret = get_frames(&free_queue, &reg_frames[0], read ? 2 : 1);
+    if (-1 == ret) STD_FAIL;
 
     uint8_t *misc_byte = NULL;
     SerialDevice::SerialFrame* frame = NULL;
@@ -129,7 +135,6 @@ int PCA9685PW::ResetDevice()
         LOG_WARN ("Failed to set I2C device address: (%d) %s", errno, strerror(errno));
         STD_FAIL;
     }
-    else LOG_VERBOSE(4, "Set I2C device address: %u", rst_addr);
 
     uint8_t buf = 0x06;
     struct i2c_msg msg = {.addr = rst_addr, .flags = 0, .len = 1, .buf = &buf};
@@ -148,14 +153,14 @@ int PCA9685PW::InitDevice()
 {
     // Declare reg variables
     SerialDevice::SerialFrame* reg_frames[1];
-    if(get_frames(&free, &reg_frames[0], 1)) STD_FAIL;
+    if(get_frames(&free_queue, &reg_frames[0], 1)) STD_FAIL;
 
     // Reset device
     ResetDevice();
     usleep(500);
 
     // Configure mode registers
-    uint8_t buf[3] = {0, DAC_PCA_FLAG_MODE1_AI, 0};
+    uint8_t buf[3] = {0, DAC_PCA_FLAG_MODE1_AI | DAC_PCA_ALL_CALL, DAC_PCA_FLAG_MODE2_OUTDRV};
     S_List* queue = &queues[queue_iter++];
     reg_frames[0]->len = 3;
     reg_frames[0]->tx_buf = &buf[0];
@@ -169,13 +174,13 @@ int PCA9685PW::InitDevice()
 int PCA9685PW::UpdateRegisters()
 {
     const int len = 5;
-    if (free.len < len) STD_FAIL;
+    if (free_queue.len < len) STD_FAIL;
     if (DAC_PCA_MISC_LEN - misc_iter < 3) STD_FAIL;
 
     // Declare frames
     SerialDevice::SerialFrame* reg_frames[len];
     memset(&reg_frames, 0, sizeof(reg_frames));
-    int ret = get_frames(&free, &reg_frames[0], len);
+    int ret = get_frames(&free_queue, &reg_frames[0], len);
     if (-1 == ret) STD_FAIL;
 
     QueueRD(0x00, 0x45);
@@ -186,14 +191,16 @@ int PCA9685PW::UpdateRegisters()
 
 int PCA9685PW::SetDutyCycle(uint8_t channel, uint16_t value)
 {
-    if (channel > 15) STD_FAIL;
-    if (value > 4095) STD_FAIL;
+    if (channel >= DAC_PCA_CHANNEL_COUNT) STD_FAIL;
+    if (value > DAC_PCA_MAX_DUTY_CYCLE) STD_FAIL;
     Channel* chan = &staged.LEDs[channel];
     memset(chan, 0, sizeof(Channel));
 
-    if (0 == value)         chan->OFF_H |= _BITULL(4);
-    else if (4095 == value) chan->ON_H  |= _BITULL(4);
-    else
+    if (0 == value)
+        chan->OFF_H = _BITULL(4);               // Completely off
+    else if (DAC_PCA_MAX_DUTY_CYCLE == value)
+        chan->ON_H  = _BITULL(4);               // Completely on
+    else                                        // In between
     {
         // No use for delay; set to 0 (leave LED_ON at 0)
         chan->OFF_L = value & 0xFF;
@@ -212,11 +219,30 @@ int PCA9685PW::GetDutyCycle(uint8_t channel)
     // All off / All on
     Channel* chan = &regs.LEDs[channel];
     if (chan->OFF_H & _BITULL(4)) return 0;
-    if (chan->ON_H  & _BITULL(4)) return 4096;
+    if (chan->ON_H  & _BITULL(4)) return DAC_PCA_MAX_DUTY_CYCLE;
 
     uint16_t off = (chan->OFF_H << 8) | chan->OFF_L;
     uint16_t on  = (chan->ON_H  << 8) | chan->ON_L;
     return (off > on) ? (off - on) : (4095 - on) + off;
+}
+
+int PCA9685PW::ClearQueues()
+{
+    for (uint16_t iter = 0; iter < queue_iter; iter++)
+    {
+        while (queues[iter].head)
+        {
+            S_List_Node* frame_node = DATA_S_List_pop(&queues[iter]);
+            SerialDevice::InitFrame(DATA_LIST_GET_OBJ(frame_node, SerialDevice::SerialFrame, node));
+            DATA_S_List_append(&free_queue, frame_node);
+        }
+    }
+
+    memset(&queues, 0, sizeof(queues));
+    memset(&misc, 0, sizeof(misc));
+    queue_iter = 0;
+    misc_iter = 0;
+    return 0;
 }
 
 int PCA9685PW::FlushQueues()
@@ -228,9 +254,6 @@ int PCA9685PW::FlushQueues()
         dev.FlushQueue(&queues[iter]);
     }
 
-    memset(&queues, 0, sizeof(queues));
-    memset(&misc, 0, sizeof(misc));
-    queue_iter = 0;
-    misc_iter = 0;
+    ClearQueues();
     return 0;
 }
