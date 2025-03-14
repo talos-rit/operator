@@ -6,20 +6,47 @@
 #include <string.h>
 #include <signal.h>
 #include <execinfo.h>
+#include <sys/time.h>
+#include <math.h>
 
 #include "util/comm.h"
 #include "util/array.h"
 #include "log/log.h"
 #include "conf/config.h"
 
-#include "gpio/pin.h"
+#include "dac/PCA9685PW.h"
 #include "gpio/isr.h"
+#include "driver/driver.h"
 
 #include "arm/ichor_arm.h"
 #include "conf/ichor_conf.h"
 
 #define LOG_FILE_THRESHOLD_THIS     LOG_THRESHOLD_MAX
 #define LOG_CONSOLE_THRESHOLD_THIS  LOG_THRESHOLD_MAX
+
+#define ENC_A       24
+#define ENC_B       25
+#define DAC_IN1     4
+#define DAC_IN2     3
+#define DAC_SPEED   2
+#define ADC_CHANNEL -1
+
+int16_t velocity_square (int32_t target, int32_t pos)
+{
+    if (target == pos) return 0;
+    return DAC_PCA_MAX_DUTY_CYCLE * (target - pos > 0 ? 1 : -1);
+}
+
+int16_t velocity_sine (int32_t target, int32_t pos)
+{
+    struct timeval tv;
+    gettimeofday(&tv, NULL);
+
+    float tmp = ((tv.tv_sec % 10) * 1e6 + tv.tv_usec) / 1e6f;
+    tmp = sin(tmp * M_PI / 5.f);
+    tmp *= DAC_PCA_MAX_DUTY_CYCLE;
+    return (int16_t) tmp;
+}
 
 int main(int argc, char* argv[])
 {
@@ -48,20 +75,74 @@ int main(int argc, char* argv[])
     /************************START SANDBOX************************/
     /*************************************************************/
 
-    uint8_t enc_a = 24, enc_b = 25;
-    RotaryEncoder enc = RotaryEncoder();
-    GPIO_INTR_TARGET target = {.enc = &enc};
-    IchorISR isr = IchorISR("/dev/gpiochip0");
+    int fd = open(conf.GetI2CDev(), O_RDWR);
+    if (fd < 0) LOG_WARN("Failed to open I2C bus");
+    PCA9685PW dac = PCA9685PW(fd, 0x60);
+    IchorISR isr = IchorISR(ISR_CHIP_PATH);
 
-    isr.RegisterPin(enc_a, GPIO_INTR_TYPE_ENCODER_A, target);
-    isr.RegisterPin(enc_b, GPIO_INTR_TYPE_ENCODER_B, target);
+    dac.SetDutyCycle(4, 0);
+    dac.SetDutyCycle(3, DAC_PCA_MAX_DUTY_CYCLE);
+    dac.SetDutyCycle(2, DAC_PCA_MAX_DUTY_CYCLE);
+
+    // dac.SetDutyCycle(5, 0);
+    // dac.SetDutyCycle(6, DAC_PCA_MAX_DUTY_CYCLE);
+    // dac.SetDutyCycle(7, DAC_PCA_MAX_DUTY_CYCLE);
+
+    // dac.SetDutyCycle(10, 0);
+    // dac.SetDutyCycle(9, DAC_PCA_MAX_DUTY_CYCLE);
+    // dac.SetDutyCycle(8, DAC_PCA_MAX_DUTY_CYCLE);
+
+    // dac.SetDutyCycle(11, 0);
+    // dac.SetDutyCycle(12, DAC_PCA_MAX_DUTY_CYCLE);
+    // dac.SetDutyCycle(13, DAC_PCA_MAX_DUTY_CYCLE);
+
+
+    // dac.SetDutyCycle(15, DAC_PCA_MAX_DUTY_CYCLE);
+    // dac.SetDutyCycle(14, DAC_PCA_MAX_DUTY_CYCLE);
+    // dac.SetDutyCycle(0 , DAC_PCA_MAX_DUTY_CYCLE);
+    // dac.SetDutyCycle(1 , DAC_PCA_MAX_DUTY_CYCLE);
+    dac.UpdateRegisters();
+
+    dac.FlushQueues();
+
+    usleep(10e6);
+
+    #if 0
+    Driver driver = Driver( &dac, DAC_IN1, DAC_IN2, DAC_SPEED,
+                            &isr, ENC_A, ENC_B,
+                            NULL, ADC_CHANNEL );
+
+    driver.SetVelocityFunc(&velocity_sine);
+    driver.SetSpeedCoefficient(10);
+
     isr.AllocatePins();
+    dac.InitDevice();
 
-    usleep(5.0e6);                          // Sleep 5s
-    isr.ProcessEvents();                    // Process events stored in queue by GPIO kernel driver
-    int32_t val = enc.GetValue();           // Check how encoder has changed
 
-    LOG_INFO("Encoder value: %d", val);
+    struct timeval start, stop;
+    bool loc_1 = true;
+    while(1)
+    {
+        driver.SetTarget(loc_1 ? 0 : 3000);
+
+        gettimeofday(&start, NULL);
+        while(1)
+        {
+            isr.ProcessEvents();    // Check GPIO interrupts (could be an abort signal)
+            // TODO                 // Check ADC values (overcurrent / overexertion)
+            driver.Poll();          // Update motors with new control information
+            dac.FlushQueues();      // Flush pending DAC writes
+
+            gettimeofday(&stop, NULL);
+            if (stop.tv_sec * 10e6+ stop.tv_usec  >= 3e6) break;
+            usleep(2.5e3);  // 25 ms delay (defacto delay in Talos Operator so far)
+        }
+
+        loc_1 = !loc_1;
+    }
+    #endif
+
+
 
     /*************************************************************/
     /*************************END SANDBOX*************************/
