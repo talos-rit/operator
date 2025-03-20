@@ -30,10 +30,11 @@ Driver::~Driver()
 {
 }
 
-int Driver::SetTarget(int32_t target)
+int Driver::SetTarget(int32_t target, int32_t start)
 {
     // TODO: setup bounding area
     this->target = target;
+    this->start = start;
     return 0;
 }
 
@@ -44,7 +45,7 @@ int Driver::SetSpeedCoefficient(uint8_t speed)
     return 0;
 }
 
-int Driver::SetVelocityFunc(int16_t (*func)(int32_t target, int32_t pos))
+int Driver::SetVelocityFunc(float (*func)(int32_t target, int32_t start, int32_t pos))
 {
     if (!func) STD_FAIL;
     v_func = func;
@@ -69,10 +70,10 @@ int Driver::Poll()
     // TODO: Check ADC (overcurrent); if too high, abort
     // Adjust speed according to v_func and encoder/target values
     // ISR.ProcessEvents() should be called just prior to Polling all motors
-    int16_t velocity = speed * v_func(target, enc.GetValue()) / 100;
-    LOG_INFO("Velocity: %d", velocity);
+    int16_t velocity = ((float) (DAC_PCA_MAX_DUTY_CYCLE * speed)) * (v_func(target, start, enc.GetValue()) / 100.0f);
+    if (velocity != last_velocity) LOG_INFO("Velocity: %d", velocity);
     // if (velocity * last_velocity < 0) velocity = 0;         // If switching directions, brake
     motor.SetSpeed(velocity);
-    // last_velocity = velocity;
+    last_velocity = velocity;
     return 0;
 }

@@ -61,7 +61,6 @@ int I2CDev::FlushQueue(S_List* list)
         mark_frames(list, SerialState::FAILED);
         STD_FAIL;
     }
-    else LOG_VERBOSE(4, "Set I2C device address: %u", addr);
 
     memset(msgs, 0, sizeof(msgs));
     uint8_t msg_iter = 0;

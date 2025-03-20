@@ -73,12 +73,10 @@ int Motor::SetSpeed(int16_t speed)
             in2 = 0;
         }
 
-        LOG_INFO("BINGO!");
         dac->SetDutyCycle(in1_pin, in1);
         dac->SetDutyCycle(in2_pin, in2);
     }
 
-    LOG_INFO("BANGO!");
     dac->SetDutyCycle(speed_pin, pwm);
     last_speed = speed;
     return 0;

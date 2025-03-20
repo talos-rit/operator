@@ -21,7 +21,12 @@ IchorISR::IchorISR(const char* chip_path)
     chip_fd = -1;
 
     chip_fd = open(chip_path, O_RDONLY);
-    if (-1 == chip_fd) STD_FAIL_VOID;
+    if (-1 == chip_fd)
+    {
+        LOG_ERROR("Failed to open GPIO device");
+        STD_FAIL_VOID;
+    }
+    else LOG_INFO("Successfully opened GPIO device");
 }
 
 IchorISR::~IchorISR()

@@ -21,10 +21,10 @@ private:
     void* adc;
     uint8_t adc_channel;
     // Tracking
-    int32_t target;
+    int32_t target, start;
     int32_t last_velocity;
     uint8_t speed;
-    int16_t (*v_func)(int32_t target, int32_t pos);
+    float (*v_func)(int32_t start, int32_t stop, int32_t pos);
 
 
 public:
@@ -33,14 +33,14 @@ public:
            void* adc, uint8_t adc_channel);
     ~Driver();
 
-    int SetTarget(int32_t target);
+    int SetTarget(int32_t target, int32_t start);
     int SetSpeedCoefficient(uint8_t speed);
 
     // Could this be replaced with a more automatable? (high degree polynomials? splines?)
     /**
      * @details func must represent a continous function, with roots at 0 and target
      */
-    int SetVelocityFunc(int16_t (*func)(int32_t target, int32_t pos));
+    int SetVelocityFunc(float (*func)(int32_t target, int32_t start, int32_t pos));
     int Abort();
     int Shutdown();
     int Poll();
