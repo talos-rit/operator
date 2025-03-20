@@ -9,28 +9,86 @@
 #include <termios.h>
 #include <signal.h>
 
+#include "arm/ichor_arm.h"
+#include "motor/motor.h"
+
 #include "log/log.h"
 
-#include "arm/ichor_arm.h"
 
 #define LOG_CONSOLE_THRESHOLD_THIS  LOG_THRESHOLD_DEFAULT
 #define LOG_FILE_THRESHOLD_THIS     LOG_THRESHOLD_MAX
 
-#define ERV_DEFAULT_COMMAND_DELAY 200000
-#define ERV_TTY_BUFFER_LEN 127
-
 #define ERV_CLOCK CLOCK_REALTIME
 
-Ichor::Ichor()
+static float dead_vel (int32_t target, int32_t start, int32_t pos)
 {
+    return 0;
+}
+
+static float open_loop_vel (int32_t target, int32_t start, int32_t pos)
+{
+    if (target == 0) return 0;
+    return target > 0 ? 1 : -1;
+}
+
+static void set_velocity(Driver** axis, float (*vel)(int32_t target, int32_t start, int32_t pos))
+{
+    for (uint8_t idx = 0; idx < ICHOR_AXIS_COUNT; idx++)
+    {
+        if (axis[idx]) axis[idx]->SetVelocityFunc(vel);
+    }
+}
+
+Ichor::Ichor(const char* isr_dev, const char* i2c_dev, uint8_t dac0_addr, uint8_t dac1_addr, uint8_t adc_addr)
+{
+    int i2c_fd = open(i2c_dev, O_RDWR);
+    if (i2c_fd < 0) LOG_WARN("Failed to open I2C bus");
+    else LOG_INFO("Successfully opened I2C bus");
+
+    isr = new IchorISR(isr_dev);
+
+    dac[0] = new PCA9685PW(i2c_fd, dac0_addr);
+    // dac[1] = new PCA9685PW(i2c_fd, dac1_addr);
+    // TODO: Add adc
+
+    for (uint8_t idx = 0; idx < ICHOR_AXIS_COUNT; idx++)
+        axis[idx] = NULL;
 }
 
 Ichor::~Ichor()
 {
+    // dac[0].ResetDevice(); // Resets all PCA9685PW devices on bus
+}
+
+int Ichor::RegisterMotor( uint8_t motor_index,
+                          uint8_t dac_index, uint8_t dac_in1, uint8_t dac_in2, uint8_t dac_speed,
+                          uint8_t enc_a, uint8_t enc_b, uint8_t adc_channel )
+{
+    if (motor_index > 8 || dac_index > 1) STD_FAIL;
+    axis[motor_index] = new Driver(dac[dac_index], dac_in1, dac_in2, dac_speed, isr, enc_a, enc_b, NULL, adc_channel);
+    axis[motor_index]->SetSpeedCoefficient(50);
+    axis[motor_index]->SetVelocityFunc(&dead_vel);
+    return 0;
+}
+
+int Ichor::Init()
+{
+    isr->AllocatePins();
+    return 0;
 }
 
 void Ichor::Poll()
 {
+    isr->ProcessEvents();    // Check GPIO interrupts (could be an abort signal)
+    // TODO                 // Check ADC values (overcurrent / overexertion)
+    for (uint8_t idx = 0; idx < ICHOR_AXIS_COUNT; idx++)
+    {
+        if (!axis[idx]) continue;
+        axis[idx]->Poll();          // Update motors with new control information
+    }
+
+    dac[0]->FlushQueues();      // Flush pending DAC writes
+    usleep(25e3);  // 25 ms delay (defacto delay in Talos Operator so far)
 }
 
 int Ichor::HandShake()
@@ -72,6 +130,14 @@ int Ichor::PolarPanStart(API_Data_Polar_Pan_Start *pan)
     uint8_t iter = 0;
     char text[255];
 
+    if (!axis[0] || !axis[2]) STD_FAIL;
+
+    axis[0]->SetVelocityFunc(&open_loop_vel);
+    axis[0]->SetTarget(pan->delta_azimuth, 0);
+
+    axis[2]->SetVelocityFunc(&open_loop_vel);
+    axis[2]->SetTarget(pan->delta_altitude, 0);
+
     iter += sprintf(&text[iter], "Polar Pan Start Payload:\n");
     iter += sprintf(&text[iter], "\tΔ Azimuth: \t%d\n",     pan->delta_azimuth);
     iter += sprintf(&text[iter], "\tΔ Altitude: \t%d\n",    pan->delta_altitude);
@@ -82,6 +148,8 @@ int Ichor::PolarPanStart(API_Data_Polar_Pan_Start *pan)
 
 int Ichor::PolarPanStop()
 {
+    axis[0]->SetVelocityFunc(&dead_vel);
+    axis[2]->SetVelocityFunc(&dead_vel);
     return 0;
 }
 

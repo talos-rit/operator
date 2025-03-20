@@ -80,9 +80,11 @@ int main(int argc, char* argv[])
     PCA9685PW dac = PCA9685PW(fd, 0x60);
     IchorISR isr = IchorISR(ISR_CHIP_PATH);
 
-    dac.SetDutyCycle(4, 0);
-    dac.SetDutyCycle(3, DAC_PCA_MAX_DUTY_CYCLE);
-    dac.SetDutyCycle(2, DAC_PCA_MAX_DUTY_CYCLE);
+
+    #if 0
+    dac.SetDutyCycle(DAC_IN1, 0);
+    dac.SetDutyCycle(DAC_IN2, DAC_PCA_MAX_DUTY_CYCLE);
+    dac.SetDutyCycle(DAC_SPEED, DAC_PCA_MAX_DUTY_CYCLE);
 
     // dac.SetDutyCycle(5, 0);
     // dac.SetDutyCycle(6, DAC_PCA_MAX_DUTY_CYCLE);
@@ -107,13 +109,13 @@ int main(int argc, char* argv[])
 
     usleep(10e6);
 
-    #if 0
+    #else
     Driver driver = Driver( &dac, DAC_IN1, DAC_IN2, DAC_SPEED,
                             &isr, ENC_A, ENC_B,
                             NULL, ADC_CHANNEL );
 
     driver.SetVelocityFunc(&velocity_sine);
-    driver.SetSpeedCoefficient(10);
+    driver.SetSpeedCoefficient(100);
 
     isr.AllocatePins();
     dac.InitDevice();
