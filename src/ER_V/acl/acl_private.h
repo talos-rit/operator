@@ -7,7 +7,7 @@
 #define ACL_SHOULDER_CONVERSION_FACTOR 33.2121f
 #define ACL_WRIST_CONVERSION_FACTOR 8.3555f
 
-#define ACL_CMD_COUNT 128
+#define ACL_CMD_COUNT 1024
 
 /** ACL Command Formats */
 #define ACL_ABORT_FMT           "A\r"   // Aborts the current movment (but keeps the movement buffer in tact)
