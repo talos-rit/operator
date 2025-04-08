@@ -31,6 +31,11 @@ int API_prep_home(API_Data_Home* payload)
     return 0;
 }
 
+//int API_prep_listpv(API_Data_Get_Polar_Pos* payload)
+//{
+//    if (!payload) STD_FAIL;
+//}
+
 int API_validate_command (const uint8_t *buf, uint16_t len)
 {
     // Check inputs
@@ -64,6 +69,10 @@ int API_validate_command (const uint8_t *buf, uint16_t len)
             break;
         case API_CMD_HOME:
             API_prep_home((API_Data_Home *) &cmd->payload_head);
+            break;
+        case API_CMD_LISTPV:
+            break;
+        case API_CMD_SET_SPEED:
             break;
         default:
             LOG_ERROR (

@@ -24,6 +24,8 @@ private:
     virtual int PolarPanStart(API_Data_Polar_Pan_Start *pan) = 0;
     virtual int PolarPanStop() = 0;
     virtual int Home(API_Data_Home* home) = 0;
+    virtual int ListPV(API_Data_Get_Polar_Pos* pos) = 0;
+    virtual int SetSpeed(API_Data_Set_Speed* speed) = 0;
 
 public:
     Arm();

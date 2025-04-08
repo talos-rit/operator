@@ -36,6 +36,8 @@ typedef enum _acl_command_type
     ACL_CMD_MANUAL,
     ACL_CMD_HOME,
     ACL_CMD_MOVE,
+    ACL_CMD_LISTPV,
+    ACL_CMD_SPEED,
 } ACL_Command_Type;
 
 /** ACL Command Map for the command string, length, and node */
@@ -110,7 +112,7 @@ int ACL_convert_polar_pan_ignore(S_List *cmd_queue, const API_Data_Polar_Pan *pa
 int ACL_enqueue_manual_mode_toggle_cmd(S_List *cmd_queue);
 
 /**
- * @brief Allocates and enqueues ACL HOME Command in input cmd_queue
+ * @brief Allocates and enqueues ACL HERE Command in input cmd_queue
  * @param cmd_queue S_List to append to
  * @returns 0 on success, -1 on failure
  */
@@ -130,6 +132,51 @@ int ACL_enqueue_delay(S_List *cmd_queue, uint16_t delay_ms);
  * @returns 0 on success, -1 on failure
  */
 int ACL_home_sequence(S_List *cmd_queue);
+
+/**
+ * @brief Allocates and enqueues ACL SPEED Command in input cmd_queue
+ * @param cmd_queue S_List to append to
+ * @returns 0 on success, -1 on failure
+ */
+int ACL_enqueue_speed_cmd(S_List *cmd_queue, uint8_t speed);
+
+/**
+ * @brief Allocates and enqueues ACL SHOW SPEED Command in input cmd_queue
+ * @param cmd_queue S_List to append to
+ * @returns 0 on success, -1 on failure
+ */
+int ACL_enqueue_show_speed_cmd(S_List *cmd_queue);
+
+/**
+ * @brief Allocates and enqueues ACL LISTPV Command in input cmd_queue
+ * @param cmd_queue S_List to append to
+ * @returns 0 on success, -1 on failure
+ */
+int ACL_enqueue_listpv_cmd(S_List *cmd_queue);
+
+/**
+ * @brief Allocates and enqueues ACL SETPV Command for saving current polar position in input cmd_queue
+ * @param cmd_queue S_List to append to
+ * @param name Name of the position to save
+ * @returns 0 on success, -1 on failure
+ */
+int ACL_enqueue_setpv_cmd(S_List *cmd_queue, const char* name);
+
+/**
+ * @brief Allocates and enqueues ACL DELP Command in input cmd_queue
+ * @param cmd_queue S_List to append to
+ * @param name Name of the position to delete
+ * @returns 0 on success, -1 on failure
+ */
+int ACL_enqueue_delp_cmd(S_List *cmd_queue, const char* name);
+
+/**
+ * @brief Allocates and enqueues ACL TEACH Command for setting Cartesian position in input cmd_queue
+ * @param cmd_queue S_List to append to
+ * @param name Name of the position to save
+ * @returns 0 on success, -1 on failure
+ */
+int ACL_enqueue_teach_cmd(S_List *cmd_queue, const char* name);
 
 /**
  * @brief Returns the ACL character corresponding to the desired angular vector, according to the received payload

@@ -34,6 +34,7 @@ class Scorbot : public Arm
         int PolarPanStart(API_Data_Polar_Pan_Start *pan);
         int PolarPanStop();
         int Home(API_Data_Home *home);
+        int ListPV(API_Data_Get_Polar_Pos *pos);
         int WriteCommandQueue(S_List *cmd_list);
         void Poll();
 };

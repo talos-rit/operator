@@ -22,6 +22,13 @@
 #define ACL_TOGGLE_MANUAL_FMT   "~" // While the scorbot controller is in direct mode, this command allows manual control of the position (like a joystick)
 #define ACL_MOVE_MANUAL_FMT     "%c"
 #define ACL_CLRBUF_FMT          "clrbuf\r"  // Clears the movement buffer, and halts all motor movement
+#define ACL_SPEED_FMT           "SPEED %d\r" // Speed command to set speed for all axes
+#define ACL_SHOW_SPEED_FMT      "SHOW SPEED\r" // Get the current speed of all axes
+#define ACL_LISTPV_FMT          "LISTPV %s\r" // List the encoder values for each axis of the input position
+#define ACL_SETPV_FMT           "SETPV %s\r" // Save the current position to the input position name
+#define ACL_DELP_FMT            "DELP %s\r" // Delete the input position name from RAM
+#define ACL_TEACH_FMT           "TEACH %s\r" // Records cartesian coordinates of input position
+
 
 /** Scorbot axes representation in ACL */
 typedef enum _acl_axis
@@ -30,7 +37,7 @@ typedef enum _acl_axis
     ACL_AXIS_SHOULDER               = 2,
     ACL_AXIS_ELBOW                  = 3,
     ACL_AXIS_WRIST_PITCH            = 4,
-    ACL_AXIS_WRIST_ROLL             = 5
+    ACL_AXIS_WRIST_ROLL             = 5,
 } ACL_Axis;
 
 typedef enum _acl_manual_axis

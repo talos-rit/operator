@@ -184,6 +184,30 @@ int ACL_enqueue_move_cmd(S_List *cmd_queue)
     return 0;
 }
 
+int ACL_enqueue_speed_cmd(S_List *cmd_queue, uint8_t speed)
+{
+    ACL_Command* cmd = get_cmd(cmd_queue);
+    if(!cmd) STD_FAIL;
+
+    cmd->len = sprintf(&cmd->payload[0], ACL_SPEED_FMT, speed);
+    cmd->type = ACL_CMD_SPEED;
+
+    DATA_S_List_append(cmd_queue, &cmd->node);
+    return 0;
+}
+
+int ACL_enqueue_listpv_cmd(S_List *cmd_queue)
+{
+    ACL_Command* cmd = get_cmd(cmd_queue);
+    if(!cmd) STD_FAIL;
+
+    cmd->len = sprintf(&cmd->payload[0], ACL_LISTPV_FMT, "POSITION");
+    cmd->type = ACL_CMD_LISTPV;
+
+    DATA_S_List_append(cmd_queue, &cmd->node);
+    return 0;
+}
+
 int ACL_generate_enqueue_moved_cmd(S_List *cmd_queue)
 {
     ACL_Command* cmd = get_cmd(cmd_queue);

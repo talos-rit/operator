@@ -10,6 +10,8 @@
 extern "C" {
 #endif
 
+#define POS_NAME_SIZE 32
+
 typedef enum _api_cmd_id
 {
     API_CMD_HANDSHAKE       = 0x0000,
@@ -17,6 +19,8 @@ typedef enum _api_cmd_id
     API_CMD_HOME            = 0x0002,
     API_CMD_POLARPAN_START  = 0x0003,
     API_CMD_POLARPAN_STOP   = 0x0004,
+    API_CMD_LISTPV          = 0x000F,
+    API_CMD_SET_SPEED          = 0x000A,
 } API_Command_ID;
 
 #pragma pack(push, 1)
@@ -54,6 +58,17 @@ typedef struct _api_data_home
 {
     uint32_t    delay_ms;       /** How long to wait until executing pan */
 } API_Data_Home;
+
+typedef struct _api_data_get_polar_pos
+{
+    char        name[POS_NAME_SIZE];          /** Name descriptor for the position */
+} API_Data_Get_Polar_Pos;
+
+typedef struct _api_data_set_speed
+{
+    int8_t        speed;          /** Speed to set for all axes */
+} API_Data_Set_Speed;
+
 #pragma pack(pop)
 
 #define API_WRAPPER_HEAD_LEN offsetof(API_Data_Wrapper, payload_head)

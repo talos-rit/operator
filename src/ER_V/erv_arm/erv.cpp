@@ -330,6 +330,25 @@ int Scorbot::Home(API_Data_Home* home)
     return 0;
 }
 
+int Scorbot::ListPV(API_Data_Get_Polar_Pos *pos)
+{
+    uint8_t iter = 0;
+    char text[255];
+
+    iter += sprintf(&text[iter], "ListPV Payload:\n");
+    iter += sprintf(&text[iter], "\tName: \t\t%s\n", pos->name);
+
+    LOG_VERBOSE(4, "%s", text);
+
+    S_List cmd_list;
+    DATA_S_List_init(&cmd_list);
+    ACL_enqueue_listpv_cmd(&cmd_list);
+
+    WriteCommandQueue(&cmd_list);
+
+    return 0;
+}
+
 int Scorbot::WriteCommandQueue(S_List* cmd_list)
 {
     if (!cmd_list) STD_FAIL;
