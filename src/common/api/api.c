@@ -58,6 +58,11 @@ int API_validate_command (const uint8_t *buf, uint16_t len)
         case API_CMD_POLARPAN_STOP:
             // Already correct endianness
             break;
+        case API_CMD_CARTESIAN_START:
+            // Already correct endianness
+        case API_CMD_CARTESIAN_STOP:
+            // Already correct endianness
+            break;
 
         case API_CMD_POLARPAN:
             API_prep_polar_pan((API_Data_Polar_Pan*) &cmd->payload_head);

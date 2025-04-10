@@ -17,6 +17,8 @@ typedef enum _api_cmd_id
     API_CMD_HOME            = 0x0002,
     API_CMD_POLARPAN_START  = 0x0003,
     API_CMD_POLARPAN_STOP   = 0x0004,
+    API_CMD_CARTESIAN_START = 0x0006,
+    API_CMD_CARTESIAN_STOP  = 0x0007,
 } API_Command_ID;
 
 #pragma pack(push, 1)
@@ -49,6 +51,13 @@ typedef struct _api_data_polar_pan_start
     int8_t      delta_azimuth;  /** Requested change in azimuth */
     int8_t      delta_altitude; /** Requested change in altitude */
 } API_Data_Polar_Pan_Start;
+
+typedef struct _api_data_cartesian_start
+{
+    int8_t      delta_x_value;  /** Requested change in x axis */
+    int8_t      delta_y_value; /** Requested change in y axis */
+    int8_t      delta_z_value;  /** Requested change in z axis */
+} API_Data_Cartesian_Start;
 
 typedef struct _api_data_home
 {

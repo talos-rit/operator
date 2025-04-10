@@ -97,6 +97,14 @@ int Arm::ProcessQueue()
             LOG_INFO("Polar Pan Stop Recieved");
             if (PolarPanStop()) STD_FAIL;
             break;
+        case API_CMD_CARTESIAN_START:
+            LOG_INFO("Cartesian Start Recieved");
+            if (CartesianStart((API_Data_Cartesian_Start *) &cmd->payload_head)) STD_FAIL;
+            break;
+        case API_CMD_CARTESIAN_STOP:
+            LOG_INFO("Cartesian Stop Recieved");
+            if (CartesianStop()) STD_FAIL;
+            break;
         default:
             LOG_IEC();
             status = -1;

@@ -136,3 +136,9 @@ int ACL_home_sequence(S_List *cmd_queue);
  * @returns Corresponding ACL character on success, NULL character on failure
 */
 char ACL_get_polar_pan_continuous_vector(API_Data_Polar_Pan_Start* payload);
+
+/**
+ * @brief Returns the ACL character corresponding to the desired XYZ vector, according to the received payload
+ * @returns Corresponding ACL character on success, NULL character on failure
+*/
+char ACL_get_cartesian_continuous_vector(API_Data_Cartesian_Start* payload);

@@ -36,6 +36,7 @@ Scorbot::Scorbot(const char* dev)
 
     // Setup config
     polar_pan_cont = '\0';
+    cartesian_cont = '\0';
     manual_mode = false;
     oversteer = ERV_OVERSTEER_ABORT;
 
@@ -126,6 +127,10 @@ static void poll_polar_pan(int fd, char* polar_pan_cont, struct timeval *last_st
         {
             // Manual mode is toggling
             write(fd, "~", 1);
+            if(manual_mode && !*manual_mode) // temporary toggle inclusion for Cartesian mode testing
+            {
+                write(fd, "x", 1);
+            }
             *manual_mode = !(*manual_mode);
         }
     }
@@ -301,6 +306,36 @@ int Scorbot::PolarPanStart(API_Data_Polar_Pan_Start *pan)
 int Scorbot::PolarPanStop()
 {
     polar_pan_cont = '\0';
+
+    S_List cmd_list;
+    DATA_S_List_init(&cmd_list);
+    ACL_enqueue_delay(&cmd_list, 500);
+    ACL_enqueue_here_cmd(&cmd_list);
+    WriteCommandQueue(&cmd_list);
+
+    return 0;
+}
+
+int Scorbot::CartesianStart(API_Data_Cartesian_Start *pan)
+{
+    uint8_t iter = 0;
+    char text[255];
+
+    iter += sprintf(&text[iter], "Cartesian Start Payload:\n");
+    iter += sprintf(&text[iter], "\tΔ X Value: \t%d\n",     pan->delta_x_value);
+    iter += sprintf(&text[iter], "\tΔ Y Value: \t%d\n",    pan->delta_y_value);
+    LOG_VERBOSE(4, "%s", text);
+
+    cartesian_cont = ACL_get_cartesian_continuous_vector(pan);
+    gettimeofday(&last_start, NULL);
+
+    if('\0' == cartesian_cont) CartesianStop();
+    return 0;
+}
+
+int Scorbot::CartesianStop()
+{
+    cartesian_cont = '\0';
 
     S_List cmd_list;
     DATA_S_List_init(&cmd_list);

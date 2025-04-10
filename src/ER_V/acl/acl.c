@@ -112,6 +112,28 @@ char ACL_get_polar_pan_continuous_vector(API_Data_Polar_Pan_Start* payload)
     return (char) vector;
 }
 
+char ACL_get_cartesian_continuous_vector(API_Data_Cartesian_Start* payload)
+{
+    if (!payload) STD_FAIL;
+
+    ACL_Manual_XYZ_Axis vector;
+    if (payload->delta_x_value)
+    {
+        vector = payload->delta_x_value > 0 ? ACL_MAN_POS_X_AXIS : ACL_MAN_NEG_X_AXIS;
+    }
+    else if (payload->delta_y_value)
+    {
+        vector = payload->delta_y_value > 0 ? ACL_MAN_POS_Y_AXIS : ACL_MAN_NEG_Y_AXIS;
+    }
+    else
+    {
+        //LOG_IEC();
+        return '\0';
+    }
+
+    return (char) vector;
+}
+
 int ACL_enqueue_shift_cmd(S_List *cmd_queue, ACL_Axis axis, float degree_count)
 {
     ACL_Command* cmd = get_cmd(cmd_queue);

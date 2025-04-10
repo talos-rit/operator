@@ -23,6 +23,8 @@ private:
     virtual int PolarPan(API_Data_Polar_Pan *pan) = 0;
     virtual int PolarPanStart(API_Data_Polar_Pan_Start *pan) = 0;
     virtual int PolarPanStop() = 0;
+    virtual int CartesianStart(API_Data_Cartesian_Start *pan) = 0;
+    virtual int CartesianStop() = 0;
     virtual int Home(API_Data_Home* home) = 0;
 
 public:

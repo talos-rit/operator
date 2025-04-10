@@ -26,6 +26,7 @@ class Scorbot : public Arm
         S_List cmd_buffer;
 
         char polar_pan_cont;
+        char cartesian_cont;
         bool manual_mode;
         struct timeval last_start;
 
@@ -33,6 +34,8 @@ class Scorbot : public Arm
         int PolarPan(API_Data_Polar_Pan *pan);
         int PolarPanStart(API_Data_Polar_Pan_Start *pan);
         int PolarPanStop();
+        int CartesianStart(API_Data_Cartesian_Start *pan);
+        int CartesianStop();
         int Home(API_Data_Home *home);
         int WriteCommandQueue(S_List *cmd_list);
         void Poll();

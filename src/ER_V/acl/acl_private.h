@@ -47,6 +47,18 @@ typedef enum _acl_manual_axis
     ACL_MAN_NEG_WRIST_ROLL_AXIS     = 't',
 } ACL_Manual_Axis;
 
+typedef enum _acl_manual_xyz_axis
+{
+    ACL_MAN_POS_X_AXIS             = '1',
+    ACL_MAN_NEG_X_AXIS             = 'q',
+    ACL_MAN_POS_Y_AXIS             = '2',
+    ACL_MAN_NEG_Y_AXIS             = 'w',
+    ACL_MAN_POS_Z_AXIS             = '3',
+    ACL_MAN_NEG_Z_AXIS             = 'e',
+    ACL_MAN_POS_PITCH_AXIS         = '4',
+    ACL_MAN_NEG_PITCH_AXIS         = 'r',
+} ACL_Manual_XYZ_Axis;
+
 /** Resource management struct for ACL commands and the associated S_List */
 typedef struct _acl_resources
 {
