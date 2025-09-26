@@ -28,7 +28,7 @@ static float dead_vel (int32_t target, int32_t start, int32_t pos)
 static float open_loop_vel (int32_t target, int32_t start, int32_t pos)
 {
     if (target == 0) return 0;
-    return target > 0 ? 1 : -1;
+    return 1.0f * ((target > 0) ? 1 : -1);
 }
 
 static void set_velocity(Driver** axis, float (*vel)(int32_t target, int32_t start, int32_t pos))
@@ -150,6 +150,7 @@ int Ichor::PolarPanStop()
 {
     axis[0]->SetVelocityFunc(&dead_vel);
     axis[2]->SetVelocityFunc(&dead_vel);
+    LOG_INFO("Encoder position: %d", axis[0]->GetEnc());
     return 0;
 }
 

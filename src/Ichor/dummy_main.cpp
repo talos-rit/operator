@@ -31,21 +31,21 @@
 #define DAC_SPEED   2
 #define ADC_CHANNEL -1
 
-int16_t velocity_square (int32_t target, int32_t pos)
+float velocity_square (int32_t start, int32_t stop, int32_t pos)
 {
-    if (target == pos) return 0;
-    return DAC_PCA_MAX_DUTY_CYCLE * (target - pos > 0 ? 1 : -1);
+    if (stop == pos) return 0;
+    return (stop - pos > 0 ? 1 : -1);
 }
 
-int16_t velocity_sine (int32_t target, int32_t pos)
+float velocity_sine (int32_t start, int32_t stop, int32_t pos)
 {
     struct timeval tv;
     gettimeofday(&tv, NULL);
 
     float tmp = ((tv.tv_sec % 10) * 1e6 + tv.tv_usec) / 1e6f;
     tmp = sin(tmp * M_PI / 5.f);
-    tmp *= DAC_PCA_MAX_DUTY_CYCLE;
-    return (int16_t) tmp;
+    // tmp *= DAC_PCA_MAX_DUTY_CYCLE;
+    return tmp;
 }
 
 int main(int argc, char* argv[])
@@ -122,11 +122,8 @@ int main(int argc, char* argv[])
 
 
     struct timeval start, stop;
-    bool loc_1 = true;
     while(1)
     {
-        driver.SetTarget(loc_1 ? 0 : 3000);
-
         gettimeofday(&start, NULL);
         while(1)
         {
@@ -139,8 +136,6 @@ int main(int argc, char* argv[])
             if (stop.tv_sec * 10e6+ stop.tv_usec  >= 3e6) break;
             usleep(2.5e3);  // 25 ms delay (defacto delay in Talos Operator so far)
         }
-
-        loc_1 = !loc_1;
     }
     #endif
 
