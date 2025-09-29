@@ -7,11 +7,7 @@
 #define ACL_SHOULDER_CONVERSION_FACTOR 33.2121f
 #define ACL_WRIST_CONVERSION_FACTOR 8.3555f
 
-<<<<<<< HEAD
 #define ACL_CMD_COUNT 1024
-=======
-#define ACL_CMD_COUNT 128
->>>>>>> 3547e09 (Addressed network bug (issue 47); Migrated buffers from stack to heap (issue 42); Improved network drop detection)
 
 /** ACL Command Formats */
 #define ACL_ABORT_FMT           "A\r"   // Aborts the current movment (but keeps the movement buffer in tact)
