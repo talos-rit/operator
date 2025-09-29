@@ -19,9 +19,7 @@ CC          := g++
 CPP_FLAGS   := -g -Wall -Wextra -Wno-deprecated-declarations -D _DEFAULT_SOURCE
 CPP_LIB 	:= -lpthread
 CPP_INC     := -I include -I$(INT_SRC_DIR) -I$(EXT_SRC_DIR)
-AMQ_LIB 	:= -luuid -lssl -lcrypto -lapr-1 -lactivemq-cpp
-AMQ_INC 	:= -I/usr/include/apr-1.0/ -I/usr/local/include/activemq-cpp-3.10.0/
-FLAGS 		:= $(CPP_FLAGS) $(CPP_LIB) $(CPP_INC) $(AMQ_LIB) $(AMQ_INC)
+FLAGS 		:= $(CPP_FLAGS) $(CPP_LIB) $(CPP_INC)
 
 # Internal sources (ER_V)
 SRCS        := acl/acl.c
@@ -36,13 +34,11 @@ EXTS		+= util/timestamp.c
 EXTS		+= data/s_list.c
 EXTS		+= api/api.c
 
-EXTS_CPP	:= tamq/tamq_sub.cpp
 EXTS_CPP	+= socket/socket.cpp
 EXTS_CPP	+= sub/sub.cpp
 EXTS_CPP	+= arm/arm.cpp
 EXTS_CPP	+= conf/config.cpp
 EXTS_CPP	+= log/log_config.cpp
-EXTS_CPP	+= tamq/tamq_conf.cpp
 EXTS_CPP	+= tmp/tmp.cpp
 
 # Automated reformatting
@@ -63,10 +59,11 @@ RM          := rm -f
 # MAKEFLAGS   += --no-print-directory
 DIR_DUP     = mkdir -p $(@D)
 
-all: $(NAME)
+all: $(BIN_DIR)/$(NAME)
 
 # Executable
-$(NAME): $(MAIN) $(OBJS)
+$(BIN_DIR)/$(NAME): $(MAIN) $(OBJS)
+	$(DIR_DUP)
 	$(CC) $(MAIN) $(OBJS) $(FLAGS) -o $(BIN_DIR)/$(NAME)
 
 # Internal source compilation

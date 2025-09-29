@@ -9,7 +9,6 @@
 #include "util/array.h"
 #include "log/log.h"
 #include "sub/sub.h"
-#include "tamq/tamq_sub.h"
 #include "socket/socket.h"
 #include "arm/arm.h"
 #include "erv_arm/erv.h"

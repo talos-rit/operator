@@ -1,0 +1,4 @@
+log_loc: ./operator.log
+scorbot_dev: /dev/ttyUSB2
+socket_address: 0.0.0.0
+socket_port: 61616

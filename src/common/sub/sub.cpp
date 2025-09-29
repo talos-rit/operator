@@ -2,13 +2,13 @@
 #include <stdint.h>
 #include <stdio.h>
 #include <string.h>
+#include <cstddef>
 
 #include "sub/sub.h"
 #include "sub/sub_private.h"
 #include "util/comm.h"
 #include "util/array.h"
 #include "log/log.h"
-#include "tamq/tamq_sub.h"
 #include "data/list.h"
 #include "data/s_list.h"
 
