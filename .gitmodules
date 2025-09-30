@@ -1,0 +1,3 @@
+[submodule "src/Ichor/driver"]
+	path = src/Ichor/driver
+	url = https://github.com/talos-rit/driver.git

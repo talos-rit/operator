@@ -56,7 +56,9 @@ typedef struct _log
     pthread_mutex_t wr_lock;                    /** Lock protecting the wr_queue */
     pthread_mutex_t free_lock;                  /** Lock protecting the free_queue */
     LOG_Config config;                          /** Configuration */
-    LOG_Buffer buffer_pool[LOG_MAX_BUFFER];     /** Statically allocated pool of Log buffers to rotate through */
+    // LOG_Buffer buffer_pool[LOG_MAX_BUFFER];     /** Statically allocated pool of Log buffers to rotate through */
+    uint32_t pool_count;                        /** Number of LOG_Buffers in buffer_pool */
+    LOG_Buffer *buffer_pool;                    /** Dynamically allocated pool of Log buffers to rotate through */
     S_List wr_queue;                            /** Queue of Log Buffers waiting to write to console/file */
     S_List free_queue;                          /** Queue of available Log Buffers */
     int fd;                                     /** Log file descriptor */

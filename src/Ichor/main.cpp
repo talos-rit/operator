@@ -11,11 +11,11 @@
 #include "sub/sub.h"
 #include "socket/socket.h"
 #include "arm/arm.h"
-#include "erv_arm/erv.h"
 #include "conf/config.h"
-#include "erv_conf/erv_conf.h"
-
 #include "api/api.h"
+
+#include "arm/ichor_arm.h"
+#include "conf/ichor_conf.h"
 
 #define LOG_FILE_THRESHOLD_THIS     LOG_THRESHOLD_MAX
 #define LOG_CONSOLE_THRESHOLD_THIS  LOG_THRESHOLD_MAX
@@ -71,7 +71,7 @@ int main(int argc, char* argv[])
     register_intr();
 
     // Initalize program; Setup Logging
-    ERVConfig conf = ERVConfig();
+    IchorConfig conf = IchorConfig();
 
     // Setup config priority
     const char* conf_loc[] = {NULL, CONF_DEFAULT_LOCATION};
@@ -91,9 +91,23 @@ int main(int argc, char* argv[])
 
     // Init Modules
     Subscriber hermes = Subscriber();
-    Inbox* inbox = new Socket();
 
-    Arm* bot = new Scorbot(conf.GetScorbotDevicePath());
+    #if 0
+    Inbox* inbox = new TAMQ_Consumer(
+        conf.GetBrokerAddress(),
+        conf.GetCommandURI(),
+        conf.GetUseTopics(),
+        conf.GetClientAck());
+    #else
+    Inbox* inbox = new Socket();
+    #endif
+
+    // Register hardware
+    Ichor* bot = new Ichor("/dev/gpiochip0", "/dev/i2c-1", 0x60, 0x61, 0x62);
+    // bot->RegisterMotor(0, 0, 0, 1, 14, 4, 17, 0);           // Base
+    bot->RegisterMotor(0, 0, 4, 3, 2, 4, 17, 0);        // Base
+    bot->RegisterMotor(2, 0, 11, 12, 13, 22, 23, 2);     // Elbow
+    bot->Init();
 
     // Register modules
     inbox->RegisterSubscriber(&hermes);

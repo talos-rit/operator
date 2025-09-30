@@ -7,7 +7,7 @@
 #define ACL_SHOULDER_CONVERSION_FACTOR 33.2121f
 #define ACL_WRIST_CONVERSION_FACTOR 8.3555f
 
-#define ACL_CMD_COUNT 32
+#define ACL_CMD_COUNT 1024
 
 /** ACL Command Formats */
 #define ACL_ABORT_FMT           "A\r"   // Aborts the current movment (but keeps the movement buffer in tact)
@@ -50,9 +50,11 @@ typedef enum _acl_manual_axis
 /** Resource management struct for ACL commands and the associated S_List */
 typedef struct _acl_resources
 {
-    ACL_Command cmd_pool[ACL_CMD_COUNT];
-    S_List      free_queue;
-    uint8_t     manaul_mode;
+    // ACL_Command     cmd_pool[ACL_CMD_COUNT];    /** Statically Allocated ACL_Command pool */
+    ACL_Command*    cmd_pool;                   /** Dynamically Allocated ACL_Command pool */
+    uint32_t        cmd_count;                  /** Number of ACL_Commands in cmd_pool */
+    S_List          free_queue;                 /** Queue of free ACL_Commands */
+    uint8_t         manaul_mode;                /** Manual mode tracker */
 } ACL_Resources;
 
 /**

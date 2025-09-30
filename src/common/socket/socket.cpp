@@ -1,6 +1,8 @@
 #include <stdint.h>
 #include <errno.h>
 #include <fcntl.h>
+#include <sys/time.h>
+#include <signal.h>
 
 #include "socket/socket.h"
 #include "util/comm.h"
@@ -20,6 +22,9 @@ static int init_socket(Socket_Props* props)
         LOG_ERROR("Could not open socket: (%d) %s", errno, strerror(errno));
         STD_FAIL;
     }
+
+    int optval = 1;
+    setsockopt(props->sockfd, SOL_SOCKET, SO_REUSEADDR, &optval, sizeof(optval));
 
     // Set up server address configuration
     memset(&props->server, 0, sizeof(props->server));
@@ -68,17 +73,14 @@ static int wait_for_connection(Socket_Props* props)
         }
     }
 
-    if (props->connfd > 0)
-    {
-        LOG_INFO ("Connection Established.");
-        return 0;
-    }
-
-    else
+    if (props->connfd < 0)
     {
         LOG_INFO("Connection Failed.");
         STD_FAIL;
     }
+
+    LOG_INFO ("Connection Established.");
+    return 0;
 }
 
 int send_response(Socket_Props* props)
@@ -103,6 +105,7 @@ static void* socket_poll (void* arg)
     Socket_Props* props = (Socket_Props*) arg;
     Subscriber* sub = props->sub;
 
+    struct timeval last_ping;
     bool idle = true;
     int ret = 0;
     uint16_t buf_iter = 0;
@@ -117,6 +120,7 @@ static void* socket_poll (void* arg)
         return NULL;
     }
 
+    gettimeofday(&last_ping, NULL);
     while(props->thread_en)
     {
         if (idle) usleep (SOCKET_POLL_PERIOD_MS * 1000);
@@ -135,9 +139,11 @@ static void* socket_poll (void* arg)
             break;
         }
 
-        LOG_VERBOSE(6, "SOCKET ITER");
         if (0 == ret)
         {
+            // Getting to this point should mean that the connection closed
+            // (otherwise recv would return -1 for a lack of a message)
+
             LOG_INFO("Connection closed by client.");
 
             close(props->connfd);
@@ -152,6 +158,7 @@ static void* socket_poll (void* arg)
             continue; // continue receiving after reconnection
         }
 
+        // gettimeofday(&last_ping, NULL);
         idle = false;
         buf_iter += ret;
 
@@ -163,12 +170,20 @@ static void* socket_poll (void* arg)
             uint16_t len = sizeof(API_Data_Header) + be16toh(msg->header.len) + 2;
             if (buf_iter < len) break;
 
+            // Enqueue copied message to command buffer
             SUB_Buffer* buf = sub->DequeueBuffer(SUB_QUEUE_FREE);
+            if (!buf)
+            {
+                LOG_WARN ("No free network buffers"); // You DDOS'd yourself.
+                break;
+            }
+
             buf->len = len;
             memcpy(&buf->body[0], msg, buf->len);
             sub->EnqueueBuffer(SUB_QUEUE_COMMAND, buf);
             LOG_VERBOSE(2, "Received ICD command");
 
+            // Re-align buffer
             buf_iter -= len;
             memcpy(&buffer[0], &buffer[len], buf_iter);
 
@@ -180,7 +195,7 @@ static void* socket_poll (void* arg)
     LOG_IEC();
     if(-1 == shutdown(props->connfd, SHUT_RDWR)) LOG_ERROR("Error shutting down socket: (%d) %s", errno, strerror(errno));
     while (recv(props->connfd, &buffer[0], sizeof(buffer), 0) > 0);
-    if (-1 == props->connfd)
+    if (-1 != props->connfd)
     {
         close (props->connfd);
         props->connfd = -1;

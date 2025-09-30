@@ -1,3 +1,5 @@
 .vscode/**
 build/**
 operator.log
+.gitmodules
+**/patch.txt

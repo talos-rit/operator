@@ -1,3 +1,4 @@
+#include <stdlib.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <fcntl.h>
@@ -74,7 +75,7 @@ int Config::SetFilePath(const char* file_path)
 */
 static int is_term(char ch)
 {
-    switch (ch)
+    switch ((signed char) ch)
     {
         //Intentional fallthroughs
         case '\n':
@@ -279,6 +280,21 @@ bool Config::GetBool(const char* key)
     int idx = GetKeyIndex(key);
     if (-1 == idx) STD_FAIL;
     return GetBool(idx);
+}
+
+int Config::GetInt(int idx)
+{
+    const char* val = GetVal(idx);
+    if (!val) STD_FAIL;
+    return atoi(val);
+}
+
+int Config::GetInt(const char* key)
+{
+    if (!key) STD_FAIL;
+    int idx = GetKeyIndex(key);
+    if (-1 == idx) STD_FAIL;
+    return GetInt(idx);
 }
 
 void Config::ClearKeyVals()

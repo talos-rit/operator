@@ -1,14 +1,15 @@
 #include <stdlib.h>
+#include <stdlib.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <string.h>
+#include <stddef.h>
 
 #include "sub/sub.h"
 #include "sub/sub_private.h"
 #include "util/comm.h"
 #include "util/array.h"
 #include "log/log.h"
-#include "tamq/tamq_sub.h"
 #include "data/list.h"
 #include "data/s_list.h"
 
@@ -26,6 +27,10 @@
 */
 static int init_queue(SUB_Instance& resources, SUB_Queue queue_idx)
 {
+    // If the message pool is NULL (unallocated), allocate a new pool.
+    // If the message pool is not NULL, assume it has been allocated already (length is compile time constant)
+    if (!resources.msg_pool) resources.msg_pool = (SUB_Buffer*) malloc(SUB_MSG_COUNT * sizeof(SUB_Buffer));
+
     if (pthread_mutex_init(&resources.locks[(uint8_t) queue_idx],  NULL)) STD_FAIL
     if (DATA_S_List_init(&resources.queues[(uint8_t) queue_idx])) STD_FAIL
 
@@ -75,6 +80,12 @@ static int SUB_deinit_subscriber(SUB_Instance& resources)
 {
     for (uint8_t iter = 0; iter < SUB_QUEUE_LEN; iter++)
         if (deinit_queue(resources, (SUB_Queue) iter)) STD_FAIL;
+
+    if (resources.msg_pool)
+    {
+        free(resources.msg_pool);
+        resources.msg_pool = NULL;
+    }
 
     return 0;
 }
@@ -135,9 +146,9 @@ SUB_Buffer* Subscriber::DequeueBuffer(SUB_Queue queue_idx)
     if ((uint8_t) queue_idx >= SUB_MSG_LEN) STD_FAIL_VOID_PTR;
 
     S_List_Node* node = NULL;
-    pthread_mutex_lock      (&resources.locks [(uint8_t) queue_idx]);
-    node = DATA_S_List_pop  (&resources.queues[(uint8_t) queue_idx]);
-    pthread_mutex_unlock    (&resources.locks [(uint8_t) queue_idx]);
+    pthread_mutex_lock (&resources.locks [(uint8_t) queue_idx]);
+    node = DATA_S_List_pop (&resources.queues[(uint8_t) queue_idx]);
+    pthread_mutex_unlock (&resources.locks [(uint8_t) queue_idx]);
 
     if (!node) return NULL;
     LOG_VERBOSE(2, "SUB_Buffer dequeued from queue index #%d", (uint8_t) queue_idx);
@@ -151,9 +162,9 @@ int Subscriber::EnqueueBuffer(SUB_Queue queue_idx, SUB_Buffer* buf)
     if ((uint8_t) queue_idx >= SUB_MSG_LEN) STD_FAIL;
 
     if (SUB_QUEUE_FREE == queue_idx) SUB_init_buffer (buf);
-    pthread_mutex_lock      (&resources.locks [(uint8_t) queue_idx]);
+    pthread_mutex_lock (&resources.locks [(uint8_t) queue_idx]);
     int ret = DATA_S_List_append (&resources.queues[(uint8_t) queue_idx], &buf->node);
-    pthread_mutex_unlock    (&resources.locks [(uint8_t) queue_idx]);
+    pthread_mutex_unlock (&resources.locks [(uint8_t) queue_idx]);
 
     if (ret) STD_FAIL;
     LOG_VERBOSE(2, "SUB_Buffer enqueued in queue index #%d", (uint8_t) queue_idx);
