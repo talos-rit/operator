@@ -9,6 +9,7 @@
 #include <stdint.h>
 #include <time.h>
 #include <sys/time.h>
+#include <unistd.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -106,7 +107,7 @@ int8_t UTIL_time_iso8601_timestamp_local(char* dst_str, time_t time);
  * 
  * @return the length of the formatted string upon success, -1 upon failure
 */
-int8_t UTIL_time_msec_timestamp(char* dst_str, __useconds_t time);
+int8_t UTIL_time_msec_timestamp(char* dst_str, useconds_t time);
 
 /**
  * @brief Formats the milli- and micro- second portion of a timestamp at the string provided
@@ -117,7 +118,7 @@ int8_t UTIL_time_msec_timestamp(char* dst_str, __useconds_t time);
  * 
  * @return the length of the formatted string upon success, -1 upon failure
 */
-int8_t UTIL_time_msec_usec_timestamp(char* dst_str, __useconds_t time);
+int8_t UTIL_time_msec_usec_timestamp(char* dst_str, useconds_t time);
 
 /**
  * @brief Formats a ISO6801 timezone offset (+TH:TM) at the string provided

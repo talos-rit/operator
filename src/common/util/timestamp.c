@@ -58,7 +58,7 @@ int8_t UTIL_time_iso8601_timestamp_local(char* dst_str, time_t time)
     return ret == 0 ? (size_t) -1 : ret;
 }
 
-int8_t UTIL_time_msec_timestamp(char* dst_str, __useconds_t usec)
+int8_t UTIL_time_msec_timestamp(char* dst_str, useconds_t usec)
 {
     if (!dst_str)
     {
@@ -69,7 +69,7 @@ int8_t UTIL_time_msec_timestamp(char* dst_str, __useconds_t usec)
     return ret == 0 ? (size_t) -1 : ret;
 }
 
-int8_t UTIL_time_msec_usec_timestamp(char* dst_str, __useconds_t usec)
+int8_t UTIL_time_msec_usec_timestamp(char* dst_str, useconds_t usec)
 {
     if (!dst_str)
     {
