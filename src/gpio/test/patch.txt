@@ -1,0 +1,12 @@
+diff --git a/driver.mk b/driver.mk
+index 909ab47..f2162ce 100644
+--- a/driver.mk
++++ b/driver.mk
+@@ -13,6 +13,7 @@ DRIVER		:=
+ DRIVER_CPP	:= serial/serial.cpp
+ DRIVER_CPP	+= serial/i2c_dev.cpp
+ DRIVER_CPP	+= serial/test/dummy_i2c.cpp
++DRIVER_CPP	+= gpio/test/dummy_gpio.cpp
+ 
+ DRIVER_UTEST:=
+ 
