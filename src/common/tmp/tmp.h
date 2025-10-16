@@ -2,4 +2,4 @@
 
 #include <stdint.h>
 
-int8_t test (int8_t arg);
+int8_t test(int8_t arg);
