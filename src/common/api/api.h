@@ -17,6 +17,7 @@ typedef enum _api_cmd_id {
   API_CMD_POLARPAN_START = 0x0003,
   API_CMD_POLARPAN_STOP = 0x0004,
   API_CMD_SET_SPEED = 0x0005,
+  API_CMD_GET_SPEED = 0x0006,
 } API_Command_ID;
 
 #pragma pack(push, 1)

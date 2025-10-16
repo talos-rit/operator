@@ -87,6 +87,10 @@ int Arm::ProcessQueue() {
       LOG_INFO("Set Speed Recieved");
       if (SetSpeed((API_Data_Set_Speed *)&cmd->payload_head)) STD_FAIL;
       break;
+    case API_CMD_GET_SPEED:
+      LOG_INFO("Get Speed Recieved");
+      if (GetSpeed()) STD_FAIL;
+      break;
     default:
       LOG_IEC();
       status = -1;

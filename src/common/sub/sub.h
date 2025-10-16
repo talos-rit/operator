@@ -75,6 +75,7 @@ class Subscriber {
 
   SUB_State status;       /** Current status of subscriber interface */
   SUB_Instance resources; /** Resources for managing buffers */
+  Inbox *responder;       /** Pointer to the responder inbox */
 
  public:
   Subscriber();

@@ -122,6 +122,15 @@ int Subscriber::Start() {
   return 0;
 }
 
+int Subscriber::RegisterResponder(Inbox *responder) {
+  if (!responder) STD_FAIL;
+  if (SUB_State::RUN == status)
+    LOG_WARN("Registering a responder on a running Subscriber.");
+
+  this->responder = responder;
+  return 0;
+}
+
 int Subscriber::Stop() {
   if (SUB_State::RUN != status) STD_FAIL;
   status = SUB_State::INIT;

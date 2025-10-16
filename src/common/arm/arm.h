@@ -24,6 +24,7 @@ class Arm {
   virtual int PolarPanStop() = 0;
   virtual int Home(API_Data_Home *home) = 0;
   virtual int SetSpeed(API_Data_Set_Speed *speed) = 0;
+  virtual int GetSpeed() = 0;
 
  public:
   enum OversteerConfig {
