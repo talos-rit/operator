@@ -66,7 +66,7 @@ typedef struct _sub_instance {
 int SUB_init_buffer(SUB_Buffer *buf);
 
 class Subscriber {
-private:
+ private:
   enum class SUB_State {
     DEAD,
     INIT,
@@ -76,7 +76,7 @@ private:
   SUB_State status;       /** Current status of subscriber interface */
   SUB_Instance resources; /** Resources for managing buffers */
 
-public:
+ public:
   Subscriber();
   ~Subscriber();
 

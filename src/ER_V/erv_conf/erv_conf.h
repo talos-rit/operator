@@ -10,10 +10,10 @@
 #define ERV_CONF_DEV_DEFAULT "/dev/ttyUSB0"
 
 class ERVConfig : public LogConfig, public SocketConfig {
-private:
+ private:
   uint8_t dev_idx;
 
-public:
+ public:
   ERVConfig();
   virtual ~ERVConfig();
 

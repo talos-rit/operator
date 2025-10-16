@@ -8,7 +8,7 @@
 #define ICHOR_AXIS_COUNT 8
 
 class Ichor : public Arm {
-public:
+ public:
   Ichor(const char *isr_dev, const char *i2c_dev, uint8_t dac0_addr,
         uint8_t dac1_addr, uint8_t adc_addr);
   ~Ichor();
@@ -19,7 +19,7 @@ public:
 
   int Init();
 
-private:
+ private:
   int i2c_fd;
   Driver *axis[ICHOR_AXIS_COUNT];
   PCA9685PW *dac[2];

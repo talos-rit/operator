@@ -1,8 +1,9 @@
+#include "log/log_config.h"
+
 #include <stdint.h>
 #include <string.h>
 
 #include "conf/config.h"
-#include "log/log_config.h"
 #include "util/comm.h"
 
 #define LOG_CONSOLE_THRESHOLD_THIS LOG_THRESHOLD_MAX
@@ -15,8 +16,7 @@ LogConfig::LogConfig() {
 LogConfig::~LogConfig() {}
 
 int LogConfig::SetLogLocation(const char *log_location) {
-  if (!log_location)
-    STD_FAIL;
+  if (!log_location) STD_FAIL;
   return OverrideValue(log_loc_idx, log_location);
 }
 

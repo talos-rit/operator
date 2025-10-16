@@ -1,3 +1,5 @@
+#include "conf/config.h"
+
 #include <errno.h>
 #include <fcntl.h>
 #include <regex.h>
@@ -7,7 +9,6 @@
 #include <string.h>
 #include <unistd.h>
 
-#include "conf/config.h"
 #include "log/log.h"
 #include "util/comm.h"
 
@@ -27,8 +28,7 @@ Config::~Config() { ClearKeyVals(); }
  * @returns 0 on success, -1 on failure
  */
 static int CONF_Entry_init(CONF_Entry *entry) {
-  if (!entry)
-    STD_FAIL;
+  if (!entry) STD_FAIL;
   memset(entry, 0, sizeof(CONF_Entry));
   return 0;
 }
@@ -36,8 +36,7 @@ static int CONF_Entry_init(CONF_Entry *entry) {
 const char *Config::GetFilePath() { return &path[0]; }
 
 int Config::SetFilePath(const char *file_path) {
-  if (!file_path)
-    STD_FAIL;
+  if (!file_path) STD_FAIL;
 
   if (strlen(file_path) >= CONF_MEMBER_LEN) {
     LOG_WARN("Config path too long; Max path length: %d", CONF_MEMBER_LEN);
@@ -66,13 +65,13 @@ int Config::SetFilePath(const char *file_path) {
  */
 static int is_term(char ch) {
   switch ((signed char)ch) {
-  // Intentional fallthroughs
-  case '\n':
-  case '\0':
-  case EOF:
-    return 1;
-  default:
-    break;
+    // Intentional fallthroughs
+    case '\n':
+    case '\0':
+    case EOF:
+      return 1;
+    default:
+      break;
   }
   return 0;
 }
@@ -107,29 +106,29 @@ int Config::ParseYaml(int fd) {
   // terminator, or end-of-file after each value read function uses system call;
   // minimize using buffers as much as possible
 
-  regex_t entry;         // Compiled regex pattern for detecting config entries
-  regmatch_t matches[3]; // Match groups for regex
-  uint8_t line = 1;      // Tracks line number for logging/debugging
-  off_t offset; // Tracks how far to back track for next read; used to line up
-                // to just after the first newline in the buffer
+  regex_t entry;          // Compiled regex pattern for detecting config entries
+  regmatch_t matches[3];  // Match groups for regex
+  uint8_t line = 1;       // Tracks line number for logging/debugging
+  off_t offset;  // Tracks how far to back track for next read; used to line up
+                 // to just after the first newline in the buffer
   char buffer[CONF_KEY_LEN + CONF_VAL_LEN +
-              4]; // buffer to store read calls in; ": " and "\n\0" require 4
-                  // additional characters
-  char key[CONF_KEY_LEN]; // buffer to temporarily hold keys/vals
-  int result = 0;         // result of each read
+              4];  // buffer to store read calls in; ": " and "\n\0" require 4
+                   // additional characters
+  char key[CONF_KEY_LEN];  // buffer to temporarily hold keys/vals
+  int result = 0;          // result of each read
 
   memset(&buffer[0], 0, sizeof(buffer));
   if (0 != regcomp(&entry, CONF_ENTRY_FMT, CONF_REGEX_FLAGS))
-    STD_FAIL; // Compile regex pattern
+    STD_FAIL;  // Compile regex pattern
   while (3 <= (result = read(fd, &buffer[0],
-                             sizeof(buffer) - 1))) // Loop until file is empty
+                             sizeof(buffer) - 1)))  // Loop until file is empty
   {
     LOG_VERBOSE(5, "RESULT: %d", result);
     LOG_VERBOSE(6, "BUFFER: %s", buffer);
 
-    buffer[result] = '\0'; // Null terminate buffer for str operations
+    buffer[result] = '\0';  // Null terminate buffer for str operations
     int ret = regexec(&entry, &buffer[0], 3, matches,
-                      0); // match regex pattern against read buffer
+                      0);  // match regex pattern against read buffer
     if (!ret) {
       // Match found
       copy_regex_group(&key[0], &buffer[0], &matches[1]);
@@ -145,20 +144,20 @@ int Config::ParseYaml(int fd) {
         LOG_VERBOSE(4, "VAL: %s", val);
       }
 
-      offset = matches[0].rm_eo; // set offset to end of match
+      offset = matches[0].rm_eo;  // set offset to end of match
     } else {
       LOG_VERBOSE(4, "NO MATCH ON LINE %d", line);
-      for (offset = 0; offset < result && !is_term(buffer[offset]); offset++)
-        ; // Sets offset to first newline in buffer
+      for (offset = 0; offset < result && !is_term(buffer[offset]);
+           offset++);  // Sets offset to first newline in buffer
     }
 
     offset -= result - 1;
     LOG_VERBOSE(6, "OFFSET: %d", offset);
-    memset(buffer, 0, sizeof(buffer)); // Clear buffer
+    memset(buffer, 0, sizeof(buffer));  // Clear buffer
     lseek(
         fd, offset,
-        SEEK_CUR); // Align file iterator to just after first newline in buffer
-    line++;        // Increment line counter
+        SEEK_CUR);  // Align file iterator to just after first newline in buffer
+    line++;         // Increment line counter
   }
 
   regfree(&entry);
@@ -166,8 +165,7 @@ int Config::ParseYaml(int fd) {
 }
 
 int Config::ParseConfig() {
-  if (0 == strlen(path))
-    STD_FAIL;
+  if (0 == strlen(path)) STD_FAIL;
   int fd = open(path, CONF_FILE_PERM);
   if (fd < 0) {
     conf_errno = errno;
@@ -176,18 +174,14 @@ int Config::ParseConfig() {
 
   ParseYaml(fd);
 
-  if (close(fd))
-    STD_FAIL;
+  if (close(fd)) STD_FAIL;
   return 0;
 }
 
 int Config::AddKey(const char *key, const char *deflt, CONF_Data_Type type) {
-  if (!key)
-    STD_FAIL;
-  if (!deflt)
-    STD_FAIL;
-  if (CONF_PAIR_LIMIT <= key_count)
-    STD_FAIL;
+  if (!key) STD_FAIL;
+  if (!deflt) STD_FAIL;
+  if (CONF_PAIR_LIMIT <= key_count) STD_FAIL;
 
   pairs[key_count].type = type;
   strcpy(&pairs[key_count].key[0], key);
@@ -210,18 +204,15 @@ int Config::AddKey(const char *key, bool deflt) {
 }
 
 const char *Config::GetVal(uint8_t idx) {
-  if (idx >= key_count)
-    STD_FAIL_VOID_PTR;
+  if (idx >= key_count) STD_FAIL_VOID_PTR;
   return &pairs[idx].val[0];
 }
 
 const char *Config::GetVal(const char *key) {
-  if (!key)
-    STD_FAIL_VOID_PTR;
+  if (!key) STD_FAIL_VOID_PTR;
 
   int idx = GetKeyIndex(key);
-  if (-1 == idx)
-    return NULL;
+  if (-1 == idx) return NULL;
   return GetVal(idx);
 }
 
@@ -229,11 +220,11 @@ bool Config::fail_get_bool(int idx) {
   // Ensure in bounds
   if (idx >= 0 && idx < key_count) {
     // Must be invalid value; not "true" or "false"
-    if (OverrideValue(idx, CONF_DEFAULT_BOOL_VAL))
-      LOG_IEC();
-    LOG_WARN("Unrecognized configuration value for key: \"%s\"; Using default "
-             "value: %s%",
-             pairs[idx].key, pairs[idx].val);
+    if (OverrideValue(idx, CONF_DEFAULT_BOOL_VAL)) LOG_IEC();
+    LOG_WARN(
+        "Unrecognized configuration value for key: \"%s\"; Using default "
+        "value: %s%",
+        pairs[idx].key, pairs[idx].val);
   }
 
   return CONF_DEFAULT_BOOL_VAL;
@@ -261,27 +252,22 @@ bool Config::GetBool(int idx) {
 }
 
 bool Config::GetBool(const char *key) {
-  if (!key)
-    STD_FAIL;
+  if (!key) STD_FAIL;
   int idx = GetKeyIndex(key);
-  if (-1 == idx)
-    STD_FAIL;
+  if (-1 == idx) STD_FAIL;
   return GetBool(idx);
 }
 
 int Config::GetInt(int idx) {
   const char *val = GetVal(idx);
-  if (!val)
-    STD_FAIL;
+  if (!val) STD_FAIL;
   return atoi(val);
 }
 
 int Config::GetInt(const char *key) {
-  if (!key)
-    STD_FAIL;
+  if (!key) STD_FAIL;
   int idx = GetKeyIndex(key);
-  if (-1 == idx)
-    STD_FAIL;
+  if (-1 == idx) STD_FAIL;
   return GetInt(idx);
 }
 
@@ -293,10 +279,8 @@ void Config::ClearKeyVals() {
 }
 
 int Config::OverrideValue(uint8_t key_idx, const char *val) {
-  if (key_idx > key_count)
-    STD_FAIL;
-  if (!val)
-    STD_FAIL;
+  if (key_idx > key_count) STD_FAIL;
+  if (!val) STD_FAIL;
 
   if (strlen(val) + 1 > CONF_VAL_LEN) {
     LOG_ERROR("Override value for key %s too long", &pairs[key_idx].key[0]);

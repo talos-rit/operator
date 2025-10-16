@@ -1,3 +1,5 @@
+#include "erv_arm/erv.h"
+
 #include <err.h>
 #include <errno.h>
 #include <fcntl.h>
@@ -10,7 +12,6 @@
 #include <unistd.h>
 
 #include "acl/acl.h"
-#include "erv_arm/erv.h"
 #include "log/log.h"
 
 #define LOG_CONSOLE_THRESHOLD_THIS LOG_THRESHOLD_DEFAULT
@@ -60,14 +61,14 @@ Scorbot::~Scorbot() {
  */
 static uint8_t is_term(char ch) {
   switch (ch) {
-    // Intentional fallthroughs
-  case '\r':
-  case '\n':
-  case '\0':
-  case '>':
-    return 1;
-  default:
-    break;
+      // Intentional fallthroughs
+    case '\r':
+    case '\n':
+    case '\0':
+    case '>':
+      return 1;
+    default:
+      break;
   }
 
   return 0;
@@ -82,14 +83,11 @@ static uint8_t is_term(char ch) {
  * @param len Number of chars to flush
  */
 static void flush_buffer(char *tty_buffer, uint16_t len) {
-  if (!tty_buffer)
-    STD_FAIL_VOID;
-  if (!len)
-    return;
+  if (!tty_buffer) STD_FAIL_VOID;
+  if (!len) return;
 
-  tty_buffer[ERV_TTY_BUFFER_LEN - 1] = '\0'; // Ensure end is null terminated
-  if (len + 1 < ERV_TTY_BUFFER_LEN)
-    tty_buffer[len + 1] = '\0';
+  tty_buffer[ERV_TTY_BUFFER_LEN - 1] = '\0';  // Ensure end is null terminated
+  if (len + 1 < ERV_TTY_BUFFER_LEN) tty_buffer[len + 1] = '\0';
 
   LOG_VERBOSE(0, "SCOR: %s", tty_buffer);
 }
@@ -198,8 +196,7 @@ static void poll_cmd_buffer(int fd, S_List *cmd_buffer) {
   static uint16_t last_delay_ms = 0;
   static struct timeval last_cmd_ts;
 
-  if (0 == cmd_buffer->len)
-    return;
+  if (0 == cmd_buffer->len) return;
   if (!init) {
     gettimeofday(&last_cmd_ts, NULL);
     init = true;
@@ -218,8 +215,7 @@ static void poll_cmd_buffer(int fd, S_List *cmd_buffer) {
 
   // Execute next command
   S_List_Node *node = DATA_S_List_pop(cmd_buffer);
-  if (!node)
-    STD_FAIL_VOID;
+  if (!node) STD_FAIL_VOID;
 
   ACL_Command *cmd = DATA_LIST_GET_OBJ(node, ACL_Command, node);
   last_delay_ms = cmd->delay_ms;
@@ -230,8 +226,7 @@ static void poll_cmd_buffer(int fd, S_List *cmd_buffer) {
 }
 
 void Scorbot::Poll() {
-  if (-1 == fd)
-    return;
+  if (-1 == fd) return;
 
   poll_polar_pan(fd, &polar_pan_cont, &last_start, &manual_mode);
   poll_tty_rx(fd);
@@ -251,17 +246,17 @@ int Scorbot::PolarPan(API_Data_Polar_Pan *pan) {
   DATA_S_List_init(&cmd_list);
 
   switch (oversteer) {
-  case OVERSTEER_NONE:
-    ACL_convert_polar_pan_direct(&cmd_list, pan);
-    break;
-  case OVERSTEER_IGNORE:
-    ACL_convert_polar_pan_ignore(&cmd_list, pan);
-    break;
-  case OVERSTEER_ABORT:
-    ACL_convert_polar_pan_abort(&cmd_list, pan);
-    break;
-  default:
-    STD_FAIL;
+    case OVERSTEER_NONE:
+      ACL_convert_polar_pan_direct(&cmd_list, pan);
+      break;
+    case OVERSTEER_IGNORE:
+      ACL_convert_polar_pan_ignore(&cmd_list, pan);
+      break;
+    case OVERSTEER_ABORT:
+      ACL_convert_polar_pan_abort(&cmd_list, pan);
+      break;
+    default:
+      STD_FAIL;
   }
 
   WriteCommandQueue(&cmd_list);
@@ -288,8 +283,7 @@ int Scorbot::PolarPanStart(API_Data_Polar_Pan_Start *pan) {
   polar_pan_cont = ACL_get_polar_pan_continuous_vector(pan);
   gettimeofday(&last_start, NULL);
 
-  if ('\0' == polar_pan_cont)
-    PolarPanStop();
+  if ('\0' == polar_pan_cont) PolarPanStop();
   return 0;
 }
 
@@ -324,10 +318,8 @@ int Scorbot::Home(API_Data_Home *home) {
 }
 
 int Scorbot::WriteCommandQueue(S_List *cmd_list) {
-  if (!cmd_list)
-    STD_FAIL;
-  if (-1 == fd)
-    STD_FAIL;
+  if (!cmd_list) STD_FAIL;
+  if (-1 == fd) STD_FAIL;
 
   polar_pan_cont = '\0';
   DATA_S_List_append_list(&cmd_buffer, cmd_list);

@@ -1,7 +1,8 @@
 // CPPUTEST testing module
 
-#include "CppUTest/TestHarness.h"
 #include "tmp/tmp.h"
+
+#include "CppUTest/TestHarness.h"
 
 TEST_GROUP(FirstTestGroup){};
 

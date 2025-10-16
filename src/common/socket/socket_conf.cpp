@@ -1,11 +1,11 @@
 
+#include "socket/socket_conf.h"
+
 #include <arpa/inet.h>
 #include <signal.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
-
-#include "socket/socket_conf.h"
 
 #include "conf/config.h"
 #include "log/log.h"
@@ -25,14 +25,12 @@ SocketConfig::~SocketConfig() {}
 uint32_t SocketConfig::GetBindingAddress() {
   uint32_t val = 0;
   int ret = inet_pton(AF_INET, GetVal(address_idx), &val);
-  if (1 == ret)
-    return val; // Nominal return
+  if (1 == ret) return val;  // Nominal return
 
   // Error handling
   LOG_WARN("Failed to set user-defined binding address; using default");
   ret = inet_pton(AF_INET, SOCKET_CONF_BINDING_ADDR_DEFAULT, &val);
-  if (1 == ret)
-    return val; // Default return
+  if (1 == ret) return val;  // Default return
 
   // Default should always resolve; if you got here, you messed up.
   LOG_FATAL("Binding address could not be set to default; ending program");

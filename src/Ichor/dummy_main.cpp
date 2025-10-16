@@ -9,17 +9,15 @@
 #include <string.h>
 #include <sys/time.h>
 
+#include "arm/ichor_arm.h"
 #include "conf/config.h"
-#include "log/log.h"
-#include "util/array.h"
-#include "util/comm.h"
-
+#include "conf/ichor_conf.h"
 #include "dac/PCA9685PW.h"
 #include "driver/driver.h"
 #include "gpio/isr.h"
-
-#include "arm/ichor_arm.h"
-#include "conf/ichor_conf.h"
+#include "log/log.h"
+#include "util/array.h"
+#include "util/comm.h"
 
 #define LOG_FILE_THRESHOLD_THIS LOG_THRESHOLD_MAX
 #define LOG_CONSOLE_THRESHOLD_THIS LOG_THRESHOLD_MAX
@@ -32,8 +30,7 @@
 #define ADC_CHANNEL -1
 
 int16_t velocity_square(int32_t target, int32_t pos) {
-  if (target == pos)
-    return 0;
+  if (target == pos) return 0;
   return DAC_PCA_MAX_DUTY_CYCLE * (target - pos > 0 ? 1 : -1);
 }
 
@@ -56,12 +53,11 @@ int main(int argc, char *argv[]) {
   // Setup config priority
   const char *conf_loc[] = {NULL, CONF_DEFAULT_LOCATION};
   uint8_t conf_loc_len = UTIL_len(conf_loc);
-  if (argc > 1)
-    conf_loc[0] = argv[1];
+  if (argc > 1) conf_loc[0] = argv[1];
 
   for (uint8_t iter = 0; iter < conf_loc_len; iter++)
     if (conf_loc[iter] && !conf.SetFilePath(conf_loc[iter]))
-      break; // If file is successfully set, break loop
+      break;  // If file is successfully set, break loop
 
   conf.ParseConfig();
 
@@ -75,8 +71,7 @@ int main(int argc, char *argv[]) {
   /*************************************************************/
 
   int fd = open(conf.GetI2CDev(), O_RDWR);
-  if (fd < 0)
-    LOG_WARN("Failed to open I2C bus");
+  if (fd < 0) LOG_WARN("Failed to open I2C bus");
   PCA9685PW dac = PCA9685PW(fd, 0x60);
   IchorISR isr = IchorISR(ISR_CHIP_PATH);
 
@@ -125,15 +120,14 @@ int main(int argc, char *argv[]) {
 
     gettimeofday(&start, NULL);
     while (1) {
-      isr.ProcessEvents(); // Check GPIO interrupts (could be an abort signal)
+      isr.ProcessEvents();  // Check GPIO interrupts (could be an abort signal)
       // TODO                 // Check ADC values (overcurrent / overexertion)
-      driver.Poll();     // Update motors with new control information
-      dac.FlushQueues(); // Flush pending DAC writes
+      driver.Poll();      // Update motors with new control information
+      dac.FlushQueues();  // Flush pending DAC writes
 
       gettimeofday(&stop, NULL);
-      if (stop.tv_sec * 10e6 + stop.tv_usec >= 3e6)
-        break;
-      usleep(2.5e3); // 25 ms delay (defacto delay in Talos Operator so far)
+      if (stop.tv_sec * 10e6 + stop.tv_usec >= 3e6) break;
+      usleep(2.5e3);  // 25 ms delay (defacto delay in Talos Operator so far)
     }
 
     loc_1 = !loc_1;

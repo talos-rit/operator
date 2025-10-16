@@ -9,5 +9,5 @@
  * @returns Pointer to parent object (type obj_type*) on success, NULL on
  * failure
  */
-#define DATA_LIST_GET_OBJ(node, obj_type, node_name)                           \
+#define DATA_LIST_GET_OBJ(node, obj_type, node_name) \
   ((obj_type *)(((uint8_t *)node) - offsetof(obj_type, node_name)))

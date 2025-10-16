@@ -31,7 +31,7 @@ typedef struct _conf_entry {
 } CONF_Entry;
 
 class Config {
-private:
+ private:
   int conf_errno; /** Stores any errors that happen during initialization */
   char path[CONF_MEMBER_LEN];        /** File Path */
   CONF_Entry pairs[CONF_PAIR_LIMIT]; /** Stored pairs */
@@ -59,7 +59,7 @@ private:
    */
   bool fail_get_bool(int idx);
 
-protected:
+ protected:
   /**
    * @brief Overrides a value in the key-value table at the given index
    * @param key_idx index of Key-Value pair to override
@@ -76,7 +76,7 @@ protected:
    */
   int OverrideValue(uint8_t key_idx, bool val);
 
-public:
+ public:
   Config();
   virtual ~Config();
 

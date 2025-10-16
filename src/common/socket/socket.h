@@ -28,7 +28,7 @@ typedef struct _sock_props {
 } Socket_Props;
 
 class Socket : public Inbox {
-private:
+ private:
   int status = 0;
   pthread_t pid = -1;
 
@@ -36,7 +36,7 @@ private:
 
   void *Poll(void *arg);
 
-public:
+ public:
   Socket();
   ~Socket();
 

@@ -11,11 +11,11 @@
 #include "log/log.h"
 
 const char *const _LOG_level_color[] = {
-    BRED, // Fatal
-    RED,  // Error
-    YEL,  // Warn
-    BLU,  // Info
-    WHT,  // Verbose
+    BRED,  // Fatal
+    RED,   // Error
+    YEL,   // Warn
+    BLU,   // Info
+    WHT,   // Verbose
 };
 
 #ifdef LOG_LEVEL_ENTRY

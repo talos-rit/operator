@@ -12,8 +12,8 @@
 class IchorConfig : public LogConfig
 // ,public TAMQ_Config
 {
-private:
-public:
+ private:
+ public:
   IchorConfig();
   virtual ~IchorConfig();
 

@@ -10,11 +10,11 @@ class Subscriber;
  * messenger implementation (AMQ, HTTP, etc...)
  */
 class Inbox {
-protected:
+ protected:
   Subscriber *sub;
   void OnMessage();
 
-public:
+ public:
   /**
    * @brief Constructor
    */

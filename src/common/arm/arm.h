@@ -13,7 +13,7 @@
 #define ARM_POLL_PERIOD_MS (25)
 
 class Arm {
-private:
+ private:
   pthread_t pid;
   bool thread_enable;
   Subscriber *sub;
@@ -24,7 +24,7 @@ private:
   virtual int PolarPanStop() = 0;
   virtual int Home(API_Data_Home *home) = 0;
 
-public:
+ public:
   enum OversteerConfig {
     OVERSTEER_NONE,
     OVERSTEER_IGNORE,

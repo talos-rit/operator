@@ -41,7 +41,7 @@
 #define TAMQ_CONF_CLIENT_ACK_KEY "amq_client_ack"
 
 class TAMQ_Config : virtual public Config {
-private:
+ private:
   int address_idx;    /** IP of the ActiveMQ broker */
   int cmd_uri_idx;    /** Topic/Queue for incoming commands */
   int ret_uri_idx;    /** Topic/Queue for return messages */
@@ -51,7 +51,7 @@ private:
   int client_ack_idx; /** Determines if client will send ACK message, or if it
                          will automatically be sent */
 
-public:
+ public:
   TAMQ_Config();
   ~TAMQ_Config();
 

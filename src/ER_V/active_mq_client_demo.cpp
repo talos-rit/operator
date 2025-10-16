@@ -32,13 +32,13 @@
 #include <decaf/lang/Thread.h>
 #include <decaf/util/Date.h>
 #include <decaf/util/concurrent/CountDownLatch.h>
-#include <iostream>
 #include <stdio.h>
 #include <stdlib.h>
 
+#include <iostream>
+
 ////////////////////////////////////////////////////////////////////////////////
 int main(int argc AMQCPP_UNUSED, char *argv[] AMQCPP_UNUSED) {
-
   activemq::library::ActiveMQCPP::initializeLibrary();
 
   std::cout << "=====================================================\n";
@@ -59,7 +59,7 @@ int main(int argc AMQCPP_UNUSED, char *argv[] AMQCPP_UNUSED) {
   // customize where the consumer listens, to have the consumer
   // use a topic or queue set the 'useTopics' flag.
   //============================================================
-  std::string destURI = "TEST.FOO"; //?consumer.prefetchSize=1";
+  std::string destURI = "TEST.FOO";  //?consumer.prefetchSize=1";
 
   //============================================================
   // set to true to use topics instead of queues

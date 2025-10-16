@@ -7,11 +7,11 @@
 #define ERV_CONT_POLAR_PAN_TIMEOUT_MS 500
 
 class Scorbot : public Arm {
-public:
+ public:
   Scorbot(const char *dev);
   ~Scorbot();
 
-private:
+ private:
   char dev[32];
   int fd;
   char polar_pan_cont;

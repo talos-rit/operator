@@ -7,15 +7,14 @@
 
 #include "api/api.h"
 #include "arm/arm.h"
+#include "arm/ichor_arm.h"
 #include "conf/config.h"
+#include "conf/ichor_conf.h"
 #include "log/log.h"
 #include "socket/socket.h"
 #include "sub/sub.h"
 #include "util/array.h"
 #include "util/comm.h"
-
-#include "arm/ichor_arm.h"
-#include "conf/ichor_conf.h"
 
 #define LOG_FILE_THRESHOLD_THIS LOG_THRESHOLD_MAX
 #define LOG_CONSOLE_THRESHOLD_THIS LOG_THRESHOLD_MAX
@@ -24,7 +23,7 @@ const char *app_name;
 volatile int quit_sig = 0;
 
 static void quit_handler(int signum) {
-  quit_sig = signum; // quit control loop
+  quit_sig = signum;  // quit control loop
 }
 
 static int register_intr() {
@@ -34,20 +33,16 @@ static int register_intr() {
   sa.sa_flags = SA_RESTART; /* Restart functions if
                                interrupted by handler */
 
-  if (sigaction(SIGINT, &sa, NULL) == -1)
-    return -1;
-  if (sigaction(SIGQUIT, &sa, NULL) == -1)
-    return -1;
-  if (sigaction(SIGABRT, &sa, NULL) == -1)
-    return -1;
+  if (sigaction(SIGINT, &sa, NULL) == -1) return -1;
+  if (sigaction(SIGQUIT, &sa, NULL) == -1) return -1;
+  if (sigaction(SIGABRT, &sa, NULL) == -1) return -1;
   return 0;
 }
 
 #if VALGRIND
 static void dummy_msg(Subscriber *hermes) {
   SUB_Buffer *buf = hermes->DequeueBuffer(SUB_QUEUE_FREE);
-  if (!buf)
-    return;
+  if (!buf) return;
 
   API_Data_Wrapper *msg = (API_Data_Wrapper *)&buf->body[0];
 
@@ -76,12 +71,11 @@ int main(int argc, char *argv[]) {
   // Setup config priority
   const char *conf_loc[] = {NULL, CONF_DEFAULT_LOCATION};
   uint8_t conf_loc_len = UTIL_len(conf_loc);
-  if (argc > 1)
-    conf_loc[0] = argv[1];
+  if (argc > 1) conf_loc[0] = argv[1];
 
   for (uint8_t iter = 0; iter < conf_loc_len; iter++)
     if (conf_loc[iter] && !conf.SetFilePath(conf_loc[iter]))
-      break; // If file is successfully set, break loop
+      break;  // If file is successfully set, break loop
 
   conf.ParseConfig();
 
@@ -106,8 +100,8 @@ int main(int argc, char *argv[]) {
   // Register hardware
   Ichor *bot = new Ichor("/dev/gpiochip0", "/dev/i2c-1", 0x60, 0x61, 0x62);
   // bot->RegisterMotor(0, 0, 0, 1, 14, 4, 17, 0);           // Base
-  bot->RegisterMotor(0, 0, 4, 3, 2, 4, 17, 0);     // Base
-  bot->RegisterMotor(2, 0, 11, 12, 13, 22, 23, 2); // Elbow
+  bot->RegisterMotor(0, 0, 4, 3, 2, 4, 17, 0);      // Base
+  bot->RegisterMotor(2, 0, 11, 12, 13, 22, 23, 2);  // Elbow
   bot->Init();
 
   // Register modules
@@ -116,15 +110,12 @@ int main(int argc, char *argv[]) {
 
   // Start
   hermes.Start();
-  if (-1 == bot->Start())
-    quit_handler(SIGABRT);
+  if (-1 == bot->Start()) quit_handler(SIGABRT);
   inbox->Start();
 
   // Loop
-  if (!quit_sig)
-    LOG_INFO("Ready.");
-  while (!quit_sig)
-    ;
+  if (!quit_sig) LOG_INFO("Ready.");
+  while (!quit_sig);
   LOG_VERBOSE(0, "Quit signal: %d", quit_sig);
   LOG_INFO("Shutting down...");
 

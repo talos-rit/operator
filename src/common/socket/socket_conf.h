@@ -1,7 +1,8 @@
 #pragma once
 
-#include "conf/config.h"
 #include <stdint.h>
+
+#include "conf/config.h"
 
 #define SOCKET_CONF_BINDING_ADDR_KEY "socket_address"
 #define SOCKET_CONF_BINDING_ADDR_DEFAULT "0.0.0.0"
@@ -9,11 +10,11 @@
 #define SOCKET_CONF_PORT_DEFAULT 61616
 
 class SocketConfig : virtual public Config {
-private:
+ private:
   int address_idx; /** The server's binding IP address */
   int port_idx;    /** The port the server will listen/bind on */
 
-public:
+ public:
   SocketConfig();
   ~SocketConfig();
 

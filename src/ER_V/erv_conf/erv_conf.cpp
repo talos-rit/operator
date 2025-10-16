@@ -1,7 +1,8 @@
+#include "erv_conf/erv_conf.h"
+
 #include <stdint.h>
 
 #include "conf/config.h"
-#include "erv_conf/erv_conf.h"
 #include "util/comm.h"
 
 #define LOG_CONSOLE_THRESHOLD_THIS LOG_THRESHOLD_DEFAULT

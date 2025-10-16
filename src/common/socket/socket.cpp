@@ -1,3 +1,5 @@
+#include "socket/socket.h"
+
 #include <errno.h>
 #include <fcntl.h>
 #include <signal.h>
@@ -6,7 +8,6 @@
 
 #include "api/api.h"
 #include "log/log.h"
-#include "socket/socket.h"
 #include "util/array.h"
 #include "util/comm.h"
 
@@ -48,10 +49,8 @@ Socket::Socket() {
 }
 
 Socket::~Socket() {
-  if (-1 != props.connfd)
-    close(props.connfd);
-  if (-1 != props.sockfd)
-    close(props.sockfd);
+  if (-1 != props.connfd) close(props.connfd);
+  if (-1 != props.sockfd) close(props.sockfd);
 }
 
 static int wait_for_connection(Socket_Props *props) {
@@ -79,7 +78,7 @@ static int wait_for_connection(Socket_Props *props) {
 }
 
 int send_response(Socket_Props *props) {
-  const char *response = "Message Received."; // placeholder response
+  const char *response = "Message Received.";  // placeholder response
   int send_ret = send(props->connfd, response, strlen(response), 0);
 
   if (send_ret < 0) {
@@ -111,8 +110,7 @@ static void *socket_poll(void *arg) {
 
   gettimeofday(&last_ping, NULL);
   while (props->thread_en) {
-    if (idle)
-      usleep(SOCKET_POLL_PERIOD_MS * 1000);
+    if (idle) usleep(SOCKET_POLL_PERIOD_MS * 1000);
     idle = true;
 
     // Handle rx
@@ -120,8 +118,7 @@ static void *socket_poll(void *arg) {
                MSG_DONTWAIT);
     if (-1 == ret) {
       // errno will be set to EAGAIN if no message was received
-      if (EAGAIN == errno)
-        continue;
+      if (EAGAIN == errno) continue;
 
       // Some other error; Exit execution
       LOG_FATAL("Socket read error: (%d) %s", errno, strerror(errno));
@@ -143,7 +140,7 @@ static void *socket_poll(void *arg) {
         break;
       }
 
-      continue; // continue receiving after reconnection
+      continue;  // continue receiving after reconnection
     }
 
     // gettimeofday(&last_ping, NULL);
@@ -155,13 +152,12 @@ static void *socket_poll(void *arg) {
 
       // Check length
       uint16_t len = sizeof(API_Data_Header) + be16toh(msg->header.len) + 2;
-      if (buf_iter < len)
-        break;
+      if (buf_iter < len) break;
 
       // Enqueue copied message to command buffer
       SUB_Buffer *buf = sub->DequeueBuffer(SUB_QUEUE_FREE);
       if (!buf) {
-        LOG_WARN("No free network buffers"); // You DDOS'd yourself.
+        LOG_WARN("No free network buffers");  // You DDOS'd yourself.
         break;
       }
 
@@ -182,8 +178,7 @@ static void *socket_poll(void *arg) {
   LOG_IEC();
   if (-1 == shutdown(props->connfd, SHUT_RDWR))
     LOG_ERROR("Error shutting down socket: (%d) %s", errno, strerror(errno));
-  while (recv(props->connfd, &buffer[0], sizeof(buffer), 0) > 0)
-    ;
+  while (recv(props->connfd, &buffer[0], sizeof(buffer), 0) > 0);
   if (-1 != props->connfd) {
     close(props->connfd);
     props->connfd = -1;
@@ -203,13 +198,12 @@ int Socket::Start() {
 
 int Socket::Stop() {
   props.thread_en = false;
-  pthread_join(pid, NULL); // Wait for thread to exit
+  pthread_join(pid, NULL);  // Wait for thread to exit
   return 0;
 }
 
 int Socket::RegisterSubscriber(Subscriber *sub) {
-  if (!sub)
-    STD_FAIL;
+  if (!sub) STD_FAIL;
   this->sub = sub;
   props.sub = sub;
   return 0;

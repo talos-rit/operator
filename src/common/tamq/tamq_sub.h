@@ -21,9 +21,10 @@
 #include <decaf/lang/Thread.h>
 #include <decaf/util/Date.h>
 #include <decaf/util/concurrent/CountDownLatch.h>
-#include <iostream>
 #include <stdio.h>
 #include <stdlib.h>
+
+#include <iostream>
 #include <string>
 
 #include "sub/sub.h"
@@ -60,20 +61,20 @@ class TAMQ_Consumer : public cms::ExceptionListener,
                       public cms::MessageListener,
                       public activemq::transport::DefaultTransportListener,
                       public Inbox {
-private:
+ private:
   cms::Connection *connection;
   cms::Session *session;
   cms::Destination *destination;
   cms::MessageConsumer *consumer;
   bool useTopic;
-  std::string brokerURI; // IP Addr/Port to broker
-  std::string destURI;   // Topic/Queue name
+  std::string brokerURI;  // IP Addr/Port to broker
+  std::string destURI;    // Topic/Queue name
   bool clientAck;
 
-private:
+ private:
   TAMQ_Consumer(const TAMQ_Consumer &);
 
-public:
+ public:
   TAMQ_Consumer &operator=(const TAMQ_Consumer &);
   TAMQ_Consumer(const std::string &brokerURI, const std::string &destURI,
                 bool useTopic = false, bool clientAck = false);
@@ -97,7 +98,7 @@ public:
   int Stop();
   int RegisterSubscriber(Subscriber *sub);
 
-private:
+ private:
   void cleanup();
 };
 

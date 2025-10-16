@@ -15,6 +15,8 @@
  * limitations under the License.
  */
 
+#include "tamq/tamq_sub.h"
+
 #include <activemq/core/ActiveMQConnection.h>
 #include <activemq/core/ActiveMQConnectionFactory.h>
 #include <activemq/library/ActiveMQCPP.h>
@@ -32,13 +34,13 @@
 #include <decaf/lang/Thread.h>
 #include <decaf/util/Date.h>
 #include <decaf/util/concurrent/CountDownLatch.h>
-#include <iostream>
 #include <stdio.h>
 #include <stdlib.h>
 
+#include <iostream>
+
 #include "log/log.h"
 #include "sub/sub.h"
-#include "tamq/tamq_sub.h"
 #include "util/array.h"
 #include "util/comm.h"
 
@@ -52,8 +54,13 @@ static int counter = 0;
 TAMQ_Consumer::TAMQ_Consumer(const std::string &brokerURI,
                              const std::string &destURI, bool useTopic,
                              bool clientAck)
-    : connection(NULL), session(NULL), destination(NULL), consumer(NULL),
-      useTopic(useTopic), brokerURI(brokerURI), destURI(destURI),
+    : connection(NULL),
+      session(NULL),
+      destination(NULL),
+      consumer(NULL),
+      useTopic(useTopic),
+      brokerURI(brokerURI),
+      destURI(destURI),
       clientAck(clientAck) {
   LOG_VERBOSE(4, "TAMQ Broker Address: %s", brokerURI.c_str());
   LOG_VERBOSE(4, "TAMQ Command URI: %s", destURI.c_str());
@@ -75,7 +82,6 @@ void TAMQ_Consumer::close() { this->cleanup(); }
 
 void TAMQ_Consumer::runConsumer() {
   try {
-
     // Create a ConnectionFactory
     activemq::core::ActiveMQConnectionFactory *connectionFactory =
         new activemq::core::ActiveMQConnectionFactory(brokerURI);
@@ -123,8 +129,7 @@ void TAMQ_Consumer::onMessage(const cms::Message *message) {
 
   try {
     SUB_Buffer *buf = sub->DequeueBuffer(SUB_QUEUE_FREE);
-    if (!buf)
-      STD_FAIL_VOID;
+    if (!buf) STD_FAIL_VOID;
 
     const cms::BytesMessage *textMessage =
         dynamic_cast<const cms::BytesMessage *>(message);
@@ -143,7 +148,7 @@ void TAMQ_Consumer::onMessage(const cms::Message *message) {
       message->acknowledge();
     }
 
-#if LOG_CONSOLE_THRESHOLD_THIS >= LOG_VERBOSE + 6 |                            \
+#if LOG_CONSOLE_THRESHOLD_THIS >= LOG_VERBOSE + 6 | \
     LOG_CONSOLE_THRESHOLD_THIS >= LOG_VERBOSE + 6
     char text[length * 6 + 5];
     sprintf(&text[0], "INIT");
@@ -177,7 +182,7 @@ void TAMQ_Consumer::transportResumed() {
 }
 
 int TAMQ_Consumer::Start() {
-  runConsumer(); // Start it up and it will listen forever.
+  runConsumer();  // Start it up and it will listen forever.
   LOG_INFO("Talos ActiveMQ Client Running...");
 
   return 0;
@@ -192,14 +197,12 @@ int TAMQ_Consumer::Stop() {
 }
 
 int TAMQ_Consumer::RegisterSubscriber(Subscriber *sub) {
-  if (!sub)
-    STD_FAIL;
+  if (!sub) STD_FAIL;
   this->sub = sub;
   return 0;
 }
 
 void TAMQ_Consumer::cleanup() {
-
   try {
     if (connection != NULL) {
       connection->close();

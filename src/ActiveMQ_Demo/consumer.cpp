@@ -32,9 +32,10 @@
 #include <decaf/lang/Thread.h>
 #include <decaf/util/Date.h>
 #include <decaf/util/concurrent/CountDownLatch.h>
-#include <iostream>
 #include <stdio.h>
 #include <stdlib.h>
+
+#include <iostream>
 
 using namespace activemq;
 using namespace activemq::core;
@@ -49,7 +50,7 @@ using namespace std;
 class TAMQ_Consumer : public ExceptionListener,
                       public MessageListener,
                       public DefaultTransportListener {
-private:
+ private:
   Connection *connection;
   Session *session;
   Destination *destination;
@@ -61,15 +62,20 @@ private:
 
   char buff[512];
 
-private:
+ private:
   TAMQ_Consumer(const TAMQ_Consumer &);
   TAMQ_Consumer &operator=(const TAMQ_Consumer &);
 
-public:
+ public:
   TAMQ_Consumer(const std::string &brokerURI, const std::string &destURI,
                 bool useTopic = false, bool clientAck = false)
-      : connection(NULL), session(NULL), destination(NULL), consumer(NULL),
-        useTopic(useTopic), brokerURI(brokerURI), destURI(destURI),
+      : connection(NULL),
+        session(NULL),
+        destination(NULL),
+        consumer(NULL),
+        useTopic(useTopic),
+        brokerURI(brokerURI),
+        destURI(destURI),
         clientAck(clientAck) {}
 
   virtual ~TAMQ_Consumer() { this->cleanup(); }
@@ -77,9 +83,7 @@ public:
   void close() { this->cleanup(); }
 
   void runConsumer() {
-
     try {
-
       // Create a ConnectionFactory
       ActiveMQConnectionFactory *connectionFactory =
           new ActiveMQConnectionFactory(brokerURI);
@@ -123,7 +127,6 @@ public:
 
   // Called from the consumer since this class is a registered MessageListener.
   virtual void onMessage(const Message *message) {
-
     static int count = 0;
 
     try {
@@ -171,9 +174,8 @@ public:
     std::cout << "The Connection's Transport has been Restored." << std::endl;
   }
 
-private:
+ private:
   void cleanup() {
-
     try {
       if (connection != NULL) {
         connection->close();
@@ -191,7 +193,6 @@ private:
 
 ////////////////////////////////////////////////////////////////////////////////
 int main(int argc AMQCPP_UNUSED, char *argv[] AMQCPP_UNUSED) {
-
   activemq::library::ActiveMQCPP::initializeLibrary();
 
   std::cout << "=====================================================\n";
@@ -214,7 +215,7 @@ int main(int argc AMQCPP_UNUSED, char *argv[] AMQCPP_UNUSED) {
   // customize where the consumer listens, to have the consumer
   // use a topic or queue set the 'useTopics' flag.
   //============================================================
-  std::string destURI = "TEST.FOO"; //?consumer.prefetchSize=1";
+  std::string destURI = "TEST.FOO";  //?consumer.prefetchSize=1";
 
   //============================================================
   // set to true to use topics instead of queues

@@ -27,8 +27,9 @@ extern "C" {
 //   +TH:TS
 #define UTIL_TS_OFFSET_LEN (1 + 2 + 1 + 2 + 1)
 
-#define UTIL_TS_MSEC ":%03d" // Also used for usec
-                             //  :mmm
+#define UTIL_TS_MSEC \
+  ":%03d"  // Also used for usec
+           //  :mmm
 #define UTIL_TS_MSEC_LEN (1 + 3 + 1)
 // #define UTIL_TS_USEC                UTIL_TIMESTAMP_MSEC UTIL_TIMESTAMP_MSEC
 // #define UTIL_TS_USEC_LEN            (2 * UTIL_TIMESTAMP_MSEC_LEN)

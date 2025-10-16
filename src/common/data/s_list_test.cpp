@@ -1,7 +1,9 @@
-#include "CppUTest/TestHarness.h"
 #include "data/s_list.h"
-#include "log/log.h"
+
 #include <stddef.h>
+
+#include "CppUTest/TestHarness.h"
+#include "log/log.h"
 
 TEST_GROUP(base){};
 

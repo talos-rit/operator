@@ -37,9 +37,9 @@
 #define LOG_POLL_PERIOD_US (25 * 1000)
 
 // Preprocessor abuse
-#define LOG_LEVEL_ENTRIES                                                      \
-  LOG_LEVEL_ENTRY(FATAL), LOG_LEVEL_ENTRY(ERROR), LOG_LEVEL_ENTRY(WARN),       \
-      LOG_LEVEL_ENTRY(INFO), LOG_LEVEL_ENTRY(VERBOSE) // Always last
+#define LOG_LEVEL_ENTRIES                                                \
+  LOG_LEVEL_ENTRY(FATAL), LOG_LEVEL_ENTRY(ERROR), LOG_LEVEL_ENTRY(WARN), \
+      LOG_LEVEL_ENTRY(INFO), LOG_LEVEL_ENTRY(VERBOSE)  // Always last
 
 #define LOG_LEVEL_ENTRY(entry) LOG_##entry
 typedef enum _log_level { LOG_LEVEL_ENTRIES } LOG_level;
@@ -61,10 +61,10 @@ extern const char *const log_level_names[];
 #define LOG_IEC() LOG_ERROR("Internal error: %s:%d", __FILE__, __LINE__);
 #define LOG_WARN(fmt, ...) LOG_write((uint8_t)LOG_WARN, fmt, ##__VA_ARGS__)
 #define LOG_INFO(fmt, ...) LOG_write((uint8_t)LOG_INFO, fmt, ##__VA_ARGS__)
-#define LOG_VERBOSE(v_level, fmt, ...)                                         \
+#define LOG_VERBOSE(v_level, fmt, ...) \
   LOG_write((uint8_t)LOG_VERBOSE + v_level, fmt, ##__VA_ARGS__)
-#define LOG_write(level, fmt, ...)                                             \
-  LOG_print(__FILE__, __LINE__, LOG_CONSOLE_THRESHOLD_THIS,                    \
+#define LOG_write(level, fmt, ...)                          \
+  LOG_print(__FILE__, __LINE__, LOG_CONSOLE_THRESHOLD_THIS, \
             LOG_FILE_THRESHOLD_THIS, level, fmt, ##__VA_ARGS__)
 
 /**
