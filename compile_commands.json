@@ -1,0 +1,178 @@
+[
+  {
+    "arguments": [
+      "/usr/lib64/ccache/g++",
+      "-g",
+      "-Wall",
+      "-Wextra",
+      "-Wno-deprecated-declarations",
+      "-D",
+      "_DEFAULT_SOURCE",
+      "-I./src/common",
+      "-I./src/ER_V",
+      "-Isrc/Ichor/driver/src",
+      "-Isrc/Ichor",
+      "-c",
+      "-o",
+      "/home/rtyocum/Documents/code/rit/capstone/operator/build/obj/common/arm/arm.o",
+      "src/common/arm/arm.cpp"
+    ],
+    "directory": "/home/rtyocum/Documents/code/rit/capstone/operator",
+    "file": "/home/rtyocum/Documents/code/rit/capstone/operator/src/common/arm/arm.cpp",
+    "output": "/home/rtyocum/Documents/code/rit/capstone/operator/build/obj/common/arm/arm.o"
+  },
+  {
+    "arguments": [
+      "/usr/lib64/ccache/g++",
+      "-g",
+      "-Wall",
+      "-Wextra",
+      "-Wno-deprecated-declarations",
+      "-D",
+      "_DEFAULT_SOURCE",
+      "-I./src/common",
+      "-I./src/ER_V",
+      "-Isrc/Ichor/driver/src",
+      "-Isrc/Ichor",
+      "-c",
+      "-o",
+      "/home/rtyocum/Documents/code/rit/capstone/operator/build/obj/common/api/api.o",
+      "src/common/api/api.c"
+    ],
+    "directory": "/home/rtyocum/Documents/code/rit/capstone/operator",
+    "file": "/home/rtyocum/Documents/code/rit/capstone/operator/src/common/api/api.c",
+    "output": "/home/rtyocum/Documents/code/rit/capstone/operator/build/obj/common/api/api.o"
+  },
+  {
+    "arguments": [
+      "/usr/lib64/ccache/g++",
+      "-g",
+      "-Wall",
+      "-Wextra",
+      "-Wno-deprecated-declarations",
+      "-D",
+      "_DEFAULT_SOURCE",
+      "-I./src/common",
+      "-I./src/ER_V",
+      "-Isrc/Ichor/driver/src",
+      "-Isrc/Ichor",
+      "-c",
+      "-o",
+      "/home/rtyocum/Documents/code/rit/capstone/operator/build/obj/common/util/timestamp.o",
+      "src/common/util/timestamp.c"
+    ],
+    "directory": "/home/rtyocum/Documents/code/rit/capstone/operator",
+    "file": "/home/rtyocum/Documents/code/rit/capstone/operator/src/common/util/timestamp.c",
+    "output": "/home/rtyocum/Documents/code/rit/capstone/operator/build/obj/common/util/timestamp.o"
+  },
+  {
+    "arguments": [
+      "/usr/lib64/ccache/g++",
+      "-g",
+      "-Wall",
+      "-Wextra",
+      "-Wno-deprecated-declarations",
+      "-D",
+      "_DEFAULT_SOURCE",
+      "-I./src/common",
+      "-I./src/ER_V",
+      "-Isrc/Ichor/driver/src",
+      "-Isrc/Ichor",
+      "-c",
+      "-o",
+      "/home/rtyocum/Documents/code/rit/capstone/operator/build/obj/common/data/s_list.o",
+      "src/common/data/s_list.c"
+    ],
+    "directory": "/home/rtyocum/Documents/code/rit/capstone/operator",
+    "file": "/home/rtyocum/Documents/code/rit/capstone/operator/src/common/data/s_list.c",
+    "output": "/home/rtyocum/Documents/code/rit/capstone/operator/build/obj/common/data/s_list.o"
+  },
+  {
+    "arguments": [
+      "/usr/lib64/ccache/g++",
+      "-g",
+      "-Wall",
+      "-Wextra",
+      "-Wno-deprecated-declarations",
+      "-D",
+      "_DEFAULT_SOURCE",
+      "-I./src/common",
+      "-I./src/ER_V",
+      "-Isrc/Ichor/driver/src",
+      "-Isrc/Ichor",
+      "-c",
+      "-o",
+      "/home/rtyocum/Documents/code/rit/capstone/operator/build/obj/common/log/log.o",
+      "src/common/log/log.c"
+    ],
+    "directory": "/home/rtyocum/Documents/code/rit/capstone/operator",
+    "file": "/home/rtyocum/Documents/code/rit/capstone/operator/src/common/log/log.c",
+    "output": "/home/rtyocum/Documents/code/rit/capstone/operator/build/obj/common/log/log.o"
+  },
+  {
+    "arguments": [
+      "/usr/lib64/ccache/g++",
+      "-g",
+      "-Wall",
+      "-Wextra",
+      "-Wno-deprecated-declarations",
+      "-D",
+      "_DEFAULT_SOURCE",
+      "-I./src/common",
+      "-I./src/ER_V",
+      "-Isrc/Ichor/driver/src",
+      "-Isrc/Ichor",
+      "-c",
+      "-o",
+      "/home/rtyocum/Documents/code/rit/capstone/operator/build/obj/common/socket/socket.o",
+      "src/common/socket/socket.cpp"
+    ],
+    "directory": "/home/rtyocum/Documents/code/rit/capstone/operator",
+    "file": "/home/rtyocum/Documents/code/rit/capstone/operator/src/common/socket/socket.cpp",
+    "output": "/home/rtyocum/Documents/code/rit/capstone/operator/build/obj/common/socket/socket.o"
+  },
+  {
+    "arguments": [
+      "/usr/lib64/ccache/g++",
+      "-g",
+      "-Wall",
+      "-Wextra",
+      "-Wno-deprecated-declarations",
+      "-D",
+      "_DEFAULT_SOURCE",
+      "-I./src/common",
+      "-I./src/ER_V",
+      "-Isrc/Ichor/driver/src",
+      "-Isrc/Ichor",
+      "-c",
+      "-o",
+      "/home/rtyocum/Documents/code/rit/capstone/operator/build/obj/common/conf/config.o",
+      "src/common/conf/config.cpp"
+    ],
+    "directory": "/home/rtyocum/Documents/code/rit/capstone/operator",
+    "file": "/home/rtyocum/Documents/code/rit/capstone/operator/src/common/conf/config.cpp",
+    "output": "/home/rtyocum/Documents/code/rit/capstone/operator/build/obj/common/conf/config.o"
+  },
+  {
+    "arguments": [
+      "/usr/lib64/ccache/g++",
+      "-g",
+      "-Wall",
+      "-Wextra",
+      "-Wno-deprecated-declarations",
+      "-D",
+      "_DEFAULT_SOURCE",
+      "-I./src/common",
+      "-I./src/ER_V",
+      "-Isrc/Ichor/driver/src",
+      "-Isrc/Ichor",
+      "-c",
+      "-o",
+      "/home/rtyocum/Documents/code/rit/capstone/operator/build/obj/common/sub/sub.o",
+      "src/common/sub/sub.cpp"
+    ],
+    "directory": "/home/rtyocum/Documents/code/rit/capstone/operator",
+    "file": "/home/rtyocum/Documents/code/rit/capstone/operator/src/common/sub/sub.cpp",
+    "output": "/home/rtyocum/Documents/code/rit/capstone/operator/build/obj/common/sub/sub.o"
+  }
+]

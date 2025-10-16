@@ -7,6 +7,8 @@
 
 #pragma once
 
+#include <stdint.h>
+
 #define CONF_DEFAULT_LOCATION "/etc/talos/configs/operator.conf"
 #define CONF_MEMBER_LEN 128
 #define CONF_KEY_LEN 64
