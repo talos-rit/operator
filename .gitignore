@@ -3,3 +3,5 @@ build/**
 operator.log
 .gitmodules
 **/patch.txt
+.cache
+compile_commands.json

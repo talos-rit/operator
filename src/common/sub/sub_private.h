@@ -1,9 +1,8 @@
 #pragma once
 #include <pthread.h>
 
-#include "sub/sub.h"
 #include "data/s_list.h"
-
+#include "sub/sub.h"
 
 /** List of states the Inbox can be in */
 // typedef enum _sub_status

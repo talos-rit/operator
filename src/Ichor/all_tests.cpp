@@ -1,12 +1,8 @@
 #include <CppUTest/CommandLineTestRunner.h>
 #include <CppUTest/TestHarness.h>
 
-TEST_GROUP(Group) {};
+TEST_GROUP(Group){};
 
-IGNORE_TEST(Group, Test) {
-};
+IGNORE_TEST(Group, Test){};
 
-int main(int argc, char ** argv)
-{
-    RUN_ALL_TESTS(argc, argv);
-}
+int main(int argc, char **argv) { RUN_ALL_TESTS(argc, argv); }
