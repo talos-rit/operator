@@ -16,6 +16,7 @@ typedef enum _api_cmd_id {
   API_CMD_HOME = 0x0002,
   API_CMD_POLARPAN_START = 0x0003,
   API_CMD_POLARPAN_STOP = 0x0004,
+  API_CMD_SET_SPEED = 0x0005,
 } API_Command_ID;
 
 #pragma pack(push, 1)
@@ -48,6 +49,11 @@ typedef struct _api_data_polar_pan_start {
 typedef struct _api_data_home {
   uint32_t delay_ms; /** How long to wait until executing pan */
 } API_Data_Home;
+
+typedef struct _api_data_set_speed {
+  uint8_t speed; /** Speed value 0-100 */
+} API_Data_Set_Speed;
+
 #pragma pack(pop)
 
 #define API_WRAPPER_HEAD_LEN offsetof(API_Data_Wrapper, payload_head)

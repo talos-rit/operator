@@ -317,6 +317,24 @@ int Scorbot::Home(API_Data_Home *home) {
   return 0;
 }
 
+int Scorbot::SetSpeed(API_Data_Set_Speed *speed) {
+  uint8_t iter = 0;
+  char text[255];
+
+  iter += sprintf(&text[iter], "Set Speed Payload:\n");
+  iter += sprintf(&text[iter], "\tSpeed: \t\t%d", speed->speed);
+
+  LOG_VERBOSE(4, "%s", text);
+
+  S_List cmd_list;
+  DATA_S_List_init(&cmd_list);
+  ACL_set_speed(&cmd_list, speed);
+
+  WriteCommandQueue(&cmd_list);
+
+  return 0;
+}
+
 int Scorbot::WriteCommandQueue(S_List *cmd_list) {
   if (!cmd_list) STD_FAIL;
   if (-1 == fd) STD_FAIL;

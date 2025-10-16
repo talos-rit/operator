@@ -288,3 +288,20 @@ int ACL_home_sequence(S_List *cmd_queue) {
 
   return 0;
 }
+
+int ACL_set_speed(S_List *cmd_queue, API_Data_Set_Speed *speed) {
+  if (!cmd_queue) STD_FAIL;
+  if (!speed) STD_FAIL;
+
+  if (speed->speed > 100) speed->speed = 100;
+
+  ACL_Command *cmd = get_cmd(cmd_queue);
+  if (!cmd) STD_FAIL;
+
+  cmd->len = sprintf(&cmd->payload[0], ACL_SPEED_FMT, speed->speed);
+  cmd->type = ACL_CMD_SPEED;
+
+  DATA_S_List_append(cmd_queue, &cmd->node);
+
+  return 0;
+}

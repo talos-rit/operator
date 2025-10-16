@@ -25,6 +25,7 @@ class Scorbot : public Arm {
   int PolarPanStart(API_Data_Polar_Pan_Start *pan);
   int PolarPanStop();
   int Home(API_Data_Home *home);
+  int SetSpeed(API_Data_Set_Speed *speed);
   int WriteCommandQueue(S_List *cmd_list);
   void Poll();
 };

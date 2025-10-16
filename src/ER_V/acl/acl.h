@@ -37,6 +37,7 @@ typedef enum _acl_command_type {
   ACL_CMD_MANUAL,
   ACL_CMD_HOME,
   ACL_CMD_MOVE,
+  ACL_CMD_SPEED
 } ACL_Command_Type;
 
 /** ACL Command Map for the command string, length, and node */
@@ -155,6 +156,12 @@ int ACL_enqueue_delay(S_List *cmd_queue, uint16_t delay_ms);
  */
 int ACL_home_sequence(S_List *cmd_queue);
 
+/**
+ * @brief Generates and enqueues a move command to the command queue
+ * @param cmd_queue The command queue to fill
+ * @returns 0 on success, -1 on failure
+ */
+int ACL_set_speed(S_List *cmd_queue, API_Data_Set_Speed *speed);
 /**
  * @brief Returns the ACL character corresponding to the desired angular vector,
  * according to the received payload

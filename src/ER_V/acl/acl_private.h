@@ -26,7 +26,8 @@
 #define ACL_MOVED_DUR_FMT \
   "MOVED %s %u\r"  // Move command to move to a set point, within a specific
                    // duration
-#define ACL_HOME_FMT "HOME\r"  // Home command homes the robot
+#define ACL_HOME_FMT "HOME\r"       // Home command homes the robot
+#define ACL_SPEED_FMT "SPEED %u\r"  // Speed command sets the speed of the robot
 #define ACL_DEFP_FMT \
   "DEFP %s\r"  // Defp command sets an internal variable to the current position
                // for Scorbot
