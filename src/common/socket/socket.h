@@ -1,13 +1,13 @@
 #pragma once
 
+#include <arpa/inet.h>
+#include <pthread.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <unistd.h>
-#include <sys/types.h>
 #include <sys/socket.h>
-#include <arpa/inet.h>
-#include <pthread.h>
+#include <sys/types.h>
+#include <unistd.h>
 
 #include "sub/sub.h"
 
@@ -16,43 +16,41 @@
 #define SOCKET_PING_FREQ_MS 63
 #define SOCKET_TIMEOUT_MS (4 * SOCKET_PING_FREQ_MS)
 
-typedef struct _sock_props
-{
-    int sockfd = -1;
-    int connfd = -1;
-    int port;
-    struct sockaddr_in server;
-    struct sockaddr_in client;
+typedef struct _sock_props {
+  int sockfd = -1;
+  int connfd = -1;
+  int port;
+  struct sockaddr_in server;
+  struct sockaddr_in client;
 
-    Subscriber *sub;
-    bool thread_en;
+  Subscriber *sub;
+  bool thread_en;
 } Socket_Props;
 
-class Socket : public Inbox
-{
-    private:
-        int status = 0;
-        pthread_t pid = -1;
+class Socket : public Inbox {
+ private:
+  int status = 0;
+  pthread_t pid = -1;
 
-        Socket_Props props;
+  Socket_Props props;
 
-        void* Poll(void* arg);
+  void *Poll(void *arg);
 
-    public:
-        Socket();
-        ~Socket();
+ public:
+  Socket();
+  ~Socket();
 
-        /**
-         * @brief Starts the Messenger service
-         * @return 0 on success, -1 on failure
-        */
-        int Start();
+  /**
+   * @brief Starts the Messenger service
+   * @return 0 on success, -1 on failure
+   */
+  int Start();
 
-        /**
-         * @brief Stops the Messenger service
-         * @return 0 on success, -1 on failure
-        */
-        int Stop();
+  /**
+   * @brief Stops the Messenger service
+   * @return 0 on success, -1 on failure
+   */
+  int Stop();
 
-        int RegisterSubscriber(Subscriber* sub);
+  int RegisterSubscriber(Subscriber *sub);
 };
