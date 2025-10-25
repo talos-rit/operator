@@ -5,3 +5,4 @@ operator.log
 **/patch.txt
 .cache
 compile_commands.json
+operator.yml
