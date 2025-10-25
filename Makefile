@@ -7,7 +7,7 @@ USE_ACTIVEMQ = 0
 
 # Compiler options
 CC          := g++
-CPP_FLAGS   := -g -Wall -Wextra -Wno-deprecated-declarations -D _DEFAULT_SOURCE
+CPP_FLAGS   := -g -Wall -Wextra -Wno-deprecated-declarations -D _DEFAULT_SOURCE -std=c++20
 CPP_LIB 	:= -lpthread
 CPP_INC     := -I./src/common -I./src/ER_V
 UTEST_LIB 	:= -lCppUTest -lCppUTestExt

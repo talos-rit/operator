@@ -27,15 +27,15 @@ class Inbox {
 
   /**
    * @brief Starts the Messenger service
-   * @return 0 on success, -1 on failure
+   * @return true on success, false on failure
    */
-  virtual int Start() = 0;
+  virtual bool start() = 0;
 
   /**
    * @brief Stops the Messenger service
-   * @return 0 on success, -1 on failure
+   * @return true on success, false on failure
    */
-  virtual int Stop() = 0;
+  virtual void stop() = 0;
 
-  virtual int RegisterSubscriber(Subscriber *sub) = 0;
+  virtual void registerSubscriber(Subscriber *sub) = 0;
 };

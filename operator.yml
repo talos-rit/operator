@@ -1,0 +1,3 @@
+scorbot_dev: /dev/ttyUSB1
+log_loc: /home/rtyocum/Documents/code/rit/capstone/operator/operator.log
+socket_address: 0.0.0.0

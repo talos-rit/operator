@@ -11,7 +11,7 @@
 #include "conf/config.h"
 #include "conf/ichor_conf.h"
 #include "log/log.h"
-#include "socket/socket.h"
+#include "socket/socket.hpp"
 #include "sub/sub.h"
 #include "util/array.h"
 #include "util/comm.h"
@@ -19,24 +19,25 @@
 #define LOG_FILE_THRESHOLD_THIS LOG_THRESHOLD_MAX
 #define LOG_CONSOLE_THRESHOLD_THIS LOG_THRESHOLD_MAX
 
-const char *app_name;
-volatile int quit_sig = 0;
+namespace {
 
-static void quit_handler(int signum) {
-  quit_sig = signum;  // quit control loop
-}
+std::atomic<int> quit_sig{0};
 
-static int register_intr() {
-  struct sigaction sa;
+void quit_handler(int signum) { quit_sig.store(signum); }
+
+void register_signals() {
+  struct sigaction sa{};
   sa.sa_handler = quit_handler;
   sigemptyset(&sa.sa_mask);
   sa.sa_flags = SA_RESTART; /* Restart functions if
                                interrupted by handler */
 
-  if (sigaction(SIGINT, &sa, NULL) == -1) return -1;
-  if (sigaction(SIGQUIT, &sa, NULL) == -1) return -1;
-  if (sigaction(SIGABRT, &sa, NULL) == -1) return -1;
-  return 0;
+  for (int sig : {SIGINT, SIGQUIT, SIGABRT}) {
+    if (sigaction(sig, &sa, nullptr) == -1) {
+      perror("sigaction");
+      std::exit(EXIT_FAILURE);
+    }
+  }
 }
 
 #if VALGRIND
@@ -59,23 +60,23 @@ static void dummy_msg(Subscriber *hermes) {
   hermes->EnqueueBuffer(SUB_QUEUE_COMMAND, buf);
 }
 #endif
+}  // namespace
 
 int main(int argc, char *argv[]) {
   LOG_prep();
-  app_name = argv[0];
-  register_intr();
+  register_signals();
 
   // Initalize program; Setup Logging
-  IchorConfig conf = IchorConfig();
+  IchorConfig conf;
 
-  // Setup config priority
-  const char *conf_loc[] = {NULL, CONF_DEFAULT_LOCATION};
-  uint8_t conf_loc_len = UTIL_len(conf_loc);
+  const char *conf_loc[] = {(argc > 1 ? argv[1] : nullptr),
+                            CONF_DEFAULT_LOCATION};
   if (argc > 1) conf_loc[0] = argv[1];
 
-  for (uint8_t iter = 0; iter < conf_loc_len; iter++)
-    if (conf_loc[iter] && !conf.SetFilePath(conf_loc[iter]))
+  for (const char *loc : conf_loc) {
+    if (loc && !conf.SetFilePath(loc))
       break;  // If file is successfully set, break loop
+  }
 
   conf.ParseConfig();
 
@@ -85,48 +86,38 @@ int main(int argc, char *argv[]) {
   conf.DumpToLog(LOG_INFO);
 
   // Init Modules
-  Subscriber hermes = Subscriber();
+  Subscriber hermes;
 
-#if 0
-    Inbox* inbox = new TAMQ_Consumer(
-        conf.GetBrokerAddress(),
-        conf.GetCommandURI(),
-        conf.GetUseTopics(),
-        conf.GetClientAck());
-#else
-  Inbox *inbox = new Socket();
-#endif
+  auto inbox = std::make_unique<Socket>();
+
 
   // Register hardware
-  Ichor *bot = new Ichor("/dev/gpiochip0", "/dev/i2c-1", 0x60, 0x61, 0x62);
+  auto bot = std::make_unique<Ichor>("/dev/gpiochip0", "/dev/i2c-1", 0x60, 0x61, 0x62);
+
   // bot->RegisterMotor(0, 0, 0, 1, 14, 4, 17, 0);           // Base
   bot->RegisterMotor(0, 0, 4, 3, 2, 4, 17, 0);      // Base
   bot->RegisterMotor(2, 0, 11, 12, 13, 22, 23, 2);  // Elbow
   bot->Init();
 
   // Register modules
-  inbox->RegisterSubscriber(&hermes);
+  inbox->registerSubscriber(&hermes);
   bot->RegisterSubscriber(&hermes);
 
   // Start
   hermes.Start();
   if (-1 == bot->Start()) quit_handler(SIGABRT);
-  inbox->Start();
+  inbox->start();
 
   // Loop
   if (!quit_sig) LOG_INFO("Ready.");
   while (!quit_sig);
-  LOG_VERBOSE(0, "Quit signal: %d", quit_sig);
+  LOG_VERBOSE(0, "Quit signal: %d", quit_sig.load());
   LOG_INFO("Shutting down...");
 
   // Cleanup running processes
-  inbox->Stop();
+  inbox->stop();
   hermes.Stop();
   bot->Stop();
-
-  // Release resources
-  delete bot;
-  delete inbox;
 
   // End demo
   LOG_INFO("End Program.");
