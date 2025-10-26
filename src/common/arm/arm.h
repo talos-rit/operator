@@ -8,7 +8,7 @@
 #include <stdint.h>
 
 #include "api/api.h"
-#include "sub/sub.h"
+#include "sub/sub.hpp"
 
 #define ARM_POLL_PERIOD_MS (25)
 

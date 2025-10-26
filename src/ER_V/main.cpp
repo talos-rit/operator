@@ -10,7 +10,7 @@
 #include "erv_conf/erv_conf.h"
 #include "log/log.h"
 #include "socket/socket.hpp"
-#include "sub/sub.h"
+#include "sub/sub.hpp"
 
 #define LOG_FILE_THRESHOLD_THIS LOG_THRESHOLD_MAX
 #define LOG_CONSOLE_THRESHOLD_THIS LOG_THRESHOLD_MAX
@@ -93,7 +93,7 @@ int main(int argc, char *argv[]) {
   bot->RegisterSubscriber(&hermes);
 
   // Start
-  hermes.Start();
+  hermes.start();
   if (-1 == bot->Start()) quit_handler(SIGABRT);
   inbox->start();
 
@@ -109,7 +109,7 @@ int main(int argc, char *argv[]) {
 
   // Cleanup running processes
   inbox->stop();
-  hermes.Stop();
+  hermes.stop();
   bot->Stop();
 
   // End demo

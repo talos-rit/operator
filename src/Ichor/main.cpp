@@ -12,7 +12,7 @@
 #include "conf/ichor_conf.h"
 #include "log/log.h"
 #include "socket/socket.hpp"
-#include "sub/sub.h"
+#include "sub/sub.hpp"
 #include "util/array.h"
 #include "util/comm.h"
 
@@ -104,7 +104,7 @@ int main(int argc, char *argv[]) {
   bot->RegisterSubscriber(&hermes);
 
   // Start
-  hermes.Start();
+  hermes.start();
   if (-1 == bot->Start()) quit_handler(SIGABRT);
   inbox->start();
 
@@ -116,7 +116,7 @@ int main(int argc, char *argv[]) {
 
   // Cleanup running processes
   inbox->stop();
-  hermes.Stop();
+  hermes.stop();
   bot->Stop();
 
   // End demo

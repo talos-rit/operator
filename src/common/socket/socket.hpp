@@ -9,7 +9,8 @@
 #include <span>
 #include <thread>
 
-#include "sub/sub.h"
+#include "sub/sub.hpp"
+#include "sub/inbox.hpp"
 
 #define SOCKET_BUF_LEN 1024
 #define SOCKET_POLL_PERIOD_MS 25

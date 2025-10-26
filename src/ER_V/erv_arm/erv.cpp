@@ -1,7 +1,7 @@
 #include "erv_arm/erv.h"
 
 #include <err.h>
-#include <errno.h>
+#include "util/comm.h"
 #include <fcntl.h>
 #include <signal.h>
 #include <stddef.h>

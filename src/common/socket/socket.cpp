@@ -1,4 +1,4 @@
-#include "socket.hpp"
+#include "socket/socket.hpp"
 
 #include <endian.h>
 #include <sys/socket.h>
@@ -9,7 +9,7 @@
 
 #include "api/api.h"
 #include "log/log.h"
-#include "sub/sub.h"
+#include "sub/sub.hpp"
 
 #define LOG_CONSOLE_THRESHOLD_THIS LOG_THRESHOLD_DEFAULT
 #define LOG_FILE_THRESHOLD_THIS LOG_THRESHOLD_MAX
@@ -119,10 +119,10 @@ void Socket::poll() {
         break;
       }
 
-      if (auto *buf = props_.sub->DequeueBuffer(SUB_Queue::SUB_QUEUE_FREE)) {
+      if (auto *buf = props_.sub->dequeueBuffer(Sub_Queue::Free)) {
         buf->len = total_len;
         std::memcpy(&buf->body[0], buffer.data(), total_len);
-        props_.sub->EnqueueBuffer(SUB_Queue::SUB_QUEUE_COMMAND, buf);
+        props_.sub->enqueueBuffer(Sub_Queue::Command, buf);
         LOG_VERBOSE(2, "Received ICD command");
       } else {
         LOG_WARN("No free buffers available!");

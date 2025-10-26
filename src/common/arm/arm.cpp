@@ -6,6 +6,7 @@
 
 #include "api/api.h"
 #include "log/log.h"
+#include "sub/sub.hpp"
 #include "util/comm.h"
 
 #define LOG_CONSOLE_THRESHOLD_THIS LOG_THRESHOLD_MAX
@@ -54,7 +55,7 @@ int Arm::RegisterSubscriber(Subscriber *sub) {
 }
 
 int Arm::ProcessQueue() {
-  SUB_Buffer *buf = sub->DequeueBuffer(SUB_QUEUE_COMMAND);
+  Sub_Buffer *buf = sub->dequeueBuffer(Sub_Queue::Command);
 
   if (!buf) return 1;
   if (API_validate_command(&buf->body[0], buf->len)) STD_FAIL;
@@ -89,6 +90,6 @@ int Arm::ProcessQueue() {
       break;
   }
 
-  sub->EnqueueBuffer(SUB_QUEUE_FREE, buf);
+  sub->enqueueBuffer(Sub_Queue::Free, buf);
   return status;
 }
