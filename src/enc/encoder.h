@@ -5,18 +5,17 @@
 /**
  * @brief Rotary Encoder using stardary (2 bit Gray code) encoding
  */
-class RotaryEncoder
-{
-private:
-    int32_t value;
-    int8_t state;
-    
-public:
-    RotaryEncoder();
-    ~RotaryEncoder();
+class RotaryEncoder {
+ private:
+  int32_t value;
+  int8_t state;
 
-    int32_t GetValue();
+ public:
+  RotaryEncoder();
+  ~RotaryEncoder();
 
-    void ToggleA();
-    void ToggleB();
+  int32_t GetValue();
+
+  void ToggleA();
+  void ToggleB();
 };
