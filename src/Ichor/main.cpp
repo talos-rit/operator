@@ -5,8 +5,8 @@
 #include <stdio.h>
 #include <string.h>
 
-#include "api/api.h"
-#include "arm/arm.h"
+#include "api/api.hpp"
+#include "arm/arm.hpp"
 #include "arm/ichor_arm.h"
 #include "conf/config.h"
 #include "conf/ichor_conf.h"
@@ -101,11 +101,11 @@ int main(int argc, char *argv[]) {
 
   // Register modules
   inbox->registerSubscriber(&hermes);
-  bot->RegisterSubscriber(&hermes);
+  bot->registerSubscriber(&hermes);
 
   // Start
   hermes.start();
-  if (-1 == bot->Start()) quit_handler(SIGABRT);
+  if (false == bot->start()) quit_handler(SIGABRT);
   inbox->start();
 
   // Loop
@@ -117,7 +117,7 @@ int main(int argc, char *argv[]) {
   // Cleanup running processes
   inbox->stop();
   hermes.stop();
-  bot->Stop();
+  bot->stop();
 
   // End demo
   LOG_INFO("End Program.");

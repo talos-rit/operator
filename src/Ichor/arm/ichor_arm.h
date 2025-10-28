@@ -1,6 +1,6 @@
 #pragma once
 
-#include "arm/arm.h"
+#include "arm/arm.hpp"
 #include "dac/PCA9685PW.h"
 #include "driver/driver.h"
 #include "gpio/isr.h"
@@ -29,10 +29,10 @@ class Ichor : public Arm {
   bool manual_mode;
   OversteerConfig oversteer;
 
-  int HandShake();
-  int PolarPan(API_Data_Polar_Pan *pan);
-  int PolarPanStart(API_Data_Polar_Pan_Start *pan);
-  int PolarPanStop();
-  int Home(API_Data_Home *home);
-  void Poll();
+  int handShake();
+  int polarPan(API::PolarPan *pan);
+  int polarPanStart(API::PolarPanStart *pan);
+  int polarPanStop();
+  int home(API::Home *home);
+  void poll();
 };

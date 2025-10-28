@@ -71,7 +71,7 @@ int Ichor::Init() {
   return 0;
 }
 
-void Ichor::Poll() {
+void Ichor::poll() {
   isr->ProcessEvents();  // Check GPIO interrupts (could be an abort signal)
   // TODO                 // Check ADC values (overcurrent / overexertion)
   for (uint8_t idx = 0; idx < ICHOR_AXIS_COUNT; idx++) {
@@ -83,15 +83,15 @@ void Ichor::Poll() {
   usleep(25e3);  // 25 ms delay (defacto delay in Talos Operator so far)
 }
 
-int Ichor::HandShake() { return 0; }
+int Ichor::handShake() { return 0; }
 
-int Ichor::PolarPan(API_Data_Polar_Pan *pan) {
-  switch (oversteer) {
-    case OVERSTEER_NONE:
+int Ichor::polarPan(API::PolarPan *pan) {
+  switch (static_cast<OversteerConfig>(oversteer)) {
+    case OversteerConfig::None:
       break;
-    case OVERSTEER_IGNORE:
+    case OversteerConfig::Ignore:
       break;
-    case OVERSTEER_ABORT:
+    case OversteerConfig::Abort:
       break;
     default:
       STD_FAIL;
@@ -110,7 +110,7 @@ int Ichor::PolarPan(API_Data_Polar_Pan *pan) {
   return 0;
 }
 
-int Ichor::PolarPanStart(API_Data_Polar_Pan_Start *pan) {
+int Ichor::polarPanStart(API::PolarPanStart *pan) {
   uint8_t iter = 0;
   char text[255];
 
@@ -130,13 +130,13 @@ int Ichor::PolarPanStart(API_Data_Polar_Pan_Start *pan) {
   return 0;
 }
 
-int Ichor::PolarPanStop() {
+int Ichor::polarPanStop() {
   axis[0]->SetVelocityFunc(&dead_vel);
   axis[2]->SetVelocityFunc(&dead_vel);
   return 0;
 }
 
-int Ichor::Home(API_Data_Home *home) {
+int Ichor::home(API::Home *home) {
   uint8_t iter = 0;
   char text[255];
 
