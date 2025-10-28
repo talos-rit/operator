@@ -234,7 +234,7 @@ void Scorbot::poll() {
 }
 
 int Scorbot::handShake() {
-  LOG_INFO("Scorbot Recevied Handshake Command");
+  LOG_INFO("Scorbot Received Handshake Command");
   return 0;
 }
 
