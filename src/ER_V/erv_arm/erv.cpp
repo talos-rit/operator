@@ -245,7 +245,7 @@ int Scorbot::polarPan(API::PolarPan *pan) {
   S_List cmd_list;
   DATA_S_List_init(&cmd_list);
 
-  switch (static_cast<OversteerConfig>(oversteer)) {
+  switch (oversteer) {
     case OversteerConfig::None:
       ACL_convert_polar_pan_direct(&cmd_list, pan);
       break;
