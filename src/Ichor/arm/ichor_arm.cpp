@@ -86,7 +86,7 @@ void Ichor::poll() {
 int Ichor::handShake() { return 0; }
 
 int Ichor::polarPan(API::PolarPan *pan) {
-  switch (static_cast<OversteerConfig>(oversteer)) {
+  switch (oversteer) {
     case OversteerConfig::None:
       break;
     case OversteerConfig::Ignore:
