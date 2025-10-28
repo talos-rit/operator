@@ -71,8 +71,6 @@ int main(int argc, char *argv[]) {
 
   const char *conf_loc[] = {(argc > 1 ? argv[1] : nullptr),
                             CONF_DEFAULT_LOCATION};
-  if (argc > 1) conf_loc[0] = argv[1];
-
   for (const char *loc : conf_loc) {
     if (loc && !conf.SetFilePath(loc))
       break;  // If file is successfully set, break loop
