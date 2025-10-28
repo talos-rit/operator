@@ -7,20 +7,26 @@
 #include <cstring>
 #include <thread>
 
-#include "api/api.h"
+#include "api/api.hpp"
 #include "log/log.h"
 #include "sub/sub.hpp"
 
 #define LOG_CONSOLE_THRESHOLD_THIS LOG_THRESHOLD_DEFAULT
 #define LOG_FILE_THRESHOLD_THIS LOG_THRESHOLD_MAX
 
-Socket::Socket() {}
+Socket::Socket() {
+  if (!init()) {
+    LOG_ERROR("Socket initialization failed.");
+  }
+}
 
 Socket::~Socket() { stop(); }
 
 bool Socket::init() {
-  props_.sockfd =
-      FileDescriptor(::socket(AF_INET, SOCK_STREAM | SOCK_NONBLOCK, 0));
+  int fd = ::socket(AF_INET, SOCK_STREAM | SOCK_NONBLOCK, 0);
+  LOG_INFO("Socket fd=%d: Initializing...", fd);
+  props_.sockfd = FileDescriptor(fd);
+
   if (!props_.sockfd.valid()) {
     LOG_ERROR("Could not open socket: (%d) %s", errno, strerror(errno));
   }
@@ -50,7 +56,7 @@ bool Socket::waitForConnection() {
     int fd = ::accept(props_.sockfd,
                       reinterpret_cast<struct sockaddr *>(&props_.client),
                       &client_len);
-    if (fd < 0) {
+    if (fd > 0) {
       props_.connfd = FileDescriptor(fd);
       LOG_INFO("Client connected.");
       return true;
@@ -108,10 +114,10 @@ void Socket::poll() {
 
     buf_iter += ret;
 
-    while (buf_iter >= sizeof(API_Data_Header) + 2) {
-      auto *msg = reinterpret_cast<API_Data_Wrapper *>(buffer.data());
+    while (buf_iter >= sizeof(API::DataHeader) + 2) {
+      auto *msg = reinterpret_cast<API::DataWrapper *>(buffer.data());
       uint16_t total_len =
-          sizeof(API_Data_Header) + be16toh(msg->header.len) + 2;
+          sizeof(API::DataHeader) + be16toh(msg->header.len) + 2;
       if (buf_iter < total_len) break;
 
       if (!props_.sub) {

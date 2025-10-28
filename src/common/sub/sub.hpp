@@ -23,6 +23,10 @@ constexpr size_t SUB_MSG_LEN = 255;
 constexpr size_t SUB_MSG_COUNT = 64;
 constexpr size_t SUB_ADDR_LEN = 32;
 
+
+// Draw here how this queue works. Comes from socket, pulls from free queue, puts info, then puts into command queue, then arm pulls from command queue, processes, then into free queue again. Diagaam in comments below.
+//
+
 // Queue types
 enum class Sub_Queue : uint8_t {
   Free,    /** Index of Free Queue */

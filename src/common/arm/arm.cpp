@@ -1,88 +1,78 @@
-#include "arm/arm.h"
+#include "arm/arm.hpp"
 
-#include <pthread.h>
-#include <stdio.h>
 #include <unistd.h>
 
-#include "api/api.h"
+#include "api/api.hpp"
 #include "log/log.h"
 #include "sub/sub.hpp"
-#include "util/comm.h"
 
 #define LOG_CONSOLE_THRESHOLD_THIS LOG_THRESHOLD_MAX
 #define LOG_FILE_THRESHOLD_THIS LOG_THRESHOLD_MAX
 
-Arm::Arm() { thread_enable = false; }
+Arm::Arm() = default;
 
 Arm::~Arm() {}
 
-bool Arm::GetThreadEnable() { return this->thread_enable; }
-
-static void *ARM_run(void *arg) {
-  Arm *arm = (Arm *)arg;
-
-  // TODO: Add exit code
-  while (1) {
-    int ret = arm->ProcessQueue();
-    if (1 == ret) {
-      arm->Poll();
-      if (!arm->GetThreadEnable()) break;
-      usleep(ARM_POLL_PERIOD_MS * 1000);
-      continue;
-    }
+void Arm::runLoop() {
+  while (running_) {
+    processCommand();
+    poll();
+    std::this_thread::sleep_for(ARM_LOOP_PERIOD);
+    continue;
   }
-
-  return 0;
 }
 
-int Arm::Start() {
-  thread_enable = true;
-  int ret = pthread_create(&this->pid, NULL, ARM_run, this);
-  if (ret == -1) STD_FAIL;
-  return 0;
+bool Arm::start() {
+  running_.store(true);
+  thread_ = std::thread(&Arm::runLoop, this);
+  return true;
 }
 
-int Arm::Stop() {
-  this->thread_enable = 0;
-  pthread_join(pid, NULL);
-  return 0;
+bool Arm::stop() {
+  running_.store(false);
+  if (thread_.joinable()) thread_.join();
+  return true;
 }
 
-int Arm::RegisterSubscriber(Subscriber *sub) {
-  if (!sub) STD_FAIL;
-  this->sub = sub;
-  return 0;
+bool Arm::registerSubscriber(Subscriber *sub) {
+  if (!sub) return false;
+  sub_ = sub;
+  return true;
 }
 
-int Arm::ProcessQueue() {
-  Sub_Buffer *buf = sub->dequeueBuffer(Sub_Queue::Command);
+bool Arm::processCommand() {
+  Sub_Buffer *buf = sub_->dequeueBuffer(Sub_Queue::Command);
 
-  if (!buf) return 1;
-  if (API_validate_command(&buf->body[0], buf->len)) STD_FAIL;
-  API_Data_Wrapper *cmd = (API_Data_Wrapper *)&buf->body;
+  if (!buf) {
+    return false;
+  }
+  if (API::validate_command(&buf->body[0], buf->len)) {
+    sub_->enqueueBuffer(Sub_Queue::Free, buf);
+    return false;
+  };
+  API::DataWrapper *cmd = (API::DataWrapper *)&buf->body;
 
   int status = 0;
-  switch (cmd->header.cmd_val) {
-    case API_CMD_HANDSHAKE:
+  switch (static_cast<API::CommandID>(cmd->header.cmd_val)) {
+    case API::CommandID::Handshake:
       LOG_INFO("Handshake Recieved");
-      if (HandShake()) STD_FAIL;
+      if (handShake()) status = -1;
       break;
-    case API_CMD_POLARPAN:
+    case API::CommandID::PolarPan:
       LOG_INFO("Polar Pan Recieved");
-      if (PolarPan((API_Data_Polar_Pan *)&cmd->payload_head)) STD_FAIL;
+      if (polarPan((API::PolarPan *)&cmd->payload_head)) status = -1;
       break;
-    case API_CMD_HOME:
+    case API::CommandID::Home:
       LOG_INFO("Home Received");
-      if (Home((API_Data_Home *)&cmd->payload_head)) STD_FAIL;
+      if (home((API::Home *)&cmd->payload_head)) status = -1;
       break;
-    case API_CMD_POLARPAN_START:
+    case API::CommandID::PolarPanStart:
       LOG_INFO("Polar Pan Start Recieved");
-      if (PolarPanStart((API_Data_Polar_Pan_Start *)&cmd->payload_head))
-        STD_FAIL;
+      if (polarPanStart((API::PolarPanStart *)&cmd->payload_head)) status = -1;
       break;
-    case API_CMD_POLARPAN_STOP:
+    case API::CommandID::PolarPanStop:
       LOG_INFO("Polar Pan Stop Recieved");
-      if (PolarPanStop()) STD_FAIL;
+      if (polarPanStop()) status = -1;
       break;
     default:
       LOG_IEC();
@@ -90,6 +80,7 @@ int Arm::ProcessQueue() {
       break;
   }
 
-  sub->enqueueBuffer(Sub_Queue::Free, buf);
-  return status;
+  sub_->enqueueBuffer(Sub_Queue::Free, buf);
+
+  return status == 0;
 }

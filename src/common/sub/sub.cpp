@@ -1,7 +1,6 @@
 #include "sub/sub.hpp"
 
 #include "log/log.h"
-#include "util/comm.h"
 
 #define LOG_CONSOLE_THRESHOLD_THIS LOG_THRESHOLD_DEFAULT
 #define LOG_FILE_THRESHOLD_THIS LOG_THRESHOLD_MAX

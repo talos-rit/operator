@@ -6,7 +6,6 @@
 #include <string.h>
 
 #include "acl/acl_private.h"
-#include "erv_arm/erv.h"
 #include "log/log.h"
 #include "util/comm.h"
 
@@ -99,7 +98,7 @@ int ACL_enqueue_manual_mode_toggle_cmd(S_List *cmd_queue) {
   return 0;
 }
 
-char ACL_get_polar_pan_continuous_vector(API_Data_Polar_Pan_Start *payload) {
+char ACL_get_polar_pan_continuous_vector(API::PolarPanStart *payload) {
   if (!payload) STD_FAIL;
 
   ACL_Manual_Axis vector;
@@ -226,7 +225,7 @@ int ACL_generate_enqueue_defp_cmd(S_List *cmd_queue) {
  * @param cmd_queue Command Queue to append to
  * @param pan Polar pan parameters
  */
-static void polar_pan_body(S_List *cmd_queue, const API_Data_Polar_Pan *pan) {
+static void polar_pan_body(S_List *cmd_queue, const API::PolarPan *pan) {
   if (pan->delta_azimuth != 0) {
     LOG_VERBOSE(4, "Converting Delta Azimuth");
     ACL_enqueue_shift_cmd(cmd_queue, ACL_AXIS_BASE, pan->delta_azimuth);
@@ -239,7 +238,7 @@ static void polar_pan_body(S_List *cmd_queue, const API_Data_Polar_Pan *pan) {
 }
 
 int ACL_convert_polar_pan_abort(S_List *cmd_queue,
-                                const API_Data_Polar_Pan *pan) {
+                                const API::PolarPan *pan) {
   if (!cmd_queue) STD_FAIL;
   if (!pan) STD_FAIL;
 
@@ -254,7 +253,7 @@ int ACL_convert_polar_pan_abort(S_List *cmd_queue,
 }
 
 int ACL_convert_polar_pan_direct(S_List *cmd_queue,
-                                 const API_Data_Polar_Pan *pan) {
+                                 const API::PolarPan *pan) {
   if (!cmd_queue) STD_FAIL;
   if (!pan) STD_FAIL;
 
@@ -267,7 +266,7 @@ int ACL_convert_polar_pan_direct(S_List *cmd_queue,
 }
 
 int ACL_convert_polar_pan_ignore(S_List *cmd_queue,
-                                 const API_Data_Polar_Pan *pan) {
+                                 const API::PolarPan *pan) {
   if (!cmd_queue) STD_FAIL;
   if (!pan) STD_FAIL;
 

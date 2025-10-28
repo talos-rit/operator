@@ -6,7 +6,7 @@
 #include <iostream>
 #include <memory>
 
-#include "erv_arm/erv.h"
+#include "erv_arm/erv.hpp"
 #include "erv_conf/erv_conf.h"
 #include "log/log.h"
 #include "socket/socket.hpp"
@@ -90,11 +90,11 @@ int main(int argc, char *argv[]) {
   auto bot = std::make_unique<Scorbot>(conf.GetScorbotDevicePath());
 
   inbox->registerSubscriber(&hermes);
-  bot->RegisterSubscriber(&hermes);
+  bot->registerSubscriber(&hermes);
 
   // Start
   hermes.start();
-  if (-1 == bot->Start()) quit_handler(SIGABRT);
+  if (false == bot->start()) quit_handler(SIGABRT);
   inbox->start();
 
   // Loop
@@ -110,7 +110,7 @@ int main(int argc, char *argv[]) {
   // Cleanup running processes
   inbox->stop();
   hermes.stop();
-  bot->Stop();
+  bot->stop();
 
   // End demo
   LOG_INFO("End Program.");

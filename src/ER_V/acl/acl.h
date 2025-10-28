@@ -10,7 +10,7 @@
 
 #include <stdint.h>
 
-#include "api/api.h"
+#include "api/api.hpp"
 #include "data/s_list.h"
 
 #define ACL_CMD_SIZE 64
@@ -94,8 +94,7 @@ int ACL_Command_init(ACL_Command *cmd);
  * @param pan Polar Pan command struct pointer
  * @returns 0 on success, -1 on failure
  */
-int ACL_convert_polar_pan_abort(S_List *cmd_queue,
-                                const API_Data_Polar_Pan *pan);
+int ACL_convert_polar_pan_abort(S_List *cmd_queue, const API::PolarPan *pan);
 
 /**
  * @brief Populates cmd_queue with a formatted queue for executing a polar pan,
@@ -107,8 +106,7 @@ int ACL_convert_polar_pan_abort(S_List *cmd_queue,
  * @param pan Polar Pan command struct pointer
  * @returns 0 on success, -1 on failure
  */
-int ACL_convert_polar_pan_direct(S_List *cmd_queue,
-                                 const API_Data_Polar_Pan *pan);
+int ACL_convert_polar_pan_direct(S_List *cmd_queue, const API::PolarPan *pan);
 
 /**
  * @brief Populates cmd_queue with a formatted queue for executing a polar pan,
@@ -121,8 +119,7 @@ int ACL_convert_polar_pan_direct(S_List *cmd_queue,
  * @param pan Polar Pan command struct pointer
  * @returns 0 on success, -1 on failure
  */
-int ACL_convert_polar_pan_ignore(S_List *cmd_queue,
-                                 const API_Data_Polar_Pan *pan);
+int ACL_convert_polar_pan_ignore(S_List *cmd_queue, const API::PolarPan *pan);
 
 /**
  * @brief Populates cmd_queue with a formatted queue for toggle manual mode on
@@ -160,4 +157,4 @@ int ACL_home_sequence(S_List *cmd_queue);
  * according to the received payload
  * @returns Corresponding ACL character on success, NULL character on failure
  */
-char ACL_get_polar_pan_continuous_vector(API_Data_Polar_Pan_Start *payload);
+char ACL_get_polar_pan_continuous_vector(API::PolarPanStart *payload);
