@@ -67,7 +67,7 @@ bool Arm::processCommand() {
       if (home((API::Home *)&cmd->payload_head)) status = -1;
       break;
     case API::CommandID::PolarPanStart:
-      LOG_INFO("Polar Pan Start Recieved");
+      LOG_INFO("Polar Pan Start Received");
       if (polarPanStart((API::PolarPanStart *)&cmd->payload_head)) status = -1;
       break;
     case API::CommandID::PolarPanStop:
