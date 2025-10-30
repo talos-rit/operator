@@ -43,9 +43,9 @@ static void dummy_msg(Subscriber *hermes) {
 
   API_Data_Wrapper *msg = (API_Data_Wrapper *)&buf->body[0];
 
-  msg->header.cmd_id = htobe32(0x0);
+  msg->header.msg_id = htobe32(0x0);
   msg->header.reserved_1 = htobe16(0);
-  msg->header.cmd_val = htobe16(API_CMD_HOME);
+  msg->header.cmd_id = htobe16(API_CMD_HOME);
   msg->header.len = htobe16(sizeof(API_Data_Home));
 
   API_Data_Home *cmd = (API_Data_Home *)&msg->payload_head;

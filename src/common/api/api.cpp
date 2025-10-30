@@ -36,8 +36,8 @@ int validate_command(const uint8_t *buf, uint16_t len) {
   auto *cmd = reinterpret_cast<DataWrapper *>(const_cast<uint8_t *>(buf));
 
   // Fix endianness
-  cmd->header.cmd_id = be32toh(cmd->header.cmd_id);
-  cmd->header.cmd_val = be16toh(cmd->header.cmd_val);
+  cmd->header.msg_id = be32toh(cmd->header.msg_id);
+  cmd->header.cmd_id = be16toh(cmd->header.cmd_id);
   cmd->header.len = be16toh(cmd->header.len);
 
   // TODO: Check for duplicate cmd_ids
@@ -46,7 +46,7 @@ int validate_command(const uint8_t *buf, uint16_t len) {
   if (len < sizeof(API::DataHeader) + cmd->header.len) return -1;
 
   // Command specific preparation
-  switch (static_cast<API::CommandID>(cmd->header.cmd_val)) {
+  switch (static_cast<API::CommandID>(cmd->header.cmd_id)) {
     // Intentional fallthrough
     case API::CommandID::Handshake:
       // No body; Always valid
@@ -65,7 +65,7 @@ int validate_command(const uint8_t *buf, uint16_t len) {
       LOG_ERROR(
           "API: Failed to process Command ID %d: Unrecognized Command Value: "
           "%d",
-          cmd->header.cmd_id, cmd->header.cmd_val);
+          cmd->header.msg_id, cmd->header.cmd_id);
       return -1;
   }
 

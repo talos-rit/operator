@@ -53,7 +53,7 @@ bool Arm::processCommand() {
   API::DataWrapper *cmd = (API::DataWrapper *)&buf->body;
 
   int status = 0;
-  switch (static_cast<API::CommandID>(cmd->header.cmd_val)) {
+  switch (static_cast<API::CommandID>(cmd->header.cmd_id)) {
     case API::CommandID::Handshake:
       LOG_INFO("Handshake Recieved");
       if (handShake()) status = -1;

@@ -20,9 +20,9 @@ enum class CommandID {
 #pragma pack(push, 1)
 /** Struct mapping command message header values */
 struct DataHeader {
-  uint32_t cmd_id;     /** Unique ID for individual commands */
+  uint32_t msg_id;     /** Unique ID for individual commands */
   uint16_t reserved_1; /** RESERVED */
-  uint16_t cmd_val;    /** Command for device to carry out */
+  uint16_t cmd_id;    /** Command for device to carry out */
   uint16_t len;        /** Length of Payload */
 };
 
