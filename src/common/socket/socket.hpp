@@ -13,15 +13,8 @@
 #include "sub/sub.hpp"
 #include "util/file_descriptor.hpp"
 
-#define SOCKET_BUF_LEN 1024
-#define SOCKET_POLL_PERIOD_MS 25
-#define SOCKET_PING_FREQ_MS 63
-#define SOCKET_TIMEOUT_MS (4 * SOCKET_PING_FREQ_MS)
-
-constexpr std::size_t SOCKET_BUF_SIZE = 1024;
+constexpr std::size_t SOCKET_BUF_LEN = 1024;
 constexpr auto SOCKET_POLL_PERIOD = std::chrono::milliseconds(25);
-constexpr auto SOCKET_PING_FREQ = std::chrono::milliseconds(63);
-constexpr auto SOCKET_TIMEOUT = 4 * SOCKET_PING_FREQ;
 
 class Socket : public Inbox {
  public:
