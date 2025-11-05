@@ -32,21 +32,29 @@ struct DataWrapper {
   std::byte payload_head; /** Command Info */
 };
 
-struct PolarPan {
-  int32_t delta_azimuth;  /** Requested change in azimuth */
-  int32_t delta_altitude; /** Requested change in altitude */
-  uint32_t delay_ms;      /** How long to wait until executing pan */
-  uint32_t time_ms;       /** How long the pan should take to execute */
-};
+namespace Requests {
+  struct PolarPan {
+    int32_t delta_azimuth;  /** Requested change in azimuth */
+    int32_t delta_altitude; /** Requested change in altitude */
+    uint32_t delay_ms;      /** How long to wait until executing pan */
+    uint32_t time_ms;       /** How long the pan should take to execute */
+  };
 
-struct PolarPanStart {
-  int8_t delta_azimuth;  /** Requested change in azimuth */
-  int8_t delta_altitude; /** Requested change in altitude */
-};
+  struct PolarPanStart {
+    int8_t delta_azimuth;  /** Requested change in azimuth */
+    int8_t delta_altitude; /** Requested change in altitude */
+  };
 
-struct Home {
-  uint32_t delay_ms; /** How long to wait until executing pan */
-};
+  struct Home {
+    uint32_t delay_ms; /** How long to wait until executing pan */
+  };
+}
+
+namespace Responses {
+  struct Simple {
+    uint16_t return_code; /** Status code of executed command */
+  };
+}
 
 #pragma pack(pop)
 

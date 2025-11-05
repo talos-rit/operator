@@ -85,7 +85,7 @@ void Ichor::poll() {
 
 int Ichor::handShake() { return 0; }
 
-int Ichor::polarPan(API::PolarPan *pan) {
+int Ichor::polarPan(API::Requests::PolarPan *pan) {
   switch (oversteer) {
     case OversteerConfig::None:
       break;
@@ -110,7 +110,7 @@ int Ichor::polarPan(API::PolarPan *pan) {
   return 0;
 }
 
-int Ichor::polarPanStart(API::PolarPanStart *pan) {
+int Ichor::polarPanStart(API::Requests::PolarPanStart *pan) {
   uint8_t iter = 0;
   char text[255];
 
@@ -136,7 +136,7 @@ int Ichor::polarPanStop() {
   return 0;
 }
 
-int Ichor::home(API::Home *home) {
+int Ichor::home(API::Requests::Home *home) {
   uint8_t iter = 0;
   char text[255];
 

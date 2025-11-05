@@ -11,7 +11,7 @@
 
 namespace API {
 
-int prep_polar_pan(API::PolarPan *payload) {
+int prep_polar_pan(API::Requests::PolarPan *payload) {
   if (!payload) STD_FAIL;
 
   payload->delta_altitude = be32toh(payload->delta_altitude);
@@ -22,7 +22,7 @@ int prep_polar_pan(API::PolarPan *payload) {
   return 0;
 }
 
-int prep_home(API::Home *payload) {
+int prep_home(API::Requests::Home *payload) {
   if (!payload) STD_FAIL;
 
   payload->delay_ms = be32toh(payload->delay_ms);
@@ -56,10 +56,10 @@ int validate_command(const uint8_t *buf, uint16_t len) {
       // Already correct endianness
       break;
     case API::CommandID::PolarPan:
-      prep_polar_pan((API::PolarPan *)&cmd->payload_head);
+      prep_polar_pan((API::Requests::PolarPan *)&cmd->payload_head);
       break;
     case API::CommandID::Home:
-      prep_home((API::Home *)&cmd->payload_head);
+      prep_home((API::Requests::Home *)&cmd->payload_head);
       break;
     default:
       LOG_ERROR(

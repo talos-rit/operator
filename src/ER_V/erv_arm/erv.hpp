@@ -22,10 +22,10 @@ class Scorbot : public Arm {
   struct timeval last_start;
 
   int handShake();
-  int polarPan(API::PolarPan *pan);
-  int polarPanStart(API::PolarPanStart *pan);
+  int polarPan(API::Requests::PolarPan *pan);
+  int polarPanStart(API::Requests::PolarPanStart *pan);
   int polarPanStop();
-  int home(API::Home *home);
+  int home(API::Requests::Home *home);
   int writeCommandQueue(S_List *cmd_list);
   void poll();
 };

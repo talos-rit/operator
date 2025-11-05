@@ -238,7 +238,7 @@ int Scorbot::handShake() {
   return 0;
 }
 
-int Scorbot::polarPan(API::PolarPan *pan) {
+int Scorbot::polarPan(API::Requests::PolarPan *pan) {
   uint8_t iter = 0;
   char text[255];
 
@@ -271,7 +271,7 @@ int Scorbot::polarPan(API::PolarPan *pan) {
   return 0;
 }
 
-int Scorbot::polarPanStart(API::PolarPanStart *pan) {
+int Scorbot::polarPanStart(API::Requests::PolarPanStart *pan) {
   uint8_t iter = 0;
   char text[255];
 
@@ -299,7 +299,7 @@ int Scorbot::polarPanStop() {
   return 0;
 }
 
-int Scorbot::home(API::Home *home) {
+int Scorbot::home(API::Requests::Home *home) {
   uint8_t iter = 0;
   char text[255];
 

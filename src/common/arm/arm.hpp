@@ -53,8 +53,8 @@ class Arm {
   void runLoop();
 
   virtual int handShake() = 0;
-  virtual int polarPan(API::PolarPan *pan) = 0;
-  virtual int polarPanStart(API::PolarPanStart *pan) = 0;
+  virtual int polarPan(API::Requests::PolarPan *pan) = 0;
+  virtual int polarPanStart(API::Requests::PolarPanStart *pan) = 0;
   virtual int polarPanStop() = 0;
-  virtual int home(API::Home *home) = 0;
+  virtual int home(API::Requests::Home *home) = 0;
 };

@@ -6,3 +6,4 @@ operator.log
 .cache
 compile_commands.json
 operator.yml
+.DS_Store

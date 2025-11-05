@@ -60,15 +60,15 @@ bool Arm::processCommand() {
       break;
     case API::CommandID::PolarPan:
       LOG_INFO("Polar Pan Recieved");
-      if (polarPan((API::PolarPan *)&cmd->payload_head)) status = -1;
+      if (polarPan((API::Requests::PolarPan *)&cmd->payload_head)) status = -1;
       break;
     case API::CommandID::Home:
       LOG_INFO("Home Received");
-      if (home((API::Home *)&cmd->payload_head)) status = -1;
+      if (home((API::Requests::Home *)&cmd->payload_head)) status = -1;
       break;
     case API::CommandID::PolarPanStart:
       LOG_INFO("Polar Pan Start Received");
-      if (polarPanStart((API::PolarPanStart *)&cmd->payload_head)) status = -1;
+      if (polarPanStart((API::Requests::PolarPanStart *)&cmd->payload_head)) status = -1;
       break;
     case API::CommandID::PolarPanStop:
       LOG_INFO("Polar Pan Stop Received");

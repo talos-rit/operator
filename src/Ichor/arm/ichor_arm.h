@@ -30,9 +30,9 @@ class Ichor : public Arm {
   OversteerConfig oversteer;
 
   int handShake();
-  int polarPan(API::PolarPan *pan);
-  int polarPanStart(API::PolarPanStart *pan);
+  int polarPan(API::Requests::PolarPan *pan);
+  int polarPanStart(API::Requests::PolarPanStart *pan);
   int polarPanStop();
-  int home(API::Home *home);
+  int home(API::Requests::Home *home);
   void poll();
 };
