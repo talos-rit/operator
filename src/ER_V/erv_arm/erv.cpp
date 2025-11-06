@@ -1,7 +1,6 @@
-#include "erv_arm/erv.h"
+#include "erv_arm/erv.hpp"
 
 #include <err.h>
-#include <errno.h>
 #include <fcntl.h>
 #include <signal.h>
 #include <stddef.h>
@@ -13,6 +12,7 @@
 
 #include "acl/acl.h"
 #include "log/log.h"
+#include "util/comm.h"
 
 #define LOG_CONSOLE_THRESHOLD_THIS LOG_THRESHOLD_DEFAULT
 #define LOG_FILE_THRESHOLD_THIS LOG_THRESHOLD_MAX
@@ -36,7 +36,7 @@ Scorbot::Scorbot(const char *dev) {
   // Setup config
   polar_pan_cont = '\0';
   manual_mode = false;
-  oversteer = OVERSTEER_ABORT;
+  oversteer = OversteerConfig::Abort;
 
   // Setup ACL
   ACL_init();
@@ -225,7 +225,7 @@ static void poll_cmd_buffer(int fd, S_List *cmd_buffer) {
   return;
 }
 
-void Scorbot::Poll() {
+void Scorbot::poll() {
   if (-1 == fd) return;
 
   poll_polar_pan(fd, &polar_pan_cont, &last_start, &manual_mode);
@@ -233,12 +233,12 @@ void Scorbot::Poll() {
   poll_cmd_buffer(fd, &cmd_buffer);
 }
 
-int Scorbot::HandShake() {
-  LOG_INFO("Scorbot Recevied Handshake Command");
+int Scorbot::handShake() {
+  LOG_INFO("Scorbot Received Handshake Command");
   return 0;
 }
 
-int Scorbot::PolarPan(API_Data_Polar_Pan *pan) {
+int Scorbot::polarPan(API::PolarPan *pan) {
   uint8_t iter = 0;
   char text[255];
 
@@ -246,20 +246,20 @@ int Scorbot::PolarPan(API_Data_Polar_Pan *pan) {
   DATA_S_List_init(&cmd_list);
 
   switch (oversteer) {
-    case OVERSTEER_NONE:
+    case OversteerConfig::None:
       ACL_convert_polar_pan_direct(&cmd_list, pan);
       break;
-    case OVERSTEER_IGNORE:
+    case OversteerConfig::Ignore:
       ACL_convert_polar_pan_ignore(&cmd_list, pan);
       break;
-    case OVERSTEER_ABORT:
+    case OversteerConfig::Abort:
       ACL_convert_polar_pan_abort(&cmd_list, pan);
       break;
     default:
       STD_FAIL;
   }
 
-  WriteCommandQueue(&cmd_list);
+  writeCommandQueue(&cmd_list);
 
   iter += sprintf(&text[iter], "Polar Pan Payload:\n");
   iter += sprintf(&text[iter], "\tΔ Azimuth: \t\t%d\n", pan->delta_azimuth);
@@ -271,7 +271,7 @@ int Scorbot::PolarPan(API_Data_Polar_Pan *pan) {
   return 0;
 }
 
-int Scorbot::PolarPanStart(API_Data_Polar_Pan_Start *pan) {
+int Scorbot::polarPanStart(API::PolarPanStart *pan) {
   uint8_t iter = 0;
   char text[255];
 
@@ -283,23 +283,23 @@ int Scorbot::PolarPanStart(API_Data_Polar_Pan_Start *pan) {
   polar_pan_cont = ACL_get_polar_pan_continuous_vector(pan);
   gettimeofday(&last_start, NULL);
 
-  if ('\0' == polar_pan_cont) PolarPanStop();
+  if ('\0' == polar_pan_cont) polarPanStop();
   return 0;
 }
 
-int Scorbot::PolarPanStop() {
+int Scorbot::polarPanStop() {
   polar_pan_cont = '\0';
 
   S_List cmd_list;
   DATA_S_List_init(&cmd_list);
   ACL_enqueue_delay(&cmd_list, 500);
   ACL_enqueue_here_cmd(&cmd_list);
-  WriteCommandQueue(&cmd_list);
+  writeCommandQueue(&cmd_list);
 
   return 0;
 }
 
-int Scorbot::Home(API_Data_Home *home) {
+int Scorbot::home(API::Home *home) {
   uint8_t iter = 0;
   char text[255];
 
@@ -312,12 +312,12 @@ int Scorbot::Home(API_Data_Home *home) {
   DATA_S_List_init(&cmd_list);
   ACL_home_sequence(&cmd_list);
 
-  WriteCommandQueue(&cmd_list);
+  writeCommandQueue(&cmd_list);
 
   return 0;
 }
 
-int Scorbot::WriteCommandQueue(S_List *cmd_list) {
+int Scorbot::writeCommandQueue(S_List *cmd_list) {
   if (!cmd_list) STD_FAIL;
   if (-1 == fd) STD_FAIL;
 

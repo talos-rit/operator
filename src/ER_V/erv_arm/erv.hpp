@@ -1,7 +1,8 @@
 #pragma once
 
-#include "acl/acl.h"
-#include "arm/arm.h"
+#include "api/api.hpp"
+#include "arm/arm.hpp"
+#include "data/s_list.h"
 
 #define ERV_RX_TIMEOUT_MS 500
 #define ERV_CONT_POLAR_PAN_TIMEOUT_MS 500
@@ -20,11 +21,11 @@ class Scorbot : public Arm {
   S_List cmd_buffer;
   struct timeval last_start;
 
-  int HandShake();
-  int PolarPan(API_Data_Polar_Pan *pan);
-  int PolarPanStart(API_Data_Polar_Pan_Start *pan);
-  int PolarPanStop();
-  int Home(API_Data_Home *home);
-  int WriteCommandQueue(S_List *cmd_list);
-  void Poll();
+  int handShake();
+  int polarPan(API::PolarPan *pan);
+  int polarPanStart(API::PolarPanStart *pan);
+  int polarPanStop();
+  int home(API::Home *home);
+  int writeCommandQueue(S_List *cmd_list);
+  void poll();
 };

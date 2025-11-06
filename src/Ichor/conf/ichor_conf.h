@@ -4,7 +4,6 @@
 
 #include "conf/config.h"
 #include "log/log_config.h"
-#include "tamq/tamq_conf.h"
 
 #define ICHOR_CONF_I2C_DEV_KEY "i2c_dev"
 #define ICHOR_CONF_I2C_DEV_DEFAULT "/dev/i2c-1"

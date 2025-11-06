@@ -1,17 +1,17 @@
-#include "api/api.h"
+#include "api/api.hpp"
 
 #include <endian.h>
 #include <stddef.h>
 #include <stdlib.h>
 
-#include "api/api_private.h"
-#include "util/array.h"
 #include "util/comm.h"
 
 #define LOG_CONSOLE_THRESHOLD_THIS LOG_THRESHOLD_MAX
 #define LOG_FILE_THRESHOLD_THIS LOG_THRESHOLD_MAX
 
-int API_prep_polar_pan(API_Data_Polar_Pan *payload) {
+namespace API {
+
+int prep_polar_pan(API::PolarPan *payload) {
   if (!payload) STD_FAIL;
 
   payload->delta_altitude = be32toh(payload->delta_altitude);
@@ -22,7 +22,7 @@ int API_prep_polar_pan(API_Data_Polar_Pan *payload) {
   return 0;
 }
 
-int API_prep_home(API_Data_Home *payload) {
+int prep_home(API::Home *payload) {
   if (!payload) STD_FAIL;
 
   payload->delay_ms = be32toh(payload->delay_ms);
@@ -30,43 +30,42 @@ int API_prep_home(API_Data_Home *payload) {
   return 0;
 }
 
-int API_validate_command(const uint8_t *buf, uint16_t len) {
+int validate_command(const uint8_t *buf, uint16_t len) {
   // Check inputs
   if (!buf) STD_FAIL;
-  API_Data_Wrapper *cmd = (API_Data_Wrapper *)buf;
+  auto *cmd = reinterpret_cast<DataWrapper *>(const_cast<uint8_t *>(buf));
 
   // Fix endianness
-  cmd->header.cmd_id = be32toh(cmd->header.cmd_id);
-  cmd->header.cmd_val = be16toh(cmd->header.cmd_val);
+  cmd->header.msg_id = be32toh(cmd->header.msg_id);
+  cmd->header.cmd_id = be16toh(cmd->header.cmd_id);
   cmd->header.len = be16toh(cmd->header.len);
 
   // TODO: Check for duplicate cmd_ids
 
   // Check length
-  if (len < sizeof(API_Data_Header) + cmd->header.len) STD_FAIL
+  if (len < sizeof(API::DataHeader) + cmd->header.len) return -1;
 
   // Command specific preparation
-  switch (cmd->header.cmd_val) {
+  switch (static_cast<API::CommandID>(cmd->header.cmd_id)) {
     // Intentional fallthrough
-    case API_CMD_HANDSHAKE:
+    case API::CommandID::Handshake:
       // No body; Always valid
-    case API_CMD_POLARPAN_START:
+    case API::CommandID::PolarPanStart:
       // Already correct endianness
-    case API_CMD_POLARPAN_STOP:
+    case API::CommandID::PolarPanStop:
       // Already correct endianness
       break;
-
-    case API_CMD_POLARPAN:
-      API_prep_polar_pan((API_Data_Polar_Pan *)&cmd->payload_head);
+    case API::CommandID::PolarPan:
+      prep_polar_pan((API::PolarPan *)&cmd->payload_head);
       break;
-    case API_CMD_HOME:
-      API_prep_home((API_Data_Home *)&cmd->payload_head);
+    case API::CommandID::Home:
+      prep_home((API::Home *)&cmd->payload_head);
       break;
     default:
       LOG_ERROR(
           "API: Failed to process Command ID %d: Unrecognized Command Value: "
           "%d",
-          cmd->header.cmd_id, cmd->header.cmd_val);
+          cmd->header.msg_id, cmd->header.cmd_id);
       return -1;
   }
 
@@ -77,3 +76,4 @@ int API_validate_command(const uint8_t *buf, uint16_t len) {
 
   return 0;
 }
+}  // namespace API

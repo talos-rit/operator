@@ -1,210 +1,170 @@
-#include "socket/socket.h"
+#include "socket/socket.hpp"
 
-#include <errno.h>
-#include <fcntl.h>
-#include <signal.h>
-#include <stdint.h>
-#include <sys/time.h>
+#include <endian.h>
+#include <sys/socket.h>
 
-#include "api/api.h"
+#include <cerrno>
+#include <cstring>
+#include <thread>
+
+#include "api/api.hpp"
 #include "log/log.h"
-#include "util/array.h"
-#include "util/comm.h"
+#include "sub/sub.hpp"
 
 #define LOG_CONSOLE_THRESHOLD_THIS LOG_THRESHOLD_DEFAULT
 #define LOG_FILE_THRESHOLD_THIS LOG_THRESHOLD_MAX
 
-static int init_socket(Socket_Props *props) {
-  // Set up socket
-  props->sockfd = socket(AF_INET, SOCK_STREAM | SOCK_NONBLOCK, 0);
-  if (props->sockfd < 0) {
+Socket::Socket() {
+  if (!init()) {
+    LOG_ERROR("Socket initialization failed.");
+  }
+}
+
+Socket::~Socket() { stop(); }
+
+bool Socket::init() {
+  int fd = ::socket(AF_INET, SOCK_STREAM | SOCK_NONBLOCK, 0);
+  LOG_INFO("Socket fd=%d: Initializing...", fd);
+  props_.sockfd = FileDescriptor(fd);
+
+  if (!props_.sockfd.valid()) {
     LOG_ERROR("Could not open socket: (%d) %s", errno, strerror(errno));
-    STD_FAIL;
   }
 
   int optval = 1;
-  setsockopt(props->sockfd, SOL_SOCKET, SO_REUSEADDR, &optval, sizeof(optval));
+  ::setsockopt(props_.sockfd.get(), SOL_SOCKET, SO_REUSEADDR, &optval,
+               sizeof(optval));
 
-  // Set up server address configuration
-  memset(&props->server, 0, sizeof(props->server));
-  props->port = 61616;
-  props->server.sin_family = AF_INET;
-  props->server.sin_addr.s_addr = INADDR_ANY;
-  props->server.sin_port = htons(props->port);
+  props_.server = {};
+  props_.server.sin_family = AF_INET;
+  props_.server.sin_addr.s_addr = INADDR_ANY;
+  props_.server.sin_port = ::htons(props_.port);
 
-  // Bind socket with server address configuration
-  if (bind(props->sockfd, (struct sockaddr *)&props->server,
-           sizeof(props->server)) < 0) {
+  if (::bind(props_.sockfd, reinterpret_cast<struct sockaddr *>(&props_.server),
+             sizeof(props_.server)) < 0) {
     LOG_ERROR("Could not bind socket: (%d) %s", errno, strerror(errno));
-    STD_FAIL;
+    return false;
   }
 
-  return 0;
-}
+  return true;
+};
 
-Socket::Socket() {
-  // Create socket
-  init_socket(&props);
-  props.connfd = -1;
-}
-
-Socket::~Socket() {
-  if (-1 != props.connfd) close(props.connfd);
-  if (-1 != props.sockfd) close(props.sockfd);
-}
-
-static int wait_for_connection(Socket_Props *props) {
-  // Accept connection
-  socklen_t len = sizeof(props->client);
+bool Socket::waitForConnection() {
   LOG_INFO("Waiting for client...");
-
-  while (props->thread_en && props->connfd < 0) {
-    props->connfd =
-        accept(props->sockfd, (struct sockaddr *)&props->client, &len);
-    usleep(SOCKET_POLL_PERIOD_MS * 1000);
-    if (-1 == props->connfd && errno != EAGAIN) {
-      LOG_ERROR("Socket accept failed: (%d) %s", errno, strerror(errno));
-      STD_FAIL;
+  socklen_t client_len = sizeof(props_.client);
+  while (props_.running && !props_.connfd.valid()) {
+    int fd = ::accept(props_.sockfd,
+                      reinterpret_cast<struct sockaddr *>(&props_.client),
+                      &client_len);
+    if (fd > 0) {
+      props_.connfd = FileDescriptor(fd);
+      LOG_INFO("Client connected.");
+      return true;
     }
+    if (errno != EAGAIN) {
+      LOG_ERROR("Socket accept failed: (%d) %s", errno, strerror(errno));
+      return false;
+    }
+
+    std::this_thread::sleep_for(SOCKET_POLL_PERIOD);
   }
 
-  if (props->connfd < 0) {
-    LOG_INFO("Connection Failed.");
-    STD_FAIL;
-  }
-
-  LOG_INFO("Connection Established.");
-  return 0;
+  LOG_INFO("Socket stopped before connection.");
+  return false;
 }
 
-int send_response(Socket_Props *props) {
-  const char *response = "Message Received.";  // placeholder response
-  int send_ret = send(props->connfd, response, strlen(response), 0);
-
-  if (send_ret < 0) {
-    LOG_ERROR("Response failed to send.");
-    STD_FAIL;
-  } else {
-    LOG_INFO("Response successfully sent");
-    return 0;
+bool Socket::sendResponse(std::span<const char> msg) {
+  int sent = ::send(props_.connfd, msg.data(), msg.size(), 0);
+  if (sent < 0) {
+    LOG_ERROR("Failed to send response: (%d) %s", errno, strerror(errno));
+    return false;
   }
-}
+  LOG_INFO("Response sent (%d bytes)", sent);
+  return true;
+};
 
-static void *socket_poll(void *arg) {
-  Socket_Props *props = (Socket_Props *)arg;
-  Subscriber *sub = props->sub;
+void Socket::poll() {
+  std::array<char, SOCKET_BUF_LEN> buffer;
+  std::size_t buf_iter = 0;
 
-  struct timeval last_ping;
-  bool idle = true;
-  int ret = 0;
-  uint16_t buf_iter = 0;
-  char buffer[SOCKET_BUF_LEN];
+  if (!waitForConnection()) return;
 
-  memset(&buffer[0], 0, SOCKET_BUF_LEN);
-
-  // Creates initial connection
-  if (wait_for_connection(props) != 0) {
-    LOG_ERROR("Connection initialization failed.");
-    return NULL;
-  }
-
-  gettimeofday(&last_ping, NULL);
-  while (props->thread_en) {
-    if (idle) usleep(SOCKET_POLL_PERIOD_MS * 1000);
-    idle = true;
-
-    // Handle rx
-    ret = recv(props->connfd, &buffer[buf_iter], sizeof(buffer) - buf_iter,
-               MSG_DONTWAIT);
-    if (-1 == ret) {
-      // errno will be set to EAGAIN if no message was received
-      if (EAGAIN == errno) continue;
-
-      // Some other error; Exit execution
-      LOG_FATAL("Socket read error: (%d) %s", errno, strerror(errno));
-      LOG_IEC();
+  while (props_.running) {
+    auto remaining = std::span(buffer).subspan(buf_iter);
+    int ret =
+        ::recv(props_.connfd, remaining.data(), remaining.size(), MSG_DONTWAIT);
+    if (ret == -1) {
+      if (errno == EAGAIN) {
+        std::this_thread::sleep_for(SOCKET_POLL_PERIOD);
+        continue;
+      }
+      LOG_ERROR("Socket recv failed: (%d) %s", errno, strerror(errno));
       break;
     }
 
-    if (0 == ret) {
-      // Getting to this point should mean that the connection closed
-      // (otherwise recv would return -1 for a lack of a message)
-
-      LOG_INFO("Connection closed by client.");
-
-      close(props->connfd);
-      props->connfd = -1;
-
-      if (wait_for_connection(props) != 0) {
+    if (ret == 0) {
+      LOG_INFO("Client disconnected.");
+      props_.connfd.reset();
+      if (!waitForConnection()) {
         LOG_ERROR("Reconnection failed.");
         break;
       }
-
-      continue;  // continue receiving after reconnection
+      continue;
     }
 
-    // gettimeofday(&last_ping, NULL);
-    idle = false;
     buf_iter += ret;
 
-    while (buf_iter >= sizeof(API_Data_Header) + 2) {
-      API_Data_Wrapper *msg = (API_Data_Wrapper *)&buffer[0];
+    while (buf_iter >= sizeof(API::DataHeader) + 2) {
+      auto *msg = reinterpret_cast<API::DataWrapper *>(buffer.data());
+      uint16_t total_len =
+          sizeof(API::DataHeader) + be16toh(msg->header.len) + 2;
+      if (buf_iter < total_len) break;
 
-      // Check length
-      uint16_t len = sizeof(API_Data_Header) + be16toh(msg->header.len) + 2;
-      if (buf_iter < len) break;
-
-      // Enqueue copied message to command buffer
-      SUB_Buffer *buf = sub->DequeueBuffer(SUB_QUEUE_FREE);
-      if (!buf) {
-        LOG_WARN("No free network buffers");  // You DDOS'd yourself.
+      if (!props_.sub) {
+        LOG_WARN("No subscriber registered!");
         break;
       }
 
-      buf->len = len;
-      memcpy(&buf->body[0], msg, buf->len);
-      sub->EnqueueBuffer(SUB_QUEUE_COMMAND, buf);
-      LOG_VERBOSE(2, "Received ICD command");
+      if (auto *buf = props_.sub->dequeueBuffer(Sub_Queue::Free)) {
+        buf->len = total_len;
+        std::memcpy(&buf->body[0], buffer.data(), total_len);
+        props_.sub->enqueueBuffer(Sub_Queue::Command, buf);
+        LOG_VERBOSE(2, "Received ICD command");
+      } else {
+        LOG_WARN("No free buffers available!");
+      }
 
-      // Re-align buffer
-      buf_iter -= len;
-      memcpy(&buffer[0], &buffer[len], buf_iter);
+      buf_iter -= total_len;
+      std::memmove(buffer.data(), buffer.data() + total_len, buf_iter);
 
-      send_response(props);
+      static const char resp[] = "ACK";
+      sendResponse(resp);
     }
   }
 
-  // Empty receive buffer; avoid TIME_WAIT on socket
-  LOG_IEC();
-  if (-1 == shutdown(props->connfd, SHUT_RDWR))
-    LOG_ERROR("Error shutting down socket: (%d) %s", errno, strerror(errno));
-  while (recv(props->connfd, &buffer[0], sizeof(buffer), 0) > 0);
-  if (-1 != props->connfd) {
-    close(props->connfd);
-    props->connfd = -1;
+  if (props_.connfd.valid()) {
+    ::shutdown(props_.connfd, SHUT_RDWR);
+    props_.connfd.reset();
+  }
+}
+
+bool Socket::start() {
+  if (!props_.sockfd.valid()) {
+    LOG_ERROR("Socket not initialized!");
+    return false;
   }
 
-  return NULL;
+  ::listen(props_.sockfd, 5);
+  props_.running = true;
+  thread_ = std::thread(&Socket::poll, this);
+  LOG_INFO("Socket listening on port %d", props_.port);
+  return true;
+};
+
+void Socket::stop() {
+  props_.running = false;
+  if (thread_.joinable()) thread_.join();
+  LOG_INFO("Socket stopped.");
 }
 
-int Socket::Start() {
-  // Listen for connections
-  listen(props.sockfd, 5);
-
-  props.thread_en = true;
-  pthread_create(&pid, NULL, socket_poll, &props);
-  return 0;
-}
-
-int Socket::Stop() {
-  props.thread_en = false;
-  pthread_join(pid, NULL);  // Wait for thread to exit
-  return 0;
-}
-
-int Socket::RegisterSubscriber(Subscriber *sub) {
-  if (!sub) STD_FAIL;
-  this->sub = sub;
-  props.sub = sub;
-  return 0;
-}
+void Socket::registerSubscriber(Subscriber *sub) { props_.sub = sub; }
