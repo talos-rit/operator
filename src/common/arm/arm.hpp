@@ -31,7 +31,7 @@ class Arm {
 
   /**
    * @brief If there's a buffer in the command queue, it will be processed
-   * @returns 0 a buffer has processed properly, true if successful, false otherwise
+   * @returns true if a buffer has processed properly, false otherwise
    */
   bool processCommand();
   bool registerSubscriber(Subscriber *sub);
