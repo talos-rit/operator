@@ -57,3 +57,12 @@ sh "${TMP_DIR}/${CMAKE_BINARY_NAME}" --prefix=/opt/cmake --skip-license
 
 ln -s /opt/cmake/bin/cmake /usr/local/bin/cmake
 ln -s /opt/cmake/bin/ctest /usr/local/bin/ctest
+
+
+if [ "$architecture" != "amd64" ]; then
+    echo "Skipping clang-uml installation. Not supported on $(dpkg --print-architecture)."
+    exit 0
+fi
+wget https://github.com/bkryza/clang-uml/releases/download/0.6.2/clang-uml_0.6.2-1_amd64.deb
+apt-get update && export DEBIAN_FRONTEND=noninteractive
+apt-get -y install --no-install-recommends ./clang-uml_0.6.2-1_amd64.deb bear clang-format cpputest

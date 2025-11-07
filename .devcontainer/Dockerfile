@@ -12,8 +12,3 @@ RUN if [ "${REINSTALL_CMAKE_VERSION_FROM_SOURCE}" != "none" ]; then \
 
 # [Optional] Uncomment this section to install additional vcpkg ports.
 # RUN su vscode -c "${VCPKG_ROOT}/vcpkg install <your-port-name-here>"
-
-RUN wget https://github.com/bkryza/clang-uml/releases/download/0.6.2/clang-uml_0.6.2-1_amd64.deb
-# [Optional] Uncomment this section to install additional packages.
-RUN apt-get update && export DEBIAN_FRONTEND=noninteractive \
-    && apt-get -y install --no-install-recommends ./clang-uml_0.6.2-1_amd64.deb bear clang-format cpputest
