@@ -12,3 +12,7 @@ RUN if [ "${REINSTALL_CMAKE_VERSION_FROM_SOURCE}" != "none" ]; then \
 
 # [Optional] Uncomment this section to install additional vcpkg ports.
 # RUN su vscode -c "${VCPKG_ROOT}/vcpkg install <your-port-name-here>"
+
+# Install dev tools for dev container
+COPY ./install-dev-tools.sh /tmp/
+RUN chmod +x /tmp/install-dev-tools.sh && /tmp/install-dev-tools.sh && rm -f /tmp/install-dev-tools.sh
