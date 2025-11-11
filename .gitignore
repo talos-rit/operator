@@ -4,3 +4,6 @@ operator.log
 .gitmodules
 **/patch.txt
 .DS_Store
+.cache
+compile_commands.json
+operator.yml
