@@ -3,3 +3,4 @@ build/**
 operator.log
 .gitmodules
 **/patch.txt
+.DS_Store
