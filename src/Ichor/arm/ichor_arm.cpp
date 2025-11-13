@@ -48,6 +48,11 @@ Ichor::Ichor(const char *isr_dev, const char *i2c_dev, uint8_t dac0_addr,
   dac[0] = new PCA9685PW(i2c_fd, dac0_addr);
   // dac[1] = new PCA9685PW(i2c_fd, dac1_addr);
   mcp_gpio = new MCP23017("/dev/i2c-1", 0x21);
+  for (uint8_t pin = 0; pin < 8; pin++) {
+    mcp_gpio->setPinMode(pin, MCP23017::Port::A, false);  // Set as input
+    mcp_gpio->setInterrupt(pin, MCP23017::Port::A,
+                           MCP23017::InterruptMode::RISING);
+  }
   // TODO: Add adc
 
   for (uint8_t idx = 0; idx < ICHOR_AXIS_COUNT; idx++) axis[idx] = NULL;
