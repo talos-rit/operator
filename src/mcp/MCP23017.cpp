@@ -1,4 +1,4 @@
-#include "MCP23017.hpp"
+#include "mcp/MCP23017.hpp"
 
 #include <fcntl.h>
 #include <linux/i2c-dev.h>
@@ -6,14 +6,14 @@
 
 #include <stdexcept>
 
-MCP23017::MCP23017(std::string device_path, uint8_t address)
+MCP23017::MCP23017(const std::string& device_path, uint8_t address)
     : fd_(-1), address_(address) {
   int fd = ::open(device_path.c_str(), O_RDWR);
   if (fd < 0) {
     throw std::runtime_error("Failed to open device: " + device_path);
   }
 
-  if (ioctl(fd_, I2C_SLAVE, address_) < 0) {
+  if (ioctl(fd, I2C_SLAVE, address_) < 0) {
     ::close(fd);
     throw std::runtime_error("Failed to set I2C address: " +
                              std::to_string(address_));
@@ -22,6 +22,8 @@ MCP23017::MCP23017(std::string device_path, uint8_t address)
   fd_ = FileDescriptor(fd);
 }
 MCP23017::~MCP23017() {}
+
+bool MCP23017::setMirror() { return writeRegister(IOCON, 1 << 6); }
 
 bool MCP23017::setPinMode(uint8_t pin, Port port, bool isOutput) {
   if (pin > 7) {
@@ -53,7 +55,7 @@ bool MCP23017::setInterrupt(uint8_t pin, Port port, InterruptMode mode) {
     throw std::invalid_argument("Invalid pin number");
   }
 
-  uint8_t gpinten_reg = (port == Port::A) ? GPIO_A : GPIO_B;
+  uint8_t gpinten_reg = (port == Port::A) ? GPINTEN_A : GPINTEN_B;
   uint8_t gpinten = readRegister(gpinten_reg);
 
   uint8_t intcon_reg = (port == Port::A) ? INTCON_A : INTCON_B;
@@ -65,6 +67,7 @@ bool MCP23017::setInterrupt(uint8_t pin, Port port, InterruptMode mode) {
   switch (mode) {
     case InterruptMode::NONE:
       // Disable interrupt for the pin
+      gpinten &= ~(1 << pin);
       intcon &= ~(1 << pin);
       break;
     case InterruptMode::RISING:
@@ -116,6 +119,13 @@ std::span<const MCP23017::InterruptPin> MCP23017::getInterruptStatuses() {
       interrupt_buffer_[count++] = {Port::B, pin};
     }
   }
+
+  uint8_t clear_reg_a = GPIO_A;
+  uint8_t clear_reg_b = GPIO_B;
+
+  // Clear interrupt flags by reading GPIO registers
+  readRegister(clear_reg_a);
+  readRegister(clear_reg_b);
 
   // Return a span that views ONLY the active portion of the buffer
   return std::span<const InterruptPin>(interrupt_buffer_.data(), count);

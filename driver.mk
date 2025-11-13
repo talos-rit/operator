@@ -17,6 +17,7 @@ DRIVER_CPP	+= gpio/isr.cpp
 DRIVER_CPP 	+= enc/encoder.cpp
 DRIVER_CPP 	+= motor/motor.cpp
 DRIVER_CPP 	+= driver/driver.cpp
+DRIVER_CPP	+= mcp/MCP23017.cpp
 
 DRIVER_UTEST:=
 

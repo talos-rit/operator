@@ -10,7 +10,6 @@
 
 #include "log/log.h"
 #include "util/comm.h"
-#include "gpiod.h"
 
 #define LOG_CONSOLE_THRESHOLD_THIS LOG_THRESHOLD_DEFAULT
 #define LOG_FILE_THRESHOLD_THIS LOG_THRESHOLD_MAX
