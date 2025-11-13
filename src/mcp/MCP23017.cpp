@@ -48,6 +48,79 @@ bool MCP23017::readPin(uint8_t pin, Port port) {
   return (gpio >> pin) & 0x01;
 }
 
+bool MCP23017::setInterrupt(uint8_t pin, Port port, InterruptMode mode) {
+  if (pin > 7) {
+    throw std::invalid_argument("Invalid pin number");
+  }
+
+  uint8_t gpinten_reg = (port == Port::A) ? GPIO_A : GPIO_B;
+  uint8_t gpinten = readRegister(gpinten_reg);
+
+  uint8_t intcon_reg = (port == Port::A) ? INTCON_A : INTCON_B;
+  uint8_t intcon = readRegister(intcon_reg);
+
+  uint8_t defval_reg = (port == Port::A) ? DEFVAL_A : DEFVAL_B;
+  uint8_t defval = readRegister(defval_reg);
+
+  switch (mode) {
+    case InterruptMode::NONE:
+      // Disable interrupt for the pin
+      intcon &= ~(1 << pin);
+      break;
+    case InterruptMode::RISING:
+      // Interrupt on rising edge
+      intcon |= (1 << pin);
+      defval &= ~(1 << pin);
+      break;
+    case InterruptMode::FALLING:
+      // Interrupt on falling edge
+      intcon |= (1 << pin);
+      defval |= (1 << pin);
+      break;
+    case InterruptMode::CHANGE:
+      // Interrupt on any change
+      intcon &= ~(1 << pin);
+      break;
+    default:
+      throw std::invalid_argument("Invalid interrupt mode");
+  }
+
+  if (!writeRegister(intcon_reg, intcon)) {
+    return false;
+  }
+  if (!writeRegister(defval_reg, defval)) {
+    return false;
+  }
+
+  // Enable interrupt for the pin
+  gpinten |= (1 << pin);
+  if (!writeRegister(gpinten_reg, gpinten)) {
+    return false;
+  }
+
+  return true;
+}
+
+std::span<const MCP23017::InterruptPin> MCP23017::getInterruptStatuses() {
+  uint8_t intf_a = readRegister(INTF_A);
+  uint8_t intf_b = readRegister(INTF_B);
+
+  size_t count = 0;
+
+  // Fill buffer with active interrupt pins
+  for (uint8_t pin = 0; pin < 8; ++pin) {
+    if (intf_a & (1 << pin)) {
+      interrupt_buffer_[count++] = {Port::A, pin};
+    }
+    if (intf_b & (1 << pin)) {
+      interrupt_buffer_[count++] = {Port::B, pin};
+    }
+  }
+
+  // Return a span that views ONLY the active portion of the buffer
+  return std::span<const InterruptPin>(interrupt_buffer_.data(), count);
+}
+
 bool MCP23017::writeRegister(uint8_t reg, uint8_t value) {
   uint8_t buffer[2] = {reg, value};
   ssize_t bytes_written = write(fd_.get(), buffer, sizeof(buffer));
