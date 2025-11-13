@@ -120,12 +120,9 @@ std::span<const MCP23017::InterruptPin> MCP23017::getInterruptStatuses() {
     }
   }
 
-  uint8_t clear_reg_a = GPIO_A;
-  uint8_t clear_reg_b = GPIO_B;
-
   // Clear interrupt flags by reading GPIO registers
-  readRegister(clear_reg_a);
-  readRegister(clear_reg_b);
+  readRegister(INTCAP_A);
+  readRegister(INTCAP_B);
 
   // Return a span that views ONLY the active portion of the buffer
   return std::span<const InterruptPin>(interrupt_buffer_.data(), count);

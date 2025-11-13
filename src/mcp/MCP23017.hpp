@@ -54,4 +54,6 @@ class MCP23017 {
   static constexpr uint8_t DEFVAL_B = 0x07;
   static constexpr uint8_t INTF_A = 0x0E;
   static constexpr uint8_t INTF_B = 0x0F;
+  static constexpr uint8_t INTCAP_A = 0x10;
+  static constexpr uint8_t INTCAP_B = 0x11;
 };
