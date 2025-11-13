@@ -10,6 +10,7 @@
 
 #include "log/log.h"
 #include "util/comm.h"
+#include "gpiod.h"
 
 #define LOG_CONSOLE_THRESHOLD_THIS LOG_THRESHOLD_DEFAULT
 #define LOG_FILE_THRESHOLD_THIS LOG_THRESHOLD_MAX
@@ -108,8 +109,9 @@ int IchorISR::ExecutePin(uint8_t pin) {
   GPIO_Interrupt* intr = &pin_map[pin];
   switch (intr->type) {
     case GPIO_INTR_TYPE_E_STOP:
-      // Implement Emergency stop
-      // Intential fallthrough
+      if (!intr->target.callback) STD_FAIL;
+      intr->target.callback();
+      break;
     case GPIO_INTR_TYPE_HOMING:
       if (!intr->target.callback) STD_FAIL;
       intr->target.callback();
