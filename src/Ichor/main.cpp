@@ -94,7 +94,7 @@ int main(int argc, char *argv[]) {
 
   // bot->RegisterMotor(0, 0, 0, 1, 14, 4, 17, 0);           // Base
   bot->RegisterMotor(0, 0, 4, 3, 2, 4, 17, 0);      // Base
-  bot->RegisterMotor(2, 0, 11, 12, 13, 22, 23, 2);  // Elbow
+  bot->RegisterMotor(1, 0, 11, 12, 13, 22, 23, 2);  // Elbow
   bot->Init();
 
   // Register modules
