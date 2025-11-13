@@ -51,7 +51,7 @@ Ichor::Ichor(const char *isr_dev, const char *i2c_dev, uint8_t dac0_addr,
   for (uint8_t pin = 0; pin < 8; pin++) {
     mcp_gpio->setPinMode(pin, MCP23017::Port::A, false);  // Set as input
     mcp_gpio->setInterrupt(pin, MCP23017::Port::A,
-                           MCP23017::InterruptMode::RISING);
+                           MCP23017::InterruptMode::FALLING);
   }
   // TODO: Add adc
 
