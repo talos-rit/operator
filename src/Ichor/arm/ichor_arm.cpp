@@ -96,6 +96,10 @@ void Ichor::poll() {
     // Clear interrupt flags by reading INTCAP registers
     mcp_gpio->readRegister(0x10);
     mcp_gpio->readRegister(0x11);
+
+    // read gpio registers to clear interrupts
+    mcp_gpio->readRegister(0x12);
+    mcp_gpio->readRegister(0x13);
   }
 
 
