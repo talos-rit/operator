@@ -8,7 +8,6 @@
 #include <stdio.h>
 #include <string.h>
 #include <sys/time.h>
-#include <sys/types.h>
 #include <termios.h>
 #include <unistd.h>
 
@@ -49,11 +48,11 @@ Ichor::Ichor(const char *isr_dev, const char *i2c_dev, uint8_t dac0_addr,
   dac[0] = new PCA9685PW(i2c_fd, dac0_addr);
   // dac[1] = new PCA9685PW(i2c_fd, dac1_addr);
   mcp_gpio = new MCP23017("/dev/i2c-1", 0x21);
-  // for (uint8_t pin = 0; pin < 5; pin++) {
-  //   mcp_gpio->setPinMode(pin, MCP23017::Port::B, false);  // Set as input
-  //   // mcp_gpio->setInterrupt(pin, MCP23017::Port::A,
-  //   //                        MCP23017::InterruptMode::FALLING);
-  // }
+  for (uint8_t pin = 0; pin < 5; pin++) {
+    mcp_gpio->setPinMode(pin, MCP23017::Port::A, false);  // Set as input
+    // mcp_gpio->setInterrupt(pin, MCP23017::Port::A,
+    //                        MCP23017::InterruptMode::FALLING);
+  }
   // TODO: Add adc
 
   for (uint8_t idx = 0; idx < ICHOR_AXIS_COUNT; idx++) axis[idx] = NULL;
@@ -87,21 +86,16 @@ void Ichor::poll() {
     axis[idx]->Poll();  // Update motors with new control information
   }
 
-  uint8_t intfa = mcp_gpio->readRegister(0x0E);
-  uint8_t intfb = mcp_gpio->readRegister(0x0F);
+  std::span<const MCP23017::InterruptPin> status =
+      mcp_gpio->getInterruptStatuses();
 
-  if (intfa || intfb) {
-    LOG_WARN("GPIO Interrupt detected: INTF_A=0x%02X, INTF_B=0x%02X", intfa,
-             intfb);
-    // Clear interrupt flags by reading INTCAP registers
-    mcp_gpio->readRegister(0x10);
-    mcp_gpio->readRegister(0x11);
 
-    // read gpio registers to clear interrupts
-    mcp_gpio->readRegister(0x12);
-    mcp_gpio->readRegister(0x13);
+  for (const auto &pin : status) {
+    if (pin.port == MCP23017::Port::A) {
+      LOG_WARN("GPIO Interrupt on MCP23017 Port A Pin %d", pin.pin);
+      // Handle specific pin interrupts here
+    }
   }
-
 
   dac[0]->FlushQueues();  // Flush pending DAC writes
   usleep(25e3);  // 25 ms delay (defacto delay in Talos Operator so far)
