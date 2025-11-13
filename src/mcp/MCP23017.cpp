@@ -72,16 +72,19 @@ bool MCP23017::setInterrupt(uint8_t pin, Port port, InterruptMode mode) {
       break;
     case InterruptMode::RISING:
       // Interrupt on rising edge
+      gpinten |= (1 << pin);
       intcon |= (1 << pin);
       defval &= ~(1 << pin);
       break;
     case InterruptMode::FALLING:
       // Interrupt on falling edge
+      gpinten |= (1 << pin);
       intcon |= (1 << pin);
       defval |= (1 << pin);
       break;
     case InterruptMode::CHANGE:
       // Interrupt on any change
+      gpinten |= (1 << pin);
       intcon &= ~(1 << pin);
       break;
     default:
@@ -94,9 +97,7 @@ bool MCP23017::setInterrupt(uint8_t pin, Port port, InterruptMode mode) {
   if (!writeRegister(defval_reg, defval)) {
     return false;
   }
-
   // Enable interrupt for the pin
-  gpinten |= (1 << pin);
   if (!writeRegister(gpinten_reg, gpinten)) {
     return false;
   }
