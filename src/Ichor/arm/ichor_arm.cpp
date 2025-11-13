@@ -68,7 +68,7 @@ int Ichor::RegisterMotor(uint8_t motor_index, uint8_t dac_index,
   if (motor_index > 8 || dac_index > 1) STD_FAIL;
   axis[motor_index] = new Driver(dac[dac_index], dac_in1, dac_in2, dac_speed,
                                  isr, enc_a, enc_b, NULL, adc_channel);
-  axis[motor_index]->SetSpeedCoefficient(100);
+  axis[motor_index]->SetSpeedCoefficient(75);
   axis[motor_index]->SetVelocityFunc(&dead_vel);
   return 0;
 }
