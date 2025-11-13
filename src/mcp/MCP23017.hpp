@@ -34,9 +34,10 @@ class MCP23017 {
   bool setInterrupt(uint8_t pin, Port port, InterruptMode mode);
   std::span<const MCP23017::InterruptPin> getInterruptStatuses();
 
+  uint8_t readRegister(uint8_t reg);
+
  private:
   bool writeRegister(uint8_t reg, uint8_t value);
-  uint8_t readRegister(uint8_t reg);
 
   FileDescriptor fd_;
   uint8_t address_;
