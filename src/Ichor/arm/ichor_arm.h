@@ -4,6 +4,7 @@
 #include "dac/PCA9685PW.h"
 #include "driver/driver.h"
 #include "gpio/isr.h"
+#include "mcp/MCP23017.hpp"
 
 #define ICHOR_AXIS_COUNT 8
 
@@ -24,6 +25,7 @@ class Ichor : public Arm {
   Driver *axis[ICHOR_AXIS_COUNT];
   PCA9685PW *dac[2];
   IchorISR *isr;
+  MCP23017 *mcp_gpio;
 
   char polar_pan_cont;
   bool manual_mode;

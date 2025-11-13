@@ -12,6 +12,7 @@
 #include <unistd.h>
 
 #include "log/log.h"
+#include "mcp/MCP23017.hpp"
 #include "motor/motor.h"
 
 #define LOG_CONSOLE_THRESHOLD_THIS LOG_THRESHOLD_DEFAULT
@@ -46,6 +47,7 @@ Ichor::Ichor(const char *isr_dev, const char *i2c_dev, uint8_t dac0_addr,
 
   dac[0] = new PCA9685PW(i2c_fd, dac0_addr);
   // dac[1] = new PCA9685PW(i2c_fd, dac1_addr);
+  mcp_gpio = new MCP23017("/dev/i2c-1", 0x21);
   // TODO: Add adc
 
   for (uint8_t idx = 0; idx < ICHOR_AXIS_COUNT; idx++) axis[idx] = NULL;
@@ -77,6 +79,13 @@ void Ichor::poll() {
   for (uint8_t idx = 0; idx < ICHOR_AXIS_COUNT; idx++) {
     if (!axis[idx]) continue;
     axis[idx]->Poll();  // Update motors with new control information
+  }
+
+  std::span<const MCP23017::InterruptPin> status =
+      mcp_gpio->getInterruptStatuses();
+  //
+  for (const auto &pin : status) {
+    LOG_INFO("MCP23017 Interrupt on Port %d Pin %d", (int)pin.port, pin.pin);
   }
 
   dac[0]->FlushQueues();  // Flush pending DAC writes
