@@ -8,6 +8,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <sys/time.h>
+#include <sys/types.h>
 #include <termios.h>
 #include <unistd.h>
 
@@ -86,16 +87,17 @@ void Ichor::poll() {
     axis[idx]->Poll();  // Update motors with new control information
   }
 
-  std::span<const MCP23017::InterruptPin> status =
-      mcp_gpio->getInterruptStatuses();
+  uint8_t intfa = mcp_gpio->readRegister(0x0E);
+  uint8_t intfb = mcp_gpio->readRegister(0x0F);
 
-
-  for (const auto &pin : status) {
-    if (pin.port == MCP23017::Port::A) {
-      LOG_WARN("GPIO Interrupt on MCP23017 Port A Pin %d", pin.pin);
-      // Handle specific pin interrupts here
-    }
+  if (intfa || intfb) {
+    LOG_WARN("GPIO Interrupt detected: INTF_A=0x%02X, INTF_B=0x%02X", intfa,
+             intfb);
+    // Clear interrupt flags by reading INTCAP registers
+    mcp_gpio->readRegister(0x10);
+    mcp_gpio->readRegister(0x11);
   }
+
 
   dac[0]->FlushQueues();  // Flush pending DAC writes
   usleep(25e3);  // 25 ms delay (defacto delay in Talos Operator so far)
