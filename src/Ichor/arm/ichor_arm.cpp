@@ -87,15 +87,7 @@ void Ichor::poll() {
   }
 
   std::span<const MCP23017::InterruptPin> status =
-      mcp_gpio->getInterruptStatuses();
-
-
-  for (const auto &pin : status) {
-    if (pin.port == MCP23017::Port::A) {
-      LOG_WARN("GPIO Interrupt on MCP23017 Port A Pin %d", pin.pin);
-      // Handle specific pin interrupts here
-    }
-  }
+      mcp_gpio->getInterruptStatuses(MCP23017::Port::A);
 
   dac[0]->FlushQueues();  // Flush pending DAC writes
   usleep(25e3);  // 25 ms delay (defacto delay in Talos Operator so far)
