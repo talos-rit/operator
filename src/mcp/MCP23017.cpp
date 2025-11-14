@@ -21,6 +21,9 @@ MCP23017::MCP23017(const std::string& device_path, uint8_t address)
 
   fd_ = FileDescriptor(fd);
 
+  prev_pin_states_.fill(false);
+  interrupt_modes_.fill(InterruptMode::NONE);
+
   if (!writeRegister(GPINTEN_A, 0x00)) {
     throw std::runtime_error("Failed to initialize MCP23017");
   }
