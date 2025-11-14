@@ -6,6 +6,11 @@
 
 #include <stdexcept>
 
+#include "log/log.h"
+
+#define LOG_CONSOLE_THRESHOLD_THIS LOG_THRESHOLD_DEFAULT
+#define LOG_FILE_THRESHOLD_THIS LOG_THRESHOLD_MAX
+
 MCP23017::MCP23017(const std::string& device_path, uint8_t address)
     : fd_(-1), address_(address) {
   int fd = ::open(device_path.c_str(), O_RDWR);
@@ -113,6 +118,11 @@ std::span<const MCP23017::InterruptPin> MCP23017::getInterruptStatuses(
     auto mode = getInterruptMode(pin, port);
     auto current_state = readPin(pin, port);
     auto prev_state = getPrevPinState(pin, port);
+
+    LOG_INFO("Port %d Pin %d Mode %d Curr %d Prev %d INTf %d",
+             static_cast<int>(port), pin, static_cast<int>(mode),
+             static_cast<int>(current_state), static_cast<int>(prev_state),
+             (intf >> pin) & 0x01);
 
     switch (mode) {
       case InterruptMode::RISING:
