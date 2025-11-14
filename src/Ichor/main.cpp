@@ -93,8 +93,8 @@ int main(int argc, char *argv[]) {
   auto bot = std::make_unique<Ichor>("/dev/gpiochip0", "/dev/i2c-1", 0x60, 0x61, 0x62);
 
   // bot->RegisterMotor(0, 0, 0, 1, 14, 4, 17, 0);           // Base
-  bot->RegisterMotor(0, 0, 8, 9, 10, 4, 17, 0);      // Base
-  bot->RegisterMotor(2, 0, 12, 11, 13, 22, 23, 2);  // Elbow
+  bot->RegisterMotor(0, 0, 7, 9, 10, 4, 17, 0);      // Base
+  bot->RegisterMotor(2, 0, 11, 12, 13, 22, 23, 2);  // Elbow
   bot->Init();
 
   // Register modules
