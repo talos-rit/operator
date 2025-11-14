@@ -39,7 +39,7 @@ bool MCP23017::setPinMode(uint8_t pin, Port port, bool isOutput) {
   }
 
   uint8_t iodir_reg = (port == Port::A) ? IODIR_A : IODIR_B;
-  uint8_t iodir = readRegister(iodir_reg);
+  auto iodir = readRegister(iodir_reg);
   if (isOutput) {
     iodir &= ~(1 << pin);  // Set as output
   } else {
@@ -54,7 +54,7 @@ bool MCP23017::readPin(uint8_t pin, Port port) {
   }
 
   uint8_t gpio_reg = (port == Port::A) ? GPIO_A : GPIO_B;
-  uint8_t gpio = readRegister(gpio_reg);
+  auto gpio = readRegister(gpio_reg);
   return (gpio >> pin) & 0x01;
 }
 
@@ -64,45 +64,31 @@ bool MCP23017::setInterrupt(uint8_t pin, Port port, InterruptMode mode) {
   }
 
   uint8_t gpinten_reg = (port == Port::A) ? GPINTEN_A : GPINTEN_B;
-  uint8_t gpinten = readRegister(gpinten_reg);
-
-  uint8_t intcon_reg = (port == Port::A) ? INTCON_A : INTCON_B;
-  uint8_t intcon = readRegister(intcon_reg);
-
-  uint8_t defval_reg = (port == Port::A) ? DEFVAL_A : DEFVAL_B;
-  uint8_t defval = readRegister(defval_reg);
-
+  auto gpinten = readRegister(gpinten_reg);
+  InterruptMode& current_mode =
+      interrupt_modes_[static_cast<size_t>(port) * 8 + pin];
   switch (mode) {
     case InterruptMode::NONE:
-      // Disable interrupt for the pin
-      gpinten &= ~(1 << pin);
-      intcon &= ~(1 << pin);
+      gpinten &= ~(1 << pin);  // Disable interrupt
       break;
     case InterruptMode::RISING:
-      // Interrupt on rising edge
-      gpinten |= (1 << pin);
-      intcon |= (1 << pin);
-      defval &= ~(1 << pin);
+      gpinten |= (1 << pin);  // Enable interrupt
       break;
     case InterruptMode::FALLING:
-      // Interrupt on falling edge
-      gpinten |= (1 << pin);
-      intcon |= (1 << pin);
-      defval |= (1 << pin);
+      gpinten |= (1 << pin);  // Enable interrupt
       break;
     case InterruptMode::CHANGE:
-      // Interrupt on any change
-      gpinten |= (1 << pin);
-      intcon &= ~(1 << pin);
+      gpinten |= (1 << pin);  // Enable interrupt
       break;
-    default:
-      throw std::invalid_argument("Invalid interrupt mode");
   }
 
+  current_mode = mode;
+
+  uint8_t intcon_reg = (port == Port::A) ? INTCON_A : INTCON_B;
+  auto intcon = readRegister(intcon_reg);
+  intcon &= ~(1 << pin);  // Default to compare against previous value
+
   if (!writeRegister(intcon_reg, intcon)) {
-    return false;
-  }
-  if (!writeRegister(defval_reg, defval)) {
     return false;
   }
   // Enable interrupt for the pin
@@ -113,20 +99,50 @@ bool MCP23017::setInterrupt(uint8_t pin, Port port, InterruptMode mode) {
   return true;
 }
 
-std::span<const MCP23017::InterruptPin> MCP23017::getInterruptStatuses() {
-  uint8_t intf_a = readRegister(INTF_A);
-  uint8_t intf_b = readRegister(INTF_B);
+std::span<const MCP23017::InterruptPin> MCP23017::getInterruptStatuses(
+    MCP23017::Port port) {
+  auto intf = readRegister((port == Port::A) ? INTF_A : INTF_B);
 
   size_t count = 0;
 
   // Fill buffer with active interrupt pins
   for (uint8_t pin = 0; pin < 8; ++pin) {
-    if (intf_a & (1 << pin)) {
-      interrupt_buffer_[count++] = {Port::A, pin};
+    auto mode = getInterruptMode(pin, port);
+    auto current_state = readPin(pin, port);
+    auto prev_state = getPrevPinState(pin, port);
+
+    switch (mode) {
+      case InterruptMode::RISING:
+        if (current_state && !prev_state) {
+          intf |= (1 << pin);
+        } else {
+          intf &= ~(1 << pin);
+        }
+        break;
+      case InterruptMode::FALLING:
+        if (!current_state && prev_state) {
+          intf |= (1 << pin);
+        } else {
+          intf &= ~(1 << pin);
+        }
+        break;
+      case InterruptMode::CHANGE:
+        if (current_state != prev_state) {
+          intf |= (1 << pin);
+        } else {
+          intf &= ~(1 << pin);
+        }
+        break;
+      case InterruptMode::NONE:
+        intf &= ~(1 << pin);
+        break;
     }
-    if (intf_b & (1 << pin)) {
-      interrupt_buffer_[count++] = {Port::B, pin};
+    if (intf & (1 << pin)) {
+      interrupt_buffer_[count++] = {port, pin};
     }
+
+    // Update previous state
+    prev_pin_states_[static_cast<size_t>(port) * 8 + pin] = current_state;
   }
 
   // Clear interrupt flags by reading GPIO registers
@@ -156,4 +172,12 @@ uint8_t MCP23017::readRegister(uint8_t reg) {
   }
 
   return value;
+}
+
+MCP23017::InterruptMode MCP23017::getInterruptMode(uint8_t pin, Port port) {
+  return interrupt_modes_[static_cast<size_t>(port) * 8 + pin];
+}
+
+bool MCP23017::getPrevPinState(uint8_t pin, Port port) {
+  return prev_pin_states_[static_cast<size_t>(port) * 8 + pin];
 }
