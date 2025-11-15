@@ -88,30 +88,35 @@ int Ichor::polarPanStart(API::PolarPanStart *pan) {
   uint8_t iter = 0;
   char text[255];
 
-  if (!motor_controllers[0]->setMotorDirection(
-          MotorHAT::Motor::MOTOR1, (pan->delta_azimuth >= 0)
-                                       ? MotorHAT::Direction::FORWARD
-                                       : MotorHAT::Direction::BACKWARD)) {
-    LOG_ERROR("Failed to set motor direction for azimuth motor");
-    return -1;
+  if (pan->delta_azimuth != 0) {
+    if (!motor_controllers[0]->setMotorDirection(
+            MotorHAT::Motor::MOTOR1, (pan->delta_azimuth >= 0)
+                                         ? MotorHAT::Direction::FORWARD
+                                         : MotorHAT::Direction::BACKWARD)) {
+      LOG_ERROR("Failed to set motor direction for azimuth motor");
+      return -1;
+    }
+    if (!motor_controllers[0]->setMotorSpeed(MotorHAT::Motor::MOTOR1, 200)) {
+      LOG_ERROR("Failed to set motor speed for azimuth motor");
+      return -1;
+    }
   }
-  if (!motor_controllers[0]->setMotorDirection(
-          MotorHAT::Motor::MOTOR3, (pan->delta_altitude >= 0)
-                                       ? MotorHAT::Direction::FORWARD
-                                       : MotorHAT::Direction::BACKWARD)) {
-    LOG_ERROR("Failed to set motor direction for altitude motor");
-    return -1;
+
+  if (pan->delta_altitude != 0) {
+    if (!motor_controllers[0]->setMotorDirection(
+            MotorHAT::Motor::MOTOR3, (pan->delta_altitude >= 0)
+                                         ? MotorHAT::Direction::FORWARD
+                                         : MotorHAT::Direction::BACKWARD)) {
+      LOG_ERROR("Failed to set motor direction for altitude motor");
+      return -1;
+    }
+    if (!motor_controllers[0]->setMotorSpeed(MotorHAT::Motor::MOTOR3, 200)) {
+      LOG_ERROR("Failed to set motor speed for altitude motor");
+      return -1;
+    }
   }
 
   // static speed of 200 out of 255
-  if (!motor_controllers[0]->setMotorSpeed(MotorHAT::Motor::MOTOR1, 200)) {
-    LOG_ERROR("Failed to set motor speed for azimuth motor");
-    return -1;
-  }
-  if (!motor_controllers[0]->setMotorSpeed(MotorHAT::Motor::MOTOR3, 200)) {
-    LOG_ERROR("Failed to set motor speed for altitude motor");
-    return -1;
-  }
 
   iter += sprintf(&text[iter], "Polar Pan Start Payload:\n");
   iter += sprintf(&text[iter], "\tΔ Azimuth: \t%d\n", pan->delta_azimuth);
