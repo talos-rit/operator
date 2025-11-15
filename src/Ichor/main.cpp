@@ -90,6 +90,7 @@ int main(int argc, char *argv[]) {
 
   // Register hardware
   auto bot = std::make_unique<Ichor>("/dev/i2c-1", 0x60, 0x61);
+  bot->initialize();
 
   // Register modules
   inbox->registerSubscriber(&hermes);

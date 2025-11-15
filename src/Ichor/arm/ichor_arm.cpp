@@ -34,6 +34,13 @@ Ichor::~Ichor() {
   // dac[0].ResetDevice(); // Resets all PCA9685PW devices on bus
 }
 
+bool Ichor::initialize() {
+  if (!motor_controllers[0]->initialize()) {
+    LOG_ERROR("Failed to initialize MotorHAT controller 0");
+    return false;
+  }
+}
+
 void Ichor::poll() {
   // TODO                 // Check ADC values (overcurrent / overexertion)
 

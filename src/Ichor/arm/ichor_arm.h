@@ -13,6 +13,7 @@ class Ichor : public Arm {
  public:
   Ichor(const char *i2c_dev, uint8_t dac0_addr, uint8_t dac1_addr);
   ~Ichor();
+  bool initialize();
 
  private:
   int i2c_fd;
