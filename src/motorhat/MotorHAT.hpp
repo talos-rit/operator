@@ -18,14 +18,14 @@ class MotorHAT {
   };
 
   static constexpr MotorChannels MOTOR_MAP[] = {
-      {PCA9685::Channel::CHANNEL2, PCA9685::Channel::CHANNEL3,
-       PCA9685::Channel::CHANNEL4},
-      {PCA9685::Channel::CHANNEL5, PCA9685::Channel::CHANNEL6,
-       PCA9685::Channel::CHANNEL7},
-      {PCA9685::Channel::CHANNEL8, PCA9685::Channel::CHANNEL9,
-       PCA9685::Channel::CHANNEL10},
+      {PCA9685::Channel::CHANNEL9, PCA9685::Channel::CHANNEL10,
+       PCA9685::Channel::CHANNEL8},
       {PCA9685::Channel::CHANNEL11, PCA9685::Channel::CHANNEL12,
-       PCA9685::Channel::CHANNEL13}};
+       PCA9685::Channel::CHANNEL13},
+      {PCA9685::Channel::CHANNEL4, PCA9685::Channel::CHANNEL3,
+       PCA9685::Channel::CHANNEL2},
+      {PCA9685::Channel::CHANNEL5, PCA9685::Channel::CHANNEL6,
+       PCA9685::Channel::CHANNEL7}};
 
   MotorHAT(const std::string& device_path, uint8_t address);
   ~MotorHAT();
