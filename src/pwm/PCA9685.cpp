@@ -32,6 +32,7 @@ PCA9685::~PCA9685() {}
 
 bool PCA9685::initialize(float frequency_hz) {
   if (frequency_hz < 24.0f || frequency_hz > 1526.0f) {
+    LOG_ERROR("Frequency %.2f Hz out of range (24-1526 Hz)", frequency_hz);
     return false;
   }
 
