@@ -7,6 +7,8 @@
 #include <stdexcept>
 #include <thread>
 
+#include "log/log.h"
+
 #define LOG_CONSOLE_THRESHOLD_THIS LOG_THRESHOLD_DEFAULT
 #define LOG_FILE_THRESHOLD_THIS LOG_THRESHOLD_MAX
 
@@ -44,16 +46,19 @@ bool PCA9685::initialize(float frequency_hz) {
   uint8_t oldmode = readRegister(Register::MODE1);
   uint8_t newmode = oldmode | 0x10;  // Sleep
   if (!writeRegister(Register::MODE1, newmode)) {
+    LOG_ERROR("Failed to put PCA9685 to sleep");
     return false;
   }
 
   // Set the prescale
   if (!writeRegister(Register::PRE_SCALE, prescale)) {
+    LOG_ERROR("Failed to set PCA9685 prescale");
     return false;
   }
 
   // Wake up the device
   if (!writeRegister(Register::MODE1, oldmode)) {
+    LOG_ERROR("Failed to wake PCA9685 from sleep");
     return false;
   }
 
@@ -62,6 +67,7 @@ bool PCA9685::initialize(float frequency_hz) {
 
   // Enable auto-increment
   if (!writeRegister(Register::MODE1, oldmode | 0x20)) {
+    LOG_ERROR("Failed to enable auto-increment on PCA9685");
     return false;
   }
 
