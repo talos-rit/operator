@@ -1,4 +1,10 @@
 #include "motorhat/MotorHAT.hpp"
+#include "log/log.h"
+
+
+
+#define LOG_CONSOLE_THRESHOLD_THIS LOG_THRESHOLD_DEFAULT
+#define LOG_FILE_THRESHOLD_THIS LOG_THRESHOLD_MAX
 
 MotorHAT::MotorHAT(const std::string& device_path, uint8_t address)
     : pwm_driver_(device_path, address) {
@@ -23,6 +29,8 @@ bool MotorHAT::setMotorSpeed(Motor motor, uint8_t speed) {
 
 bool MotorHAT::setMotorDirection(Motor motor, Direction direction) {
   auto channels = GetMotorChannels(motor);
+  LOG_INFO("Setting motor direction: motor=%d, direction=%d",
+           static_cast<int>(motor), static_cast<int>(direction));
   switch (direction) {
     case Direction::FORWARD:
       return pwm_driver_.digitalWrite(channels.in1, true) &&
