@@ -24,13 +24,13 @@ bool MotorHAT::setMotorSpeed(Motor motor, uint8_t speed) {
   float duty_cycle = static_cast<float>(speed) / 255.0f;
   auto channels = GetMotorChannels(motor);
 
+  LOG_INFO("Setting motor %d speed to %d (duty cycle: %.2f)", static_cast<int>(motor), speed, duty_cycle);
+
   return pwm_driver_.setDutyCycle(channels.speed, duty_cycle);
 }
 
 bool MotorHAT::setMotorDirection(Motor motor, Direction direction) {
   auto channels = GetMotorChannels(motor);
-  LOG_INFO("Setting motor direction: motor=%d, direction=%d",
-           static_cast<int>(motor), static_cast<int>(direction));
   switch (direction) {
     case Direction::FORWARD:
       return pwm_driver_.digitalWrite(channels.in1, true) &&

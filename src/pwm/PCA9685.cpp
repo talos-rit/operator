@@ -6,6 +6,9 @@
 
 #include <stdexcept>
 
+#define LOG_CONSOLE_THRESHOLD_THIS LOG_THRESHOLD_DEFAULT
+#define LOG_FILE_THRESHOLD_THIS LOG_THRESHOLD_MAX
+
 PCA9685::PCA9685(const std::string& device_path, uint8_t address)
     : fd_(-1), address_(address) {
   int fd = ::open(device_path.c_str(), O_RDWR);
