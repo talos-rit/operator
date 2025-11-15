@@ -24,24 +24,25 @@ MCP23017::MCP23017(const std::string& device_path, uint8_t address)
   prev_pin_states_.fill(false);
   interrupt_modes_.fill(InterruptMode::NONE);
 
-  if (!writeRegister(GPINTEN_A, 0x00)) {
+  if (!writeRegister(Register::GPINTEN_A, 0x00)) {
     throw std::runtime_error("Failed to initialize MCP23017");
   }
 
-  if (!writeRegister(GPINTEN_B, 0x00)) {
+  if (!writeRegister(Register::GPINTEN_B, 0x00)) {
     throw std::runtime_error("Failed to initialize MCP23017");
   }
 }
 MCP23017::~MCP23017() {}
 
-bool MCP23017::setMirror() { return writeRegister(IOCON, 1 << 6); }
+bool MCP23017::setMirror() { return writeRegister(Register::IOCON, 1 << 6); }
 
 bool MCP23017::setPinMode(uint8_t pin, Port port, bool isOutput) {
   if (pin > 7) {
     throw std::invalid_argument("Invalid pin number");
   }
 
-  uint8_t iodir_reg = (port == Port::A) ? IODIR_A : IODIR_B;
+  Register iodir_reg =
+      (port == Port::A) ? Register::IODIR_A : Register::IODIR_B;
   auto iodir = readRegister(iodir_reg);
   if (isOutput) {
     iodir &= ~(1 << pin);  // Set as output
@@ -56,7 +57,7 @@ bool MCP23017::readPin(uint8_t pin, Port port) {
     throw std::invalid_argument("Invalid pin number");
   }
 
-  uint8_t gpio_reg = (port == Port::A) ? GPIO_A : GPIO_B;
+  Register gpio_reg = (port == Port::A) ? Register::GPIO_A : Register::GPIO_B;
   auto gpio = readRegister(gpio_reg);
   return (gpio >> pin) & 0x01;
 }
@@ -66,7 +67,8 @@ bool MCP23017::setInterrupt(uint8_t pin, Port port, InterruptMode mode) {
     throw std::invalid_argument("Invalid pin number");
   }
 
-  uint8_t gpinten_reg = (port == Port::A) ? GPINTEN_A : GPINTEN_B;
+  Register gpinten_reg =
+      (port == Port::A) ? Register::GPINTEN_A : Register::GPINTEN_B;
   auto gpinten = readRegister(gpinten_reg);
   InterruptMode& current_mode =
       interrupt_modes_[static_cast<size_t>(port) * 8 + pin];
@@ -87,7 +89,8 @@ bool MCP23017::setInterrupt(uint8_t pin, Port port, InterruptMode mode) {
 
   current_mode = mode;
 
-  uint8_t intcon_reg = (port == Port::A) ? INTCON_A : INTCON_B;
+  Register intcon_reg =
+      (port == Port::A) ? Register::INTCON_A : Register::INTCON_B;
   auto intcon = readRegister(intcon_reg);
   intcon &= ~(1 << pin);  // Default to compare against previous value
 
@@ -104,7 +107,8 @@ bool MCP23017::setInterrupt(uint8_t pin, Port port, InterruptMode mode) {
 
 std::span<const MCP23017::InterruptPin> MCP23017::getInterruptStatuses(
     MCP23017::Port port) {
-  auto intf = readRegister((port == Port::A) ? INTF_A : INTF_B);
+  auto intf =
+      readRegister((port == Port::A) ? Register::INTF_A : Register::INTF_B);
 
   size_t count = 0;
 
@@ -149,27 +153,28 @@ std::span<const MCP23017::InterruptPin> MCP23017::getInterruptStatuses(
   }
 
   // Clear interrupt flags by reading GPIO registers
-  readRegister(INTCAP_A);
-  readRegister(INTCAP_B);
+  readRegister(Register::INTCAP_A);
+  readRegister(Register::INTCAP_B);
 
   // Return a span that views ONLY the active portion of the buffer
   return std::span<const InterruptPin>(interrupt_buffer_.data(), count);
 }
 
-bool MCP23017::writeRegister(uint8_t reg, uint8_t value) {
-  uint8_t buffer[2] = {reg, value};
-  ssize_t bytes_written = write(fd_.get(), buffer, sizeof(buffer));
+bool MCP23017::writeRegister(MCP23017::Register reg, uint8_t value) {
+  uint8_t buffer[2] = {static_cast<uint8_t>(reg), value};
+  ssize_t bytes_written = ::write(fd_.get(), buffer, sizeof(buffer));
   return bytes_written == sizeof(buffer);
 }
 
-uint8_t MCP23017::readRegister(uint8_t reg) {
-  ssize_t bytes_written = write(fd_.get(), &reg, 1);
+uint8_t MCP23017::readRegister(MCP23017::Register reg) {
+  uint8_t addr = static_cast<uint8_t>(reg);
+  ssize_t bytes_written = ::write(fd_.get(), &addr, 1);
   if (bytes_written != 1) {
     throw std::runtime_error("Failed to write register address");
   }
 
   uint8_t value;
-  ssize_t bytes_read = read(fd_.get(), &value, 1);
+  ssize_t bytes_read = ::read(fd_.get(), &value, 1);
   if (bytes_read != 1) {
     throw std::runtime_error("Failed to read register value");
   }

@@ -10,13 +10,8 @@ FLAGS += -I$(SRC_DIR)/$(DRIVER_DIR)/src
 
 DRIVER		:=
 
-DRIVER_CPP	:= serial/serial.cpp
-DRIVER_CPP	+= serial/i2c_dev.cpp
-DRIVER_CPP	+= dac/PCA9685PW.cpp
-DRIVER_CPP	+= gpio/isr.cpp
-DRIVER_CPP 	+= enc/encoder.cpp
-DRIVER_CPP 	+= motor/motor.cpp
-DRIVER_CPP 	+= driver/driver.cpp
+DRIVER_CPP	+= pwm/PCA9685.cpp
+DRIVER_CPP 	+= motorhat/MotorHAT.cpp
 DRIVER_CPP	+= mcp/MCP23017.cpp
 
 DRIVER_UTEST:=

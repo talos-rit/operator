@@ -9,6 +9,25 @@
 
 class MCP23017 {
  public:
+  enum class Register : uint8_t {
+    IOCON = 0x0A,
+    IODIR_A = 0x00,
+    IODIR_B = 0x01,
+    GPIO_A = 0x12,
+    GPIO_B = 0x13,
+    GPINTEN_A = 0x04,
+    GPINTEN_B = 0x05,
+    INTCON_A = 0x08,
+    INTCON_B = 0x09,
+    DEFVAL_A = 0x06,
+    DEFVAL_B = 0x07,
+    INTF_A = 0x0E,
+    INTF_B = 0x0F,
+    INTCAP_A = 0x10,
+    INTCAP_B = 0x11,
+
+  };
+
   enum class Port { A = 0, B = 1 };
   enum class InterruptMode { NONE = 0, RISING = 1, FALLING = 2, CHANGE = 3 };
 
@@ -34,10 +53,9 @@ class MCP23017 {
   bool setInterrupt(uint8_t pin, Port port, InterruptMode mode);
   std::span<const InterruptPin> getInterruptStatuses(Port port);
 
-  uint8_t readRegister(uint8_t reg);
-
  private:
-  bool writeRegister(uint8_t reg, uint8_t value);
+  uint8_t readRegister(Register reg);
+  bool writeRegister(Register reg, uint8_t value);
   InterruptMode getInterruptMode(uint8_t pin, Port port);
   bool getPrevPinState(uint8_t pin, Port port);
 
@@ -46,19 +64,4 @@ class MCP23017 {
   std::array<InterruptPin, 16> interrupt_buffer_;
   std::array<InterruptMode, 16> interrupt_modes_;
   std::array<bool, 16> prev_pin_states_;
-  static constexpr uint8_t IOCON = 0x0A;
-  static constexpr uint8_t IODIR_A = 0x00;
-  static constexpr uint8_t IODIR_B = 0x01;
-  static constexpr uint8_t GPIO_A = 0x12;
-  static constexpr uint8_t GPIO_B = 0x13;
-  static constexpr uint8_t GPINTEN_A = 0x04;
-  static constexpr uint8_t GPINTEN_B = 0x05;
-  static constexpr uint8_t INTCON_A = 0x08;
-  static constexpr uint8_t INTCON_B = 0x09;
-  static constexpr uint8_t DEFVAL_A = 0x06;
-  static constexpr uint8_t DEFVAL_B = 0x07;
-  static constexpr uint8_t INTF_A = 0x0E;
-  static constexpr uint8_t INTF_B = 0x0F;
-  static constexpr uint8_t INTCAP_A = 0x10;
-  static constexpr uint8_t INTCAP_B = 0x11;
 };
