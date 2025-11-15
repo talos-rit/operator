@@ -1,8 +1,8 @@
 #pragma once
 
+#include <array>
 #include <cstdint>
 #include <string>
-#include <array>
 
 #include "util/file_descriptor.hpp"
 
@@ -135,6 +135,8 @@ class PCA9685 {
   PCA9685(const std::string& device_path, uint8_t address);
   ~PCA9685();
 
+  bool initialize(float frequency_hz);
+
   // Configures the specified channel for either digital (on/off) or PWM mode.
   bool configureChannel(Channel channel, bool digital_mode);
   bool setDutyCycle(Channel channel, float duty_cycle);
@@ -143,6 +145,7 @@ class PCA9685 {
   static constexpr ChannelRegisters GetChannelRegisters(Channel channel);
 
  private:
+  uint8_t readRegister(Register reg);
   bool writeRegister(Register reg, uint8_t value);
   bool writeChannelRegisters(Channel channel, uint16_t on, uint16_t off);
   FileDescriptor fd_;

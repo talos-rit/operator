@@ -1,7 +1,6 @@
 #include "motorhat/MotorHAT.hpp"
+
 #include "log/log.h"
-
-
 
 #define LOG_CONSOLE_THRESHOLD_THIS LOG_THRESHOLD_DEFAULT
 #define LOG_FILE_THRESHOLD_THIS LOG_THRESHOLD_MAX
@@ -20,11 +19,16 @@ MotorHAT::MotorHAT(const std::string& device_path, uint8_t address)
 
 MotorHAT::~MotorHAT() {}
 
+bool MotorHAT::initialize() {
+  return pwm_driver_.initialize(DEFAULT_FREQUENCY_HZ);
+}
+
 bool MotorHAT::setMotorSpeed(Motor motor, uint8_t speed) {
   float duty_cycle = static_cast<float>(speed) / 255.0f;
   auto channels = GetMotorChannels(motor);
 
-  LOG_INFO("Setting motor %d speed to %d (duty cycle: %.2f)", static_cast<int>(motor), speed, duty_cycle);
+  LOG_INFO("Setting motor %d speed to %d (duty cycle: %.2f)",
+           static_cast<int>(motor), speed, duty_cycle);
 
   return pwm_driver_.setDutyCycle(channels.speed, duty_cycle);
 }

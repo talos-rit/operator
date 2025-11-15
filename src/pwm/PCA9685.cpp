@@ -5,6 +5,7 @@
 #include <sys/ioctl.h>
 
 #include <stdexcept>
+#include <thread>
 
 #define LOG_CONSOLE_THRESHOLD_THIS LOG_THRESHOLD_DEFAULT
 #define LOG_FILE_THRESHOLD_THIS LOG_THRESHOLD_MAX
@@ -27,17 +28,60 @@ PCA9685::PCA9685(const std::string& device_path, uint8_t address)
 
 PCA9685::~PCA9685() {}
 
+bool PCA9685::initialize(float frequency_hz) {
+  if (frequency_hz < 24.0f || frequency_hz > 1526.0f) {
+    return false;
+  }
+
+  // Calculate prescale value
+  float prescaleval = 25000000.0f;  // 25MHz
+  prescaleval /= 4096.0f;           // 12-bit
+  prescaleval /= frequency_hz;
+  prescaleval -= 1.0f;
+  uint8_t prescale = static_cast<uint8_t>(prescaleval + 0.5f);
+
+  // Put the device to sleep to set the prescale
+  uint8_t oldmode = readRegister(Register::MODE1);
+  uint8_t newmode = oldmode | 0x10;  // Sleep
+  if (!writeRegister(Register::MODE1, newmode)) {
+    return false;
+  }
+
+  // Set the prescale
+  if (!writeRegister(Register::PRE_SCALE, prescale)) {
+    return false;
+  }
+
+  // Wake up the device
+  if (!writeRegister(Register::MODE1, oldmode)) {
+    return false;
+  }
+
+  // Wait for oscillator to stabilize
+  std::this_thread::sleep_for(std::chrono::milliseconds(5));
+
+  // Enable auto-increment
+  if (!writeRegister(Register::MODE1, oldmode | 0x20)) {
+    return false;
+  }
+
+  return true;
+}
+
 bool PCA9685::configureChannel(Channel channel, bool digital_mode) {
+  ChannelRegisters regs = GetChannelRegisters(channel);
   if (digital_mode) {
     // Set FULL_OFF bit to disable PWM for this channel
     channel_modes_[static_cast<size_t>(channel)] = true;
-    return writeRegister(GetChannelRegisters(channel).off_high,
-                         static_cast<uint8_t>(1 << 4));  // Set FULL_OFF bit
+    uint8_t prev_value = readRegister(regs.off_high);
+    return writeRegister(regs.off_high,
+                         prev_value | (1 << 4));  // Set FULL_OFF bit
   } else {
     // Clear FULL_OFF bit to enable PWM for this channel
     channel_modes_[static_cast<size_t>(channel)] = false;
-    return writeRegister(GetChannelRegisters(channel).off_high,
-                         0x00);  // Clear FULL_OFF bit
+    uint8_t prev_value = readRegister(regs.off_high);
+    return writeRegister(regs.off_high,
+                         prev_value & ~(1 << 4));  // Clear FULL_OFF bit
   }
 }
 
@@ -108,6 +152,22 @@ bool PCA9685::writeChannelRegisters(Channel channel, uint16_t on,
   ssize_t bytes_written = ::write(fd_.get(), buffer, sizeof(buffer));
   return bytes_written == sizeof(buffer);
 };
+
+uint8_t PCA9685::readRegister(Register reg) {
+  uint8_t reg_addr = static_cast<uint8_t>(reg);
+  ssize_t bytes_written = ::write(fd_.get(), &reg_addr, sizeof(reg_addr));
+  if (bytes_written != sizeof(reg_addr)) {
+    return 0;  // Error
+  }
+
+  uint8_t value = 0;
+  ssize_t bytes_read = ::read(fd_.get(), &value, sizeof(value));
+  if (bytes_read != sizeof(value)) {
+    return 0;  // Error
+  }
+
+  return value;
+}
 
 bool PCA9685::writeRegister(Register reg, uint8_t value) {
   uint8_t buffer[2] = {static_cast<uint8_t>(reg), value};

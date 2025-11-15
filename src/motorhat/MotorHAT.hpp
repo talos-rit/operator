@@ -7,6 +7,7 @@
 class MotorHAT {
  public:
   static constexpr uint8_t MAX_SPEED = 255;
+  static constexpr float DEFAULT_FREQUENCY_HZ = 1600.0f;
   enum class Motor { MOTOR1, MOTOR2, MOTOR3, MOTOR4, NUM_MOTORS };
   enum class Direction { FORWARD, BACKWARD, RELEASE };
 
@@ -28,6 +29,8 @@ class MotorHAT {
 
   MotorHAT(const std::string& device_path, uint8_t address);
   ~MotorHAT();
+
+  bool initialize();
 
   bool setMotorSpeed(Motor motor, uint8_t speed);
   bool setMotorDirection(Motor motor, Direction direction);
