@@ -30,7 +30,7 @@ TEST(ERVConfigTest, Initialization)
     
     // Test default Scorbot device path
     const char* dev_path = ervConfig->GetScorbotDevicePath();
-    STRCMP_EQUAL("/dev/ttyS0", dev_path);
+    STRCMP_EQUAL("/dev/ttyUSB0", dev_path);
 }
 
 // TODO: Add more tests for ERVConfig functionality

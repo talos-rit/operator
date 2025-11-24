@@ -3,22 +3,26 @@ TEST_OBJ_DIR := $(OBJ_DIR)/tests
 TEST_BIN_DIR := $(BIN_DIR)/tests
 REPORT_DIR	:= build/reports
 
+COV_FLAGS := --coverage -lgcov
+
 RM := rm -rf
 DIR_DUP = mkdir -p $(@D)
 
 # Patterns for test object files
-# Overriding some rules to add --coverage flag
+# Conditionally overriding some rules to add --coverage flag when building tests
+ifneq (,$(findstring test, $(MAKECMDGOALS)))
 # C
 $(OBJ_DIR)/%.o: $(SRC_DIR)/%.c
 	$(DIR_DUP)
-	@$(CC) $(FLAGS) -c --coverage -o $(MAKE_DIR)/$@ $<
+	@$(CC) $(FLAGS) -c $(COV_FLAGS) -o $(MAKE_DIR)/$@ $<
 	@echo "    CC        $@"
 
 # C++
 $(OBJ_DIR)/%.o: $(SRC_DIR)/%.cpp
 	$(DIR_DUP)
-	@$(CC) $(FLAGS) -c --coverage -o $(MAKE_DIR)/$@ $<
+	@$(CC) $(FLAGS) -c $(COV_FLAGS) -o $(MAKE_DIR)/$@ $<
 	@echo "    CC        $@"
+endif
 
 # C
 $(TEST_OBJ_DIR)/%.o: $(TESTS_DIR)/%.c
@@ -40,9 +44,9 @@ test_all_report: test_common_report test_erv_report test_ichor_report
 test_re: common_test_re erv_test_re ichor_test_re
 	@$(RM) $(TEST_OBJ_DIR)
 
-PHONIES += test_erv test_all test_re test_all_report
+PHONIES += test_all test_re test_all_report
 
-.PHONY: test_erv test_all test_re test_all_report
+.PHONY: test_all test_re test_all_report
 
 include tests/common/common_tests.mk
 include tests/ER_V/erv_tests.mk

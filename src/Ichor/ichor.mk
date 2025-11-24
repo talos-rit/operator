@@ -40,7 +40,7 @@ dummy: $(COMMON_OBJS) $(ICHOR_OBJS) $(SRC_DIR)/$(ICHOR_DIR)/dummy_main.cpp
 	$(CC) $^ $(FLAGS) -o $(BIN_DIR)/$@
 	@echo "    Target    $@"
 
-ichor_re: fclean ichor
+ichor_re: fclean
 
 #------------------------------------------------#
 #   SPEC                                         #
