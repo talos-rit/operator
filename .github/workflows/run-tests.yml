@@ -27,8 +27,10 @@ jobs:
       
       # Build and Run Tests with Reporting and Coverage
       - name: Run Common Unit Tests
+        # working-directory: $GITHUB_WORKSPACE
         run: |
-          make common_tests_report
+          ls
+          make --debug common_tests_report
 
       - name: Run ERV Unit Tests
         run: |
