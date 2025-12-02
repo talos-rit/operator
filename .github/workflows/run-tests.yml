@@ -16,11 +16,11 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Get current workflow info
-        run: |
-          echo "Current workflow name: ${{ github.workflow }}"
-          echo "Current workflow ref: ${{ github.ref }}"
-          echo "Current workflow file: .github/workflows/${{ github.workflow }}.yml"
+      # - name: Get current workflow info
+      #   run: |
+      #     echo "Current workflow name: ${{ github.workflow }}"
+      #     echo "Current workflow ref: ${{ github.ref }}"
+      #     echo "Current workflow file: .github/workflows/${{ github.workflow }}.yml"
 
       # Setup
       - name: Checkout Repository
@@ -28,11 +28,11 @@ jobs:
         with:
           submodules: true
 
-      - name: List all workflows
-        run: |
-          gh workflow list
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      # - name: List all workflows
+      #   run: |
+      #     gh workflow list
+      #   env:
+      #     GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       # - name: Install CppUTest
       #   run: |
       #     sudo apt-get update

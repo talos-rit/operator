@@ -7,7 +7,7 @@ run-name: Test Report triggered by ${{ github.event.workflow_run.workflow_id }}
 
 on:
   workflow_run:
-    workflows: [Run Tests]
+    workflows: ["Run Tests"]
     types:
       - completed
 permissions:
