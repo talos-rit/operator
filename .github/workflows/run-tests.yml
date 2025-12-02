@@ -21,10 +21,14 @@ jobs:
         uses: actions/checkout@v6
         with:
           submodules: true
+
+      - name: Install CppUTest
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y cpputest
       
       # Build and Run Tests with Reporting and Coverage
       - name: Run Common Unit Tests
-        # working-directory: $GITHUB_WORKSPACE
         run: |
           make common_test_report
 
