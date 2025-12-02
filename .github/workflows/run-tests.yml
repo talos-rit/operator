@@ -29,7 +29,7 @@ jobs:
       - name: Run Common Unit Tests
         # working-directory: $GITHUB_WORKSPACE
         run: |
-          ls
+          ls src/
           make --debug common_tests_report
 
       - name: Run ERV Unit Tests
