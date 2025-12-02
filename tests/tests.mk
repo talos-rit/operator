@@ -37,9 +37,14 @@ $(TEST_OBJ_DIR)/%.o: $(TESTS_DIR)/%.cpp
 	@echo "  TEST CC     $@"
 
 # Run all tests
-test_all: test_common test_erv test_ichor
+test_all: common_test erv_test ichor_test
 
-test_all_report: test_common_report test_erv_report test_ichor_report
+test_all_report: common_test_report erv_test_report ichor_test_report cov_report
+
+# Create HTML code coverage report
+cov_report:
+	lcov --capture --directory build/obj/ --output-file coverage.info --exclude '*/12/*' --exclude '/usr/include/*' --exclude '*/tests/*'
+	genhtml coverage.info --output-directory coverage
 
 test_re: common_test_re erv_test_re ichor_test_re
 	@$(RM) $(TEST_OBJ_DIR)
