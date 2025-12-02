@@ -19,6 +19,8 @@ jobs:
       # Setup
       - name: Checkout Repository
         uses: actions/checkout@v6
+        with:
+          submodules: true
 
       - name: Install CppUTest
         run: |
@@ -29,11 +31,6 @@ jobs:
       - name: Run Common Unit Tests
         # working-directory: $GITHUB_WORKSPACE
         run: |
-          ls
-          ls src/
-          ls src/common/
-          ls src/ER_V/
-          ls src/Ichor/
           make --debug common_tests_report
 
       - name: Run ERV Unit Tests
