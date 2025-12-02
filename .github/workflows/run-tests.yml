@@ -31,15 +31,15 @@ jobs:
       - name: Run Common Unit Tests
         # working-directory: $GITHUB_WORKSPACE
         run: |
-          make --debug common_tests_report
+          make common_test_report
 
       - name: Run ERV Unit Tests
         run: |
-          make erv_tests_report
+          make erv_test_report
 
       - name: Run Ichor Unit Tests
         run: |
-          make ichor_tests_report
+          make ichor_test_report
       
       # Post Processing
       - name: Upload Test Results
