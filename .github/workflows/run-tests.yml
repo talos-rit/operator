@@ -21,18 +21,18 @@ jobs:
           echo "Current workflow name: ${{ github.workflow }}"
           echo "Current workflow ref: ${{ github.ref }}"
           echo "Current workflow file: .github/workflows/${{ github.workflow }}.yml"
-          
+
+      # Setup
+      - name: Checkout Repository
+        uses: actions/checkout@v6
+        with:
+          submodules: true
+
       - name: List all workflows
         run: |
           gh workflow list
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      # Setup
-      # - name: Checkout Repository
-      #   uses: actions/checkout@v6
-      #   with:
-      #     submodules: true
-
       # - name: Install CppUTest
       #   run: |
       #     sudo apt-get update
