@@ -16,48 +16,32 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      # - name: Get current workflow info
-      #   run: |
-      #     echo "Current workflow name: ${{ github.workflow }}"
-      #     echo "Current workflow ref: ${{ github.ref }}"
-      #     echo "Current workflow file: .github/workflows/${{ github.workflow }}.yml"
-
       # Setup
       - name: Checkout Repository
         uses: actions/checkout@v6
         with:
           submodules: true
-
-      # - name: List all workflows
-      #   run: |
-      #     gh workflow list
-      #   env:
-      #     GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      # - name: Install CppUTest
-      #   run: |
-      #     sudo apt-get update
-      #     sudo apt-get install -y cpputest
       
-      # # Build and Run Tests with Reporting and Coverage
-      # - name: Run Common Unit Tests
-      #   # working-directory: $GITHUB_WORKSPACE
-      #   run: |
-      #     make common_test_report
+      # Build and Run Tests with Reporting and Coverage
+      - name: Run Common Unit Tests
+        # working-directory: $GITHUB_WORKSPACE
+        run: |
+          make common_test_report
 
-      # - name: Run ERV Unit Tests
-      #   run: |
-      #     make erv_test_report
+      - name: Run ERV Unit Tests
+        run: |
+          make erv_test_report
 
-      # - name: Run Ichor Unit Tests
-      #   run: |
-      #     make ichor_test_report
+      - name: Run Ichor Unit Tests
+        run: |
+          make ichor_test_report
       
-      # # Post Processing
-      # - name: Upload Test Results
-      #   uses: actions/upload-artifact@v4
-      #   with:
-      #     name: test-results
-      #     path: build/reports/**/cpputest_*.xml
-      #   if: ${{ !cancelled() }}
+      # Post Processing
+      - name: Upload Test Results
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-results
+          path: build/reports/**/cpputest_*.xml
+        if: ${{ !cancelled() }}
       
-      # # TODO: Decide between lcov, gcov, gcovr, codecov, coveralls, and SonarQube for code coverage reporting
+      # TODO: Decide between lcov, gcov, gcovr, codecov, coveralls, and SonarQube for code coverage reporting
