@@ -1,11 +1,13 @@
 ---
 # This is in a separate file because it is recommended to have
 # different permissions than the test runner for public repos
-name: Test Report
+# name: Test Report
+# In test-report.yml, add this after name:
+run-name: Test Report triggered by ${{ github.event.workflow_run.workflow_id }}
 
 on:
   workflow_run:
-    workflows: []
+    workflows: [Run Tests]
     types:
       - completed
 permissions:
