@@ -4,7 +4,7 @@ name: Test Report
 
 on:
   workflow_run:
-    workflows: ["Run Tests"]
+    workflows: ['Run Tests']
     types:
       - completed
 permissions:
@@ -23,4 +23,3 @@ jobs:
         reporter: java-junit
         path: |
           build/reports/**/cpputest_*.xml
-      if: ${{ !cancelled() }}
