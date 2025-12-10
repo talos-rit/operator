@@ -23,7 +23,7 @@ test_common_report: test_common_build
 	cd $(COMMON_REPORT_DIR) && ../../../$(TEST_BIN_DIR)/$(COMMON_TEST_EXE) -ojunit
 # TODO: Add single test report aggregation here
 
-test_common__re: common_re
+test_common_re: common_re
 	@$(RM) $(COMMON_TEST_OBJ_DIR)
 
 PHONIES += test_common test_common_build test_common_report test_common_re
