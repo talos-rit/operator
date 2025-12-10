@@ -11,19 +11,19 @@ COMMON_UTEST_SRCS += all_tests.cpp
 COMMON_UTEST_OBJS := $(COMMON_UTEST_SRCS:%.cpp=$(COMMON_TEST_OBJ_DIR)/%.o)
 
 
-common_test_build: common_test_re $(COMMON_OBJS) $(COMMON_UTEST_OBJS)
+test_common_build: test_common_re $(COMMON_OBJS) $(COMMON_UTEST_OBJS)
 	@mkdir -p $(TEST_BIN_DIR)
 	$(CC) $(filter-out $(PHONIES),$^) $(FLAGS) $(UTEST_LIB) $(COV_FLAGS) -o $(TEST_BIN_DIR)/$(COMMON_TEST_EXE)
 
-common_test: common_test_build
+test_common: test_common_build
 	$(TEST_BIN_DIR)/$(COMMON_TEST_EXE)
 
-common_test_report: common_test_build
+test_common_report: test_common_build
 	@mkdir -p $(COMMON_REPORT_DIR)
 	cd $(COMMON_REPORT_DIR) && ../../../$(TEST_BIN_DIR)/$(COMMON_TEST_EXE) -ojunit
 # TODO: Add single test report aggregation here
 
-common_test_re: common_re
+test_common__re: common_re
 	@$(RM) $(COMMON_TEST_OBJ_DIR)
 
-PHONIES += common_test common_test_report common_test_re
+PHONIES += test_common test_common_build test_common_report test_common_re

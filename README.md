@@ -40,9 +40,9 @@ The tests are written using the `Cpputest` unit test framework. To learn more ab
 make test_all
 
 # Individual make commands
-make common_test
-make erv_test
-make ichor_test
+make test_common
+make test_erv
+make test_ichor
 ```
 
 #### Build and Run Unit Tests With Coverage
@@ -51,9 +51,9 @@ make ichor_test
 make test_all_report
 
 # Individual make commands which generate junit xml reports for each test file
-make common_test_report
-make erv_test_report
-make ichor_test_report
+make test_common_report
+make test_erv_report
+make test_ichor_report
 ```
 
 #### Generating Code Coverage Report
