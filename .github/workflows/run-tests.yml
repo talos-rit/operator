@@ -30,15 +30,15 @@ jobs:
       # Build and Run Tests with Reporting and Coverage
       - name: Run Common Unit Tests
         run: |
-          make common_test_report
+          make test_common_report
 
       - name: Run ERV Unit Tests
         run: |
-          make erv_test_report
+          make test_erv_report
 
       - name: Run Ichor Unit Tests
         run: |
-          make ichor_test_report
+          make test_ichor_report
       
       # Post Processing
       - name: Upload Test Results
