@@ -24,7 +24,6 @@ ERV_UTEST_OBJS	:= $(UTEST_CPP:%.cpp=$(OBJ_DIR)/$(ERV_DIR)/%.o)
 
 RM          := rm -rf
 # MAKEFLAGS   += --no-print-directory
-DIR_DUP      = mkdir -p $(@D)
 PHONIES 	+= erv erv_test erv_re
 
 erv_print:
