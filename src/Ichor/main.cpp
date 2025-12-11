@@ -103,12 +103,11 @@ int main(int argc, char *argv[]) {
 
   // Start
   hermes.start();
-  if (false == bot->start()) quit_handler(SIGABRT);
+  bot->start();
   inbox->start();
 
   // Loop
-  if (!quit_sig) LOG_INFO("Ready.");
-  while (!quit_sig);
+  while (!quit_sig.load());
   LOG_VERBOSE(0, "Quit signal: %d", quit_sig.load());
   LOG_INFO("Shutting down...");
 
