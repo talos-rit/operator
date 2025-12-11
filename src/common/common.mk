@@ -4,9 +4,9 @@ COMMON_DIR 	 = common
 COMMON		:= log/log.c
 COMMON		+= util/timestamp.c
 COMMON		+= data/s_list.c
-COMMON		+= api/api.c
 
-COMMON_CPP	:= socket/socket.cpp
+COMMON_CPP	:= api/api.cpp
+COMMON_CPP	+= socket/socket.cpp
 COMMON_CPP	+= sub/sub.cpp
 COMMON_CPP	+= arm/arm.cpp
 COMMON_CPP	+= conf/config.cpp
