@@ -27,12 +27,12 @@ DRIVER_UTEST_OBJS := $(DRIVER_UTEST:%.cpp=$(ODIR)/%.o)
 
 # C
 $(OBJ_DIR)/$(DRIVER_DIR)/%.o: $(SRC_DIR)/$(DRIVER_DIR)/src/%.c
-	$(DIR_DUP)
+	@mkdir -p $(dir $@)
 	@$(CC) $(FLAGS) -c -o $(MAKE_DIR)/$@ $<
 	@echo "    CC        $@"
 
 # C++
 $(OBJ_DIR)/$(DRIVER_DIR)/%.o: $(SRC_DIR)/$(DRIVER_DIR)/src/%.cpp
-	$(DIR_DUP)
+	@mkdir -p $(dir $@)
 	@$(CC) $(FLAGS) -c -o $(MAKE_DIR)/$@ $<
 	@echo "    CC        $@"
