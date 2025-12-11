@@ -18,5 +18,5 @@ int main() {
   LOG_VERBOSE(9, "Dear god, the debugging");
 
   LOG_stop();
-  LOG_destory();
+  LOG_destroy();
 }

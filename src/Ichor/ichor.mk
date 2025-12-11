@@ -28,24 +28,23 @@ ICHOR_UTEST_OBJS	:= $(ICHOR_UTEST:%.cpp=$(OBJ_DIR)/$(ICHOR_DIR)/%.o)
 
 RM          := rm -rf
 # MAKEFLAGS   += --no-print-directory
-DIR_DUP      = mkdir -p $(@D)
 PHONIES 	+= all ichor_re clean fclean
 
 
 
 # Executable
 ichor: $(COMMON_OBJS) $(ICHOR_OBJS) $(ICHOR_MAIN)
-	@mkdir -p $(BIN_DIR)
+	@mkdir -p $(dir $@)
 	$(CC) $^ $(FLAGS) -o $(BIN_DIR)/$@
 	@echo "    Target    $@"
 
 ichor_test: ichor_re $(COMMON_OBJS) $(COMMON_UTEST_OBJS) $(ICHOR_OBJS) $(ICHOR_UTEST_OBJS)
-	@mkdir -p $(BIN_DIR)
+	@mkdir -p $(dir $@)
 	$(CC) $(filter-out $(PHONIES),$^) $(FLAGS) $(UTEST_LIB) -o $(BIN_DIR)/$@
 	$(BIN_DIR)/$@
 
 dummy: $(COMMON_OBJS) $(ICHOR_OBJS) $(SRC_DIR)/$(ICHOR_DIR)/dummy_main.cpp
-	@mkdir -p $(BIN_DIR)
+	@mkdir -p $(dir $@)
 	$(CC) $^ $(FLAGS) -o $(BIN_DIR)/$@
 	@echo "    Target    $@"
 

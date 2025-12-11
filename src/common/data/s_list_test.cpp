@@ -119,7 +119,7 @@ TEST_GROUP(nominal_large) {
 
   void teardown() {
     DATA_S_List_deinit(&list);
-    LOG_destory();
+    LOG_destroy();
   }
 };
 
