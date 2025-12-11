@@ -106,4 +106,4 @@ int8_t LOG_stop();
  * @brief Releases initialized resources from module
  * @return 0 on success, -1 on failure
  */
-int8_t LOG_destory();
+int8_t LOG_destroy();

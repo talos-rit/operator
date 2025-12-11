@@ -93,15 +93,11 @@ int main(int argc, char *argv[]) {
 
   // Start
   hermes.start();
-  if (false == bot->start()) quit_handler(SIGABRT);
+  bot->start();
   inbox->start();
 
   // Loop
-  if (!quit_sig.load()) LOG_INFO("Ready.");
-
-  while (!quit_sig.load()) {
-    std::this_thread::sleep_for(std::chrono::milliseconds(100));
-  }
+  while (!quit_sig.load());
 
   LOG_VERBOSE(0, "Quit signal: %d", quit_sig.load());
   LOG_INFO("Shutting down...");
@@ -114,5 +110,5 @@ int main(int argc, char *argv[]) {
   // End demo
   LOG_INFO("End Program.");
   LOG_stop();
-  LOG_destory();
+  LOG_destroy();
 }

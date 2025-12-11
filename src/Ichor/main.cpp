@@ -120,5 +120,5 @@ int main(int argc, char *argv[]) {
   // End demo
   LOG_INFO("End Program.");
   LOG_stop();
-  LOG_destory();
+  LOG_destroy();
 }
