@@ -1,0 +1,11 @@
+[requires]
+cpputest/4.0
+
+[generators]
+CMakeDeps
+CMakeToolchain
+
+[options]
+
+[layout]
+cmake_layout
