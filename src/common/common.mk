@@ -13,11 +13,6 @@ COMMON_CPP	+= conf/config.cpp
 COMMON_CPP	+= log/log_config.cpp
 COMMON_CPP	+= socket/socket_conf.cpp
 
-ifeq ($(USE_ACTIVEMQ), 1)
-COMMON_CPP	+= tamq/tamq_sub.cpp
-COMMON_CPP	+= tamq/tamq_conf.cpp
-endif
-
 UTEST_CPP := tmp/tests/tmp_test.cpp
 
 ODIR := $(OBJ_DIR)/common
