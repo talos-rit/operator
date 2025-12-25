@@ -39,11 +39,21 @@ endif()
 
 if(BUILD_TESTING)
     enable_testing()
-    # CppUTest will be found via Conan
-    find_package(CppUTest REQUIRED)
+    # Add Conan's generator path for package configs
+    list(APPEND CMAKE_PREFIX_PATH "${CMAKE_BINARY_DIR}/build/Debug/generators")
+    find_package(CppUTest REQUIRED CONFIG)
+    
+    # Create namespaced aliases for Conan-generated targets
+    if(NOT TARGET CppUTest::CppUTest)
+        add_library(CppUTest::CppUTest ALIAS CppUTest)
+    endif()
+    if(NOT TARGET CppUTest::CppUTestExt)
+        add_library(CppUTest::CppUTestExt ALIAS CppUTestExt)
+    endif()
 endif()
 
 # Add subdirectories
+add_subdirectory(src/proto)
 add_subdirectory(src/common)
 add_subdirectory(src/ER_V)
 add_subdirectory(src/Ichor)

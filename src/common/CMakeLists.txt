@@ -1,16 +1,11 @@
 # Common library
 add_library(common STATIC)
 
-# C sources
 target_sources(common PRIVATE
     log/log.c
     util/timestamp.c
     data/s_list.c
     api/api.cpp
-)
-
-# C++ sources
-target_sources(common PRIVATE
     socket/socket.cpp
     sub/sub.cpp
     arm/arm.cpp

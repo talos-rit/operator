@@ -1,18 +1,9 @@
 # ER_V executable
 add_executable(erv)
 
-# Main file
 target_sources(erv PRIVATE
     main.cpp
-)
-
-# C sources
-target_sources(erv PRIVATE
     acl/acl.c
-)
-
-# C++ sources
-target_sources(erv PRIVATE
     erv_arm/erv.cpp
     erv_conf/erv_conf.cpp
 )
