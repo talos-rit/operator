@@ -3,7 +3,7 @@ add_executable(erv)
 
 target_sources(erv PRIVATE
     main.cpp
-    acl/acl.c
+    acl/acl.cpp
     erv_arm/erv.cpp
     erv_conf/erv_conf.cpp
 )
@@ -20,7 +20,7 @@ if(BUILD_TESTING)
     
     target_sources(erv_test PRIVATE
         all_tests.cpp
-        acl/acl.c
+        acl/acl.cpp
         erv_arm/erv.cpp
         erv_conf/erv_conf.cpp
     )
