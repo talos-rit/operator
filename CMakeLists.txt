@@ -6,6 +6,9 @@ set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
+# Generate compile_commands.json for IDEs (VS Code IntelliSense)
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
+
 # Compiler options matching original Makefile
 add_compile_options(
     -Wall
@@ -36,6 +39,13 @@ option(BUILD_TESTING "Build the testing tree" ON)
 if(EXISTS ${CMAKE_BINARY_DIR}/conan_toolchain.cmake)
     include(${CMAKE_BINARY_DIR}/conan_toolchain.cmake)
 endif()
+
+# Add Conan's generator path so find_package() can resolve Conan packages
+list(APPEND CMAKE_PREFIX_PATH "${CMAKE_BINARY_DIR}/build/Debug/generators")
+
+# Dependencies for proto/gRPC code (provided by Conan when installed)
+find_package(protobuf CONFIG QUIET)
+find_package(gRPC CONFIG QUIET)
 
 if(BUILD_TESTING)
     enable_testing()

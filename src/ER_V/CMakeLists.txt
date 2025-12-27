@@ -6,11 +6,13 @@ target_sources(erv PRIVATE
     acl/acl.cpp
     erv_arm/erv.cpp
     erv_conf/erv_conf.cpp
+    service.cpp
 )
 
 # Link libraries
 target_link_libraries(erv PRIVATE
     common
+    proto
     Threads::Threads
 )
 
@@ -23,10 +25,12 @@ if(BUILD_TESTING)
         acl/acl.cpp
         erv_arm/erv.cpp
         erv_conf/erv_conf.cpp
+        service.cpp
     )
     
     target_link_libraries(erv_test PRIVATE
         common
+        proto
         Threads::Threads
         CppUTest::CppUTest
         CppUTest::CppUTestExt

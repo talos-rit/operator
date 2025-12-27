@@ -10,3 +10,9 @@ target_sources(proto INTERFACE
     ${CMAKE_CURRENT_SOURCE_DIR}/icd/v1/icd.pb.cc
     ${CMAKE_CURRENT_SOURCE_DIR}/icd/v1/icd.grpc.pb.cc
 )
+
+# Link required protobuf/gRPC libs (resolved via Conan or system)
+target_link_libraries(proto INTERFACE
+  protobuf::libprotobuf
+  gRPC::grpc++
+)
