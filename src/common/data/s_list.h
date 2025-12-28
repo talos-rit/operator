@@ -17,6 +17,10 @@
 
 #include "data/list.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /** Singly Linked List Node */
 typedef struct _s_list_node {
   struct _s_list_node *next; /** Pointer to next node */
@@ -87,3 +91,7 @@ int8_t DATA_S_List_prepend(S_List *list, S_List_Node *node);
  * @returns Pointer to node from top of list on success, NULL on failure
  */
 S_List_Node *DATA_S_List_pop(S_List *list);
+
+#ifdef __cplusplus
+}
+#endif
