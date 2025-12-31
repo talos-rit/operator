@@ -34,14 +34,14 @@ int16_t velocity_square(int32_t target, int32_t pos) {
   return DAC_PCA_MAX_DUTY_CYCLE * (target - pos > 0 ? 1 : -1);
 }
 
-int16_t velocity_sine(int32_t target, int32_t pos) {
+float velocity_sine(int32_t target __attribute__((unused)), int32_t start __attribute__((unused)), int32_t pos __attribute__((unused))) {
   struct timeval tv;
   gettimeofday(&tv, NULL);
 
   float tmp = ((tv.tv_sec % 10) * 1e6 + tv.tv_usec) / 1e6f;
   tmp = sin(tmp * M_PI / 5.f);
   tmp *= DAC_PCA_MAX_DUTY_CYCLE;
-  return (int16_t)tmp;
+  return tmp;
 }
 
 int main(int argc, char *argv[]) {
@@ -115,8 +115,11 @@ int main(int argc, char *argv[]) {
 
   struct timeval start, stop;
   bool loc_1 = true;
+  int32_t current_pos = 0;
   while (1) {
-    driver.SetTarget(loc_1 ? 0 : 3000);
+    int32_t target = loc_1 ? 0 : 3000;
+    driver.SetTarget(target, current_pos);
+    current_pos = target;
 
     gettimeofday(&start, NULL);
     while (1) {

@@ -21,6 +21,10 @@
 #include "data/s_list.h"
 #include "log/log_ansi_color.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #define LOG_USE_LOCATION false
 #define LOG_USE_COLOR true
 #define LOG_USE_STDERR true
@@ -107,3 +111,7 @@ int8_t LOG_stop();
  * @return 0 on success, -1 on failure
  */
 int8_t LOG_destory();
+
+#ifdef __cplusplus
+}
+#endif
