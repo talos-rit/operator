@@ -1,0 +1,25 @@
+---
+# This is in a separate file because it is recommended to have
+# different permissions than the test runner for public repos
+name: Test Report
+
+on:
+  workflow_run:
+    workflows: ["Run Tests"]
+    types:
+      - completed
+permissions:
+  contents: read
+  actions: read
+  checks: write
+jobs:
+  test-report:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Test Report Summary
+        uses: dorny/test-reporter@v2
+        with:
+          artifact: test-results
+          name: CppUTest Report
+          reporter: java-junit
+          path: cpputest_*.xml
