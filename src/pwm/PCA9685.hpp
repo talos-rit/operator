@@ -8,7 +8,7 @@
 
 class PCA9685 {
  public:
-  constexpr static uint16_t PWM_MAX = 4095;
+  constexpr static uint16_t PWM_MAX = 4096;
   enum class Register : uint8_t {
     MODE1 = 0x00,
     MODE2 = 0x01,
@@ -138,7 +138,7 @@ class PCA9685 {
   bool initialize(float frequency_hz);
 
   // Configures the specified channel for either digital (on/off) or PWM mode.
-  bool configureChannel(Channel channel, bool digital_mode);
+  void configureChannel(Channel channel, bool digital_mode);
   bool setDutyCycle(Channel channel, float duty_cycle);
   bool digitalWrite(Channel channel, bool value);
 

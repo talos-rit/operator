@@ -26,6 +26,10 @@ PCA9685::PCA9685(const std::string& device_path, uint8_t address)
   }
 
   fd_ = FileDescriptor(fd);
+  // Reset the chip
+  if (!writeRegister(Register::MODE1, 0x00)) {
+    throw std::runtime_error("Failed to reset PCA9685");
+  }
 }
 
 PCA9685::~PCA9685() {}
@@ -45,7 +49,7 @@ bool PCA9685::initialize(float frequency_hz) {
 
   // Put the device to sleep to set the prescale
   uint8_t oldmode = readRegister(Register::MODE1);
-  uint8_t newmode = oldmode | 0x10;  // Sleep
+  uint8_t newmode = (oldmode & 0x7F) | 0x10;  // Sleep
   if (!writeRegister(Register::MODE1, newmode)) {
     LOG_ERROR("Failed to put PCA9685 to sleep");
     return false;
@@ -67,7 +71,7 @@ bool PCA9685::initialize(float frequency_hz) {
   std::this_thread::sleep_for(std::chrono::milliseconds(5));
 
   // Enable auto-increment
-  if (!writeRegister(Register::MODE1, oldmode | 0x20)) {
+  if (!writeRegister(Register::MODE1, oldmode | 0xA0)) {
     LOG_ERROR("Failed to enable auto-increment on PCA9685");
     return false;
   }
@@ -75,20 +79,13 @@ bool PCA9685::initialize(float frequency_hz) {
   return true;
 }
 
-bool PCA9685::configureChannel(Channel channel, bool digital_mode) {
-  ChannelRegisters regs = GetChannelRegisters(channel);
+void PCA9685::configureChannel(Channel channel, bool digital_mode) {
   if (digital_mode) {
     // Set FULL_OFF bit to disable PWM for this channel
     channel_modes_[static_cast<size_t>(channel)] = true;
-    uint8_t prev_value = readRegister(regs.off_high);
-    return writeRegister(regs.off_high,
-                         prev_value | (1 << 4));  // Set FULL_OFF bit
   } else {
     // Clear FULL_OFF bit to enable PWM for this channel
     channel_modes_[static_cast<size_t>(channel)] = false;
-    uint8_t prev_value = readRegister(regs.off_high);
-    return writeRegister(regs.off_high,
-                         prev_value & ~(1 << 4));  // Clear FULL_OFF bit
   }
 }
 
@@ -100,6 +97,14 @@ bool PCA9685::setDutyCycle(Channel channel, float duty_cycle) {
   if (channel_modes_[static_cast<size_t>(channel)]) {
     // Channel is in digital mode; cannot set duty cycle
     return false;
+  }
+
+  if (duty_cycle >= 1.0f) {
+    // Special case: 100% duty cycle
+    return writeChannelRegisters(channel, 0x1000, 0);
+  } else if (duty_cycle <= 0.0f) {
+    // Special case: 0% duty cycle
+    return writeChannelRegisters(channel, 0, 0x1000);
   }
 
   uint16_t off_value = static_cast<uint16_t>(duty_cycle * PWM_MAX);
@@ -130,6 +135,9 @@ bool PCA9685::digitalWrite(Channel channel, bool value) {
 
 bool PCA9685::writeChannelRegisters(Channel channel, uint16_t on,
                                     uint16_t off) {
+  if (on > PWM_MAX || off > PWM_MAX) {
+    return false;
+  }
   ChannelRegisters regs = GetChannelRegisters(channel);
   uint8_t buffer[5];
   buffer[0] = static_cast<uint8_t>(regs.on_low);
@@ -152,9 +160,14 @@ bool PCA9685::writeChannelRegisters(Channel channel, uint16_t on,
   // 0x0F = 0000 1111b  -> mask for PWM bits 11..8 in high byte
   //
   buffer[1] = static_cast<uint8_t>(on & 0xFF);
-  buffer[2] = static_cast<uint8_t>((on >> 8) & 0x0F);
+  buffer[2] = static_cast<uint8_t>((on >> 8) & 0x1F);
   buffer[3] = static_cast<uint8_t>(off & 0xFF);
-  buffer[4] = static_cast<uint8_t>((off >> 8) & 0x0F);
+  buffer[4] = static_cast<uint8_t>((off >> 8) & 0x1F);
+
+  LOG_INFO("Writing to channel %d: ON=%d OFF=%d", static_cast<int>(channel), on,
+           off);
+  LOG_INFO("Buffer: [%02X %02X %02X %02X %02X]", buffer[0], buffer[1],
+           buffer[2], buffer[3], buffer[4]);
 
   ssize_t bytes_written = ::write(fd_.get(), buffer, sizeof(buffer));
   return bytes_written == sizeof(buffer);

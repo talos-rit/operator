@@ -18,7 +18,7 @@ class MotorHAT {
   };
 
   static constexpr MotorChannels MOTOR_MAP[] = {
-      {PCA9685::Channel::CHANNEL9, PCA9685::Channel::CHANNEL10,
+      {PCA9685::Channel::CHANNEL10, PCA9685::Channel::CHANNEL9,
        PCA9685::Channel::CHANNEL8},
       {PCA9685::Channel::CHANNEL11, PCA9685::Channel::CHANNEL12,
        PCA9685::Channel::CHANNEL13},
