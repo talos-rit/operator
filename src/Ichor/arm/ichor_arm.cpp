@@ -18,9 +18,8 @@
 
 #define ERV_CLOCK CLOCK_REALTIME
 
-Ichor::Ichor(const char *i2c_dev, uint8_t dac0_addr, uint8_t dac1_addr) {
+Ichor::Ichor(const char* i2c_dev, uint8_t dac0_addr, uint8_t dac1_addr) {
   motor_controllers[0] = new MotorHAT(i2c_dev, dac0_addr);
-  // dac[1] = new PCA9685PW(i2c_fd, dac1_addr);
   mcp_gpio = new MCP23017("/dev/i2c-1", 0x21);
   for (uint8_t pin = 0; pin < 5; pin++) {
     mcp_gpio->setPinMode(pin, MCP23017::Port::A, false);  // Set as input
@@ -30,15 +29,14 @@ Ichor::Ichor(const char *i2c_dev, uint8_t dac0_addr, uint8_t dac1_addr) {
   // TODO: Add adc
 }
 
-Ichor::~Ichor() {
-  // dac[0].ResetDevice(); // Resets all PCA9685PW devices on bus
-}
+Ichor::~Ichor() = default;
 
 bool Ichor::initialize() {
   if (!motor_controllers[0]->initialize()) {
     LOG_ERROR("Failed to initialize MotorHAT controller 0");
     return false;
   }
+  return true;
 }
 
 void Ichor::poll() {
@@ -47,7 +45,7 @@ void Ichor::poll() {
   std::span<const MCP23017::InterruptPin> status =
       mcp_gpio->getInterruptStatuses(MCP23017::Port::A);
 
-  for (const auto &pin : status) {
+  for (const auto& pin : status) {
     if (pin.port == MCP23017::Port::A) {
       LOG_WARN("GPIO Interrupt on MCP23017 Port A Pin %d", pin.pin);
       // Handle specific pin interrupts here
@@ -59,7 +57,7 @@ void Ichor::poll() {
 
 int Ichor::handShake() { return 0; }
 
-int Ichor::polarPan(API::PolarPan *pan) {
+int Ichor::polarPan(API::PolarPan* pan) {
   switch (oversteer) {
     case OversteerConfig::None:
       break;
@@ -84,7 +82,7 @@ int Ichor::polarPan(API::PolarPan *pan) {
   return 0;
 }
 
-int Ichor::polarPanStart(API::PolarPanStart *pan) {
+int Ichor::polarPanStart(API::PolarPanStart* pan) {
   uint8_t iter = 0;
   char text[255];
 
@@ -138,7 +136,7 @@ int Ichor::polarPanStop() {
   return 0;
 }
 
-int Ichor::home(API::Home *home) {
+int Ichor::home(API::Home* home) {
   uint8_t iter = 0;
   char text[255];
 
