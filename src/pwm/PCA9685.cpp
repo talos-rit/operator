@@ -197,10 +197,11 @@ bool PCA9685::writeRegister(Register reg, uint8_t value) {
 
 constexpr PCA9685::ChannelRegisters PCA9685::GetChannelRegisters(
     PCA9685::Channel ch) {
+  const uint8_t base_addr = static_cast<uint8_t>(0x06 + 4 * static_cast<uint8_t>(ch));
   return {
-      Register(uint8_t(0x06 + 4 * static_cast<uint8_t>(ch) + 0)),  // ON_L
-      Register(uint8_t(0x06 + 4 * static_cast<uint8_t>(ch) + 1)),  // ON_H
-      Register(uint8_t(0x06 + 4 * static_cast<uint8_t>(ch) + 2)),  // OFF_L
-      Register(uint8_t(0x06 + 4 * static_cast<uint8_t>(ch) + 3))   // OFF_H
+      static_cast<Register>(base_addr + 0),  // ON_L
+      static_cast<Register>(base_addr + 1),  // ON_H
+      static_cast<Register>(base_addr + 2),  // OFF_L
+      static_cast<Register>(base_addr + 3)   // OFF_H
   };
 }
