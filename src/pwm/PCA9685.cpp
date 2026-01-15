@@ -177,13 +177,15 @@ uint8_t PCA9685::readRegister(Register reg) {
   uint8_t reg_addr = static_cast<uint8_t>(reg);
   ssize_t bytes_written = ::write(fd_.get(), &reg_addr, sizeof(reg_addr));
   if (bytes_written != sizeof(reg_addr)) {
-    return 0;  // Error
+    throw std::runtime_error("Failed to write PCA9685 register address " +
+                             std::to_string(static_cast<uint8_t>(reg)));
   }
 
   uint8_t value = 0;
   ssize_t bytes_read = ::read(fd_.get(), &value, sizeof(value));
   if (bytes_read != sizeof(value)) {
-    return 0;  // Error
+    throw std::runtime_error("Failed to read PCA9685 register " +
+                             std::to_string(static_cast<uint8_t>(reg)));
   }
 
   return value;
