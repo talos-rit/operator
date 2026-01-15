@@ -30,10 +30,16 @@ class MotorHAT {
   MotorHAT(const std::string& device_path, uint8_t address);
   ~MotorHAT();
 
+  /* Initialize the Motor HAT by setting up the PCA9685 driver */
   bool initialize();
 
+  /* Set the speed of a motor (0 to MAX_SPEED) */
   bool setMotorSpeed(Motor motor, uint8_t speed);
+
+  /* Set the direction of a motor (FORWARD, BACKWARD, RELEASE) */
   bool setMotorDirection(Motor motor, Direction direction);
+
+  /* Stop a motor */
   bool stopMotor(Motor motor);
 
   static constexpr MotorChannels GetMotorChannels(Motor motor);
