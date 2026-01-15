@@ -42,7 +42,7 @@ class MotorHAT {
   /* Stop a motor */
   bool stopMotor(Motor motor);
 
-  static constexpr MotorChannels GetMotorChannels(Motor motor);
+  static constexpr MotorChannels getMotorChannels(Motor motor);
 
  private:
   PCA9685 pwm_driver_;
