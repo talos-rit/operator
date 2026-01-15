@@ -13,7 +13,7 @@
 #define LOG_FILE_THRESHOLD_THIS LOG_THRESHOLD_MAX
 
 PCA9685::PCA9685(const std::string& device_path, uint8_t address)
-    : fd_(-1), address_(address) {
+    : fd_(-1), address_(address), channel_modes_{} {
   int fd = ::open(device_path.c_str(), O_RDWR);
   if (fd < 0) {
     throw std::runtime_error("Failed to open device: " + device_path);
