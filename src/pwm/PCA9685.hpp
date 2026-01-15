@@ -161,7 +161,7 @@ class PCA9685 {
 
   /* Retrieves the register addresses for the specified channel.
    */
-  static constexpr ChannelRegisters GetChannelRegisters(Channel channel);
+  static constexpr ChannelRegisters getChannelRegisters(Channel channel);
 
  private:
   uint8_t readRegister(Register reg);

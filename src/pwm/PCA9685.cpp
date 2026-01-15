@@ -116,7 +116,7 @@ bool PCA9685::digitalWrite(Channel channel, bool value) {
     // Channel is in PWM mode; cannot perform digital write
     return false;
   }
-  ChannelRegisters regs = GetChannelRegisters(channel);
+  ChannelRegisters regs = getChannelRegisters(channel);
   if (value) {
     bool remove_full_off =
         writeRegister(regs.off_high, 0x00);  // Clear FULL_OFF bit
@@ -138,7 +138,7 @@ bool PCA9685::writeChannelRegisters(Channel channel, uint16_t on,
   if (on > PWM_MAX || off > PWM_MAX) {
     return false;
   }
-  ChannelRegisters regs = GetChannelRegisters(channel);
+  ChannelRegisters regs = getChannelRegisters(channel);
   uint8_t buffer[5];
   buffer[0] = static_cast<uint8_t>(regs.on_low);
 
@@ -192,7 +192,7 @@ bool PCA9685::writeRegister(Register reg, uint8_t value) {
   return bytes_written == sizeof(buffer);
 }
 
-constexpr PCA9685::ChannelRegisters PCA9685::GetChannelRegisters(
+constexpr PCA9685::ChannelRegisters PCA9685::getChannelRegisters(
     PCA9685::Channel ch) {
   const uint8_t base_addr = static_cast<uint8_t>(0x06 + 4 * static_cast<uint8_t>(ch));
   return {
