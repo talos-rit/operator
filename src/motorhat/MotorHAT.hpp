@@ -39,7 +39,5 @@ class MotorHAT {
   static constexpr MotorChannels GetMotorChannels(Motor motor);
 
  private:
-  bool writeRegister(uint8_t reg, uint8_t value);
-
   PCA9685 pwm_driver_;
 };
