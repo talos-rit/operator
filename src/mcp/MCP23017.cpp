@@ -76,19 +76,10 @@ bool MCP23017::setInterrupt(uint8_t pin, Port port, InterruptMode mode) {
   auto gpinten = readRegister(gpinten_reg);
   InterruptMode& current_mode =
       interrupt_modes_[static_cast<size_t>(port) * 8 + pin];
-  switch (mode) {
-    case InterruptMode::NONE:
-      gpinten &= ~(1 << pin);  // Disable interrupt
-      break;
-    case InterruptMode::RISING:
-      gpinten |= (1 << pin);  // Enable interrupt
-      break;
-    case InterruptMode::FALLING:
-      gpinten |= (1 << pin);  // Enable interrupt
-      break;
-    case InterruptMode::CHANGE:
-      gpinten |= (1 << pin);  // Enable interrupt
-      break;
+  if (mode == InterruptMode::NONE) {
+    gpinten &= ~(1 << pin);  // Disable interrupt
+  } else {
+    gpinten |= (1 << pin);   // Enable interrupt
   }
 
   current_mode = mode;
