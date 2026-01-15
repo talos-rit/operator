@@ -135,13 +135,32 @@ class PCA9685 {
   PCA9685(const std::string& device_path, uint8_t address);
   ~PCA9685();
 
+  /* Initializes the PCA9685 with the specified PWM frequency in Hz.
+   * Returns true on success, false on failure.
+   */
   bool initialize(float frequency_hz);
 
-  // Configures the specified channel for either digital (on/off) or PWM mode.
+  /* Configures the specified channel for either digital output or PWM output.
+   * If digital_mode is true, the channel is set for digital output (on/off).
+   * If digital_mode is false, the channel is set for PWM output.
+   * Returns true on success, false on failure.
+   */
   void configureChannel(Channel channel, bool digital_mode);
+
+  /* Sets the duty cycle for the specified channel.
+   * duty_cycle should be in the range [0.0, 1.0], where 0.0 is always off and 1.0 is always on.
+   * Returns true on success, false on failure.
+   */
   bool setDutyCycle(Channel channel, float duty_cycle);
+
+  /* Sets the digital output for the specified channel.
+   * value is true for HIGH and false for LOW.
+   * Returns true on success, false on failure.
+   */
   bool digitalWrite(Channel channel, bool value);
 
+  /* Retrieves the register addresses for the specified channel.
+   */
   static constexpr ChannelRegisters GetChannelRegisters(Channel channel);
 
  private:
