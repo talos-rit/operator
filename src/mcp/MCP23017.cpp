@@ -34,7 +34,11 @@ MCP23017::MCP23017(const std::string& device_path, uint8_t address)
 }
 MCP23017::~MCP23017() {}
 
-bool MCP23017::setMirror() { return writeRegister(Register::IOCON, 1 << 6); }
+bool MCP23017::setMirror() {
+  auto iocon = readRegister(Register::IOCON);
+  iocon |= (1 << 6);  // Set MIRROR bit while preserving other configuration bits
+  return writeRegister(Register::IOCON, iocon);
+}
 
 bool MCP23017::setPinMode(uint8_t pin, Port port, bool isOutput) {
   if (pin > 7) {
