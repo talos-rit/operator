@@ -49,8 +49,21 @@ class MCP23017 {
    * isOutput: true for output, false for input
    */
   bool setPinMode(uint8_t pin, Port port, bool isOutput);
+
+  /* Reads the state of a pin on the specified port.
+   * port: 0 for GPIOA, 1 for GPIOB
+   * Returns true if the pin is HIGH, false if LOW
+   */
   bool readPin(uint8_t pin, Port port);
+
+  /* Configures interrupt for a pin on the specified port.
+   * mode: NONE, RISING, FALLING, CHANGE
+   */
   bool setInterrupt(uint8_t pin, Port port, InterruptMode mode);
+
+  /* Retrieves the list of pins that have triggered an interrupt
+   * on the specified port since the last call.
+   */
   std::span<const InterruptPin> getInterruptStatuses(Port port);
 
  private:
