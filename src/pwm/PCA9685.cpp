@@ -164,11 +164,6 @@ bool PCA9685::writeChannelRegisters(Channel channel, uint16_t on,
   buffer[3] = static_cast<uint8_t>(off & 0xFF);
   buffer[4] = static_cast<uint8_t>((off >> 8) & 0x1F);
 
-  LOG_DEBUG("Writing to channel %d: ON=%d OFF=%d", static_cast<int>(channel), on,
-            off);
-  LOG_DEBUG("Buffer: [%02X %02X %02X %02X %02X]", buffer[0], buffer[1],
-            buffer[2], buffer[3], buffer[4]);
-
   ssize_t bytes_written = ::write(fd_.get(), buffer, sizeof(buffer));
   return bytes_written == sizeof(buffer);
 };
