@@ -15,8 +15,8 @@ add_executable(common_test_exe
 
 target_link_libraries(common_test_exe
     common_objs
-    CppUTest::CppUTest
-    CppUTest::CppUTestExt
+    CppUTest
+    CppUTestExt
     Threads::Threads
 )
 

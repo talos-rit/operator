@@ -18,7 +18,7 @@
 #include <stdint.h>
 // #include <stdatomic.h>
 
-#include "data/s_list.hpp"
+#include "data/s_list.h"
 #include "log/log_ansi_color.hpp"
 
 #define LOG_USE_LOCATION false

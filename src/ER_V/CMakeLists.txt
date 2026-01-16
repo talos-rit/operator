@@ -6,7 +6,6 @@ target_sources(erv PRIVATE
     acl/acl.cpp
     erv_arm/erv.cpp
     erv_conf/erv_conf.cpp
-    service.cpp
 )
 
 # Link libraries

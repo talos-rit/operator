@@ -15,7 +15,7 @@
 
 #include <stdint.h>
 
-#include "data/list.hpp"
+#include "data/list.h"
 
 /** Singly Linked List Node */
 typedef struct _s_list_node {

@@ -7,13 +7,13 @@
 
 #include "api/api.hpp"
 #include "arm/arm.hpp"
-#include "arm/ichor_arm.h"
-#include "conf/config.h"
-#include "conf/ichor_conf.h"
-#include "log/log.h"
+#include "arm/ichor_arm.hpp"
+#include "conf/config.hpp"
+#include "conf/ichor_conf.hpp"
+#include "log/log.hpp"
 #include "socket/socket.hpp"
 #include "sub/sub.hpp"
-#include "util/array.h"
+#include "util/array.hpp"
 #include "util/comm.h"
 
 #define LOG_FILE_THRESHOLD_THIS LOG_THRESHOLD_MAX
@@ -41,18 +41,18 @@ void register_signals() {
 }
 
 #if VALGRIND
-static void dummy_msg(Subscriber *hermes) {
-  SUB_Buffer *buf = hermes->DequeueBuffer(SUB_QUEUE_FREE);
+static void dummy_msg(Subscriber* hermes) {
+  SUB_Buffer* buf = hermes->DequeueBuffer(SUB_QUEUE_FREE);
   if (!buf) return;
 
-  API_Data_Wrapper *msg = (API_Data_Wrapper *)&buf->body[0];
+  API_Data_Wrapper* msg = (API_Data_Wrapper*)&buf->body[0];
 
   msg->header.msg_id = htobe32(0x0);
   msg->header.reserved_1 = htobe16(0);
   msg->header.cmd_id = htobe16(API_CMD_HOME);
   msg->header.len = htobe16(sizeof(API_Data_Home));
 
-  API_Data_Home *cmd = (API_Data_Home *)&msg->payload_head;
+  API_Data_Home* cmd = (API_Data_Home*)&msg->payload_head;
 
   cmd->delay_ms = 0;
 
@@ -62,16 +62,16 @@ static void dummy_msg(Subscriber *hermes) {
 #endif
 }  // namespace
 
-int main(int argc, char *argv[]) {
+int main(int argc, char* argv[]) {
   LOG_prep();
   register_signals();
 
   // Initalize program; Setup Logging
   IchorConfig conf;
 
-  const char *conf_loc[] = {(argc > 1 ? argv[1] : nullptr),
+  const char* conf_loc[] = {(argc > 1 ? argv[1] : nullptr),
                             CONF_DEFAULT_LOCATION};
-  for (const char *loc : conf_loc) {
+  for (const char* loc : conf_loc) {
     if (loc && !conf.SetFilePath(loc))
       break;  // If file is successfully set, break loop
   }
@@ -88,9 +88,9 @@ int main(int argc, char *argv[]) {
 
   auto inbox = std::make_unique<Socket>();
 
-
   // Register hardware
-  auto bot = std::make_unique<Ichor>("/dev/gpiochip0", "/dev/i2c-1", 0x60, 0x61, 0x62);
+  auto bot =
+      std::make_unique<Ichor>("/dev/gpiochip0", "/dev/i2c-1", 0x60, 0x61, 0x62);
 
   // bot->RegisterMotor(0, 0, 0, 1, 14, 4, 17, 0);           // Base
   bot->RegisterMotor(0, 0, 4, 3, 2, 4, 17, 0);      // Base

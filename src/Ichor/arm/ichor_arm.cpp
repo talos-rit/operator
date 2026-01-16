@@ -1,4 +1,4 @@
-#include "arm/ichor_arm.h"
+#include "arm/ichor_arm.hpp"
 
 #include <err.h>
 #include <errno.h>
@@ -11,7 +11,7 @@
 #include <termios.h>
 #include <unistd.h>
 
-#include "log/log.h"
+#include "log/log.hpp"
 #include "motor/motor.h"
 
 #define LOG_CONSOLE_THRESHOLD_THIS LOG_THRESHOLD_DEFAULT
@@ -26,7 +26,7 @@ static float open_loop_vel(int32_t target, int32_t start, int32_t pos) {
   return target > 0 ? 1 : -1;
 }
 
-static void set_velocity(Driver **axis,
+static void set_velocity(Driver** axis,
                          float (*vel)(int32_t target, int32_t start,
                                       int32_t pos)) {
   for (uint8_t idx = 0; idx < ICHOR_AXIS_COUNT; idx++) {
@@ -34,7 +34,7 @@ static void set_velocity(Driver **axis,
   }
 }
 
-Ichor::Ichor(const char *isr_dev, const char *i2c_dev, uint8_t dac0_addr,
+Ichor::Ichor(const char* isr_dev, const char* i2c_dev, uint8_t dac0_addr,
              uint8_t dac1_addr, uint8_t adc_addr) {
   int i2c_fd = open(i2c_dev, O_RDWR);
   if (i2c_fd < 0)
@@ -85,7 +85,7 @@ void Ichor::poll() {
 
 int Ichor::handShake() { return 0; }
 
-int Ichor::polarPan(API::PolarPan *pan) {
+int Ichor::polarPan(API::PolarPan* pan) {
   switch (oversteer) {
     case OversteerConfig::None:
       break;
@@ -110,7 +110,7 @@ int Ichor::polarPan(API::PolarPan *pan) {
   return 0;
 }
 
-int Ichor::polarPanStart(API::PolarPanStart *pan) {
+int Ichor::polarPanStart(API::PolarPanStart* pan) {
   uint8_t iter = 0;
   char text[255];
 
@@ -136,7 +136,7 @@ int Ichor::polarPanStop() {
   return 0;
 }
 
-int Ichor::home(API::Home *home) {
+int Ichor::home(API::Home* home) {
   uint8_t iter = 0;
   char text[255];
 

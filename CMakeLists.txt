@@ -35,14 +35,6 @@ find_package(Threads REQUIRED)
 # Option to build tests
 option(BUILD_TESTING "Build the testing tree" ON)
 
-# Conan integration (if using conan)
-if(EXISTS ${CMAKE_BINARY_DIR}/conan_toolchain.cmake)
-    include(${CMAKE_BINARY_DIR}/conan_toolchain.cmake)
-endif()
-
-# Add Conan's generator path so find_package() can resolve Conan packages
-list(APPEND CMAKE_PREFIX_PATH "${CMAKE_BINARY_DIR}/build/Debug/generators")
-
 # # Dependencies for proto/gRPC code (provided by Conan when installed)
 # find_package(protobuf CONFIG QUIET)
 # find_package(gRPC CONFIG QUIET)

@@ -9,8 +9,8 @@ target_link_libraries(ichor_test_exe
     common_objs
     driver_objs
     $<TARGET_OBJECTS:ichor>
-    CppUTest::CppUTest
-    CppUTest::CppUTestExt
+    CppUTest
+    CppUTestExt
     Threads::Threads
 )
 

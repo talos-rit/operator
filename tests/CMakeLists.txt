@@ -1,11 +1,11 @@
 # CppUTest for testing
-find_package(CppUTest QUIET)
-if(NOT CppUTest_FOUND)
-    message(STATUS "CppUTest not found, tests will be disabled")
-    set(BUILD_TESTS OFF)
-else()
-    set(BUILD_TESTS ON)
-endif()
+find_package(PkgConfig REQUIRED)
+pkg_search_module(CPPUTEST REQUIRED cpputest>=3.8)
+message(STATUS "Found CppUTest version ${CPPUTEST_VERSION}")
+
+include_directories(${CPPUTEST_INCLUDE_DIRS} ../src/)
+link_directories(${CPPUTEST_LIBRARIES})
+
 
 option(ENABLE_COVERAGE "Enable code coverage for tests. Requires Debug build type. Automatically applied for unit testing" OFF)
 option(ENABLE_REPORT "Enable generation of coverage report after tests. Requires ENABLE_COVERAGE" OFF)

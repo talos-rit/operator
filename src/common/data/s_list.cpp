@@ -1,4 +1,4 @@
-#include "data/s_list.hpp"
+#include "data/s_list.h"
 
 #include <stdio.h>
 #include <string.h>
