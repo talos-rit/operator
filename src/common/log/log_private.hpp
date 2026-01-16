@@ -7,10 +7,10 @@
 #include <stdint.h>
 #include <time.h>
 
-#include "data/s_list.h"
-#include "log/log.h"
+#include "data/s_list.hpp"
+#include "log/log.hpp"
 
-const char *const _LOG_level_color[] = {
+const char* const _LOG_level_color[] = {
     BRED,  // Fatal
     RED,   // Error
     YEL,   // Warn
@@ -22,7 +22,7 @@ const char *const _LOG_level_color[] = {
 #undef LOG_LEVEL_ENTRY
 #endif
 #define LOG_LEVEL_ENTRY(entry) #entry
-const char *const log_level_names[] = {LOG_LEVEL_ENTRIES};
+const char* const log_level_names[] = {LOG_LEVEL_ENTRIES};
 #undef LOG_LEVEL_ENTRY
 
 /** Buffer for Log Entry */
@@ -43,7 +43,7 @@ typedef struct _log_buffer {
 typedef struct _log_config {
   bool en;        /** Indicates log enabled vs disabled */
   bool print_loc; /** Indicates whether or not to print source file locations */
-  const char *path; /** Path of log file */
+  const char* path; /** Path of log file */
 } LOG_Config;
 
 /** Log Module Resources */
@@ -56,7 +56,7 @@ typedef struct _log {
   // LOG_Buffer buffer_pool[LOG_MAX_BUFFER];     /** Statically allocated pool
   // of Log buffers to rotate through */
   uint32_t pool_count;     /** Number of LOG_Buffers in buffer_pool */
-  LOG_Buffer *buffer_pool; /** Dynamically allocated pool of Log buffers to
+  LOG_Buffer* buffer_pool; /** Dynamically allocated pool of Log buffers to
                               rotate through */
   S_List wr_queue; /** Queue of Log Buffers waiting to write to console/file */
   S_List free_queue; /** Queue of available Log Buffers */

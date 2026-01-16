@@ -1,20 +1,20 @@
-#include "acl/acl.h"
+#include "acl/acl.hpp"
 
 #include <math.h>
 #include <stddef.h>
 #include <stdio.h>
 #include <string.h>
 
-#include "acl/acl_private.h"
-#include "log/log.h"
-#include "util/comm.h"
+#include "acl/acl_private.hpp"
+#include "log/log.hpp"
+#include "util/comm.hpp"
 
 #define LOG_CONSOLE_THRESHOLD_THIS LOG_THRESHOLD_DEFAULT
 #define LOG_FILE_THRESHOLD_THIS LOG_THRESHOLD_MAX
 
 ACL_Resources resources;
 
-int ACL_Command_init(ACL_Command *cmd) {
+int ACL_Command_init(ACL_Command* cmd) {
   if (!cmd) STD_FAIL;
 
   memset(cmd, 0, sizeof(ACL_Command));
@@ -30,7 +30,7 @@ int ACL_Command_init(ACL_Command *cmd) {
 int ACL_init() {
   memset(&resources, 0, sizeof(resources));
   resources.cmd_pool =
-      (ACL_Command *)malloc(ACL_CMD_COUNT * sizeof(ACL_Command));
+      (ACL_Command*)malloc(ACL_CMD_COUNT * sizeof(ACL_Command));
   resources.cmd_count = ACL_CMD_COUNT;
 
   for (uint16_t iter = 0; iter < ACL_CMD_COUNT; iter++) {
@@ -56,15 +56,15 @@ int ACL_destroy() {
  * @brief Helper function for fetching initialized ACL Command structs
  * @returns ACL Command pointer on success, NULL on failure
  */
-static ACL_Command *get_cmd(S_List *cmd_queue) {
+static ACL_Command* get_cmd(S_List* cmd_queue) {
   if (!cmd_queue) STD_FAIL_VOID_PTR;
-  S_List_Node *node = DATA_S_List_pop(&resources.free_queue);
+  S_List_Node* node = DATA_S_List_pop(&resources.free_queue);
   if (!node) STD_FAIL_VOID_PTR;
   return DATA_LIST_GET_OBJ(node, ACL_Command, node);
 }
 
-int ACL_flush_tx(S_List *cmd_queue) {
-  ACL_Command *cmd = get_cmd(cmd_queue);
+int ACL_flush_tx(S_List* cmd_queue) {
+  ACL_Command* cmd = get_cmd(cmd_queue);
   if (!cmd) STD_FAIL;
 
   cmd->type = ACL_CMD_FLUSH;
@@ -75,8 +75,8 @@ int ACL_flush_tx(S_List *cmd_queue) {
   return 0;
 }
 
-int ACL_enqueue_clrbuf_cmd(S_List *cmd_queue) {
-  ACL_Command *cmd = get_cmd(cmd_queue);
+int ACL_enqueue_clrbuf_cmd(S_List* cmd_queue) {
+  ACL_Command* cmd = get_cmd(cmd_queue);
   if (!cmd) STD_FAIL;
 
   cmd->type = ACL_CMD_ABORT;
@@ -87,8 +87,8 @@ int ACL_enqueue_clrbuf_cmd(S_List *cmd_queue) {
   return 0;
 }
 
-int ACL_enqueue_manual_mode_toggle_cmd(S_List *cmd_queue) {
-  ACL_Command *cmd = get_cmd(cmd_queue);
+int ACL_enqueue_manual_mode_toggle_cmd(S_List* cmd_queue) {
+  ACL_Command* cmd = get_cmd(cmd_queue);
   if (!cmd) STD_FAIL;
 
   cmd->type = ACL_CMD_MANUAL;
@@ -98,7 +98,7 @@ int ACL_enqueue_manual_mode_toggle_cmd(S_List *cmd_queue) {
   return 0;
 }
 
-char ACL_get_polar_pan_continuous_vector(API::PolarPanStart *payload) {
+char ACL_get_polar_pan_continuous_vector(API::PolarPanStart* payload) {
   if (!payload) STD_FAIL;
 
   ACL_Manual_Axis vector;
@@ -116,9 +116,9 @@ char ACL_get_polar_pan_continuous_vector(API::PolarPanStart *payload) {
   return (char)vector;
 }
 
-int ACL_enqueue_shift_cmd(S_List *cmd_queue, ACL_Axis axis,
+int ACL_enqueue_shift_cmd(S_List* cmd_queue, ACL_Axis axis,
                           float degree_count) {
-  ACL_Command *cmd = get_cmd(cmd_queue);
+  ACL_Command* cmd = get_cmd(cmd_queue);
   if (!cmd) STD_FAIL;
 
   int encoder_count;
@@ -150,8 +150,8 @@ int ACL_enqueue_shift_cmd(S_List *cmd_queue, ACL_Axis axis,
   return 0;
 }
 
-int ACL_enqueue_here_cmd(S_List *cmd_queue) {
-  ACL_Command *cmd = get_cmd(cmd_queue);
+int ACL_enqueue_here_cmd(S_List* cmd_queue) {
+  ACL_Command* cmd = get_cmd(cmd_queue);
   if (!cmd) STD_FAIL;
 
   cmd->len = sprintf(&cmd->payload[0], ACL_HERE_FMT, ACL_VAR_POS);
@@ -162,8 +162,8 @@ int ACL_enqueue_here_cmd(S_List *cmd_queue) {
   return 0;
 }
 
-int ACL_enqueue_delay(S_List *cmd_queue, uint16_t delay_ms) {
-  ACL_Command *cmd = get_cmd(cmd_queue);
+int ACL_enqueue_delay(S_List* cmd_queue, uint16_t delay_ms) {
+  ACL_Command* cmd = get_cmd(cmd_queue);
   if (!cmd) STD_FAIL;
 
   cmd->len = 0;
@@ -174,8 +174,8 @@ int ACL_enqueue_delay(S_List *cmd_queue, uint16_t delay_ms) {
   return 0;
 }
 
-int ACL_enqueue_move_cmd(S_List *cmd_queue) {
-  ACL_Command *cmd = get_cmd(cmd_queue);
+int ACL_enqueue_move_cmd(S_List* cmd_queue) {
+  ACL_Command* cmd = get_cmd(cmd_queue);
   if (!cmd) STD_FAIL;
 
   cmd->len = sprintf(&cmd->payload[0], ACL_MOVE_FMT, ACL_VAR_POS);
@@ -185,8 +185,8 @@ int ACL_enqueue_move_cmd(S_List *cmd_queue) {
   return 0;
 }
 
-int ACL_generate_enqueue_moved_cmd(S_List *cmd_queue) {
-  ACL_Command *cmd = get_cmd(cmd_queue);
+int ACL_generate_enqueue_moved_cmd(S_List* cmd_queue) {
+  ACL_Command* cmd = get_cmd(cmd_queue);
   if (!cmd) STD_FAIL;
 
   cmd->len = sprintf(&cmd->payload[0], ACL_MOVED_FMT, ACL_VAR_POS);
@@ -196,8 +196,8 @@ int ACL_generate_enqueue_moved_cmd(S_List *cmd_queue) {
   return 0;
 }
 
-int ACL_generate_enqueue_home_cmd(S_List *cmd_queue) {
-  ACL_Command *cmd = get_cmd(cmd_queue);
+int ACL_generate_enqueue_home_cmd(S_List* cmd_queue) {
+  ACL_Command* cmd = get_cmd(cmd_queue);
   if (!cmd) STD_FAIL;
 
   cmd->len = sprintf(&cmd->payload[0], ACL_HOME_FMT);
@@ -208,8 +208,8 @@ int ACL_generate_enqueue_home_cmd(S_List *cmd_queue) {
   return 0;
 }
 
-int ACL_generate_enqueue_defp_cmd(S_List *cmd_queue) {
-  ACL_Command *cmd = get_cmd(cmd_queue);
+int ACL_generate_enqueue_defp_cmd(S_List* cmd_queue) {
+  ACL_Command* cmd = get_cmd(cmd_queue);
   if (!cmd) STD_FAIL;
 
   cmd->len = sprintf(&cmd->payload[0], ACL_DEFP_FMT, ACL_VAR_POS);
@@ -225,7 +225,7 @@ int ACL_generate_enqueue_defp_cmd(S_List *cmd_queue) {
  * @param cmd_queue Command Queue to append to
  * @param pan Polar pan parameters
  */
-static void polar_pan_body(S_List *cmd_queue, const API::PolarPan *pan) {
+static void polar_pan_body(S_List* cmd_queue, const API::PolarPan* pan) {
   if (pan->delta_azimuth != 0) {
     LOG_VERBOSE(4, "Converting Delta Azimuth");
     ACL_enqueue_shift_cmd(cmd_queue, ACL_AXIS_BASE, pan->delta_azimuth);
@@ -237,8 +237,7 @@ static void polar_pan_body(S_List *cmd_queue, const API::PolarPan *pan) {
   }
 }
 
-int ACL_convert_polar_pan_abort(S_List *cmd_queue,
-                                const API::PolarPan *pan) {
+int ACL_convert_polar_pan_abort(S_List* cmd_queue, const API::PolarPan* pan) {
   if (!cmd_queue) STD_FAIL;
   if (!pan) STD_FAIL;
 
@@ -252,8 +251,7 @@ int ACL_convert_polar_pan_abort(S_List *cmd_queue,
   return 0;
 }
 
-int ACL_convert_polar_pan_direct(S_List *cmd_queue,
-                                 const API::PolarPan *pan) {
+int ACL_convert_polar_pan_direct(S_List* cmd_queue, const API::PolarPan* pan) {
   if (!cmd_queue) STD_FAIL;
   if (!pan) STD_FAIL;
 
@@ -265,8 +263,7 @@ int ACL_convert_polar_pan_direct(S_List *cmd_queue,
   return 0;
 }
 
-int ACL_convert_polar_pan_ignore(S_List *cmd_queue,
-                                 const API::PolarPan *pan) {
+int ACL_convert_polar_pan_ignore(S_List* cmd_queue, const API::PolarPan* pan) {
   if (!cmd_queue) STD_FAIL;
   if (!pan) STD_FAIL;
 
@@ -278,7 +275,7 @@ int ACL_convert_polar_pan_ignore(S_List *cmd_queue,
   return 0;
 }
 
-int ACL_home_sequence(S_List *cmd_queue) {
+int ACL_home_sequence(S_List* cmd_queue) {
   if (!cmd_queue) STD_FAIL;
 
   ACL_generate_enqueue_defp_cmd(cmd_queue);

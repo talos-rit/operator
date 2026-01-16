@@ -1,13 +1,14 @@
-#include "util/timestamp.h"
+#include "util/timestamp.hpp"
 
 #include <stdint.h>
 #include <stdio.h>
 #include <string.h>
 #include <sys/time.h>
-#include <time.h>
 
-#include "log/log.h"
-#include "util/array.h"
+#include <time.hpp>
+
+#include "log/log.hpp"
+#include "util/array.hpp"
 
 // NOTE: can't use debug logs: logs use timestamps
 

@@ -2,7 +2,7 @@
 
 #include <stdint.h>
 
-#include "conf/config.h"
+#include "conf/config.hpp"
 
 #define SOCKET_CONF_BINDING_ADDR_KEY "socket_address"
 #define SOCKET_CONF_BINDING_ADDR_DEFAULT "0.0.0.0"
@@ -36,7 +36,7 @@ class SocketConfig : virtual public Config {
    * @param addr binding address to set in config
    * @returns 0 on success, -1 on failure
    */
-  int SetBindingAddress(const char *addr);
+  int SetBindingAddress(const char* addr);
 
   /**
    * @brief Gets config for socket port

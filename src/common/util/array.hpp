@@ -7,7 +7,7 @@
 #include <stdint.h>
 #include <stdio.h>
 
-#include "util/comm.h"
+#include "util/comm.hpp"
 
 #define UTIL_len(arr) (sizeof(arr) / sizeof(arr[0]))
 #define UTIL_modulo(a, b) (((a % b) + b) % b)
@@ -30,7 +30,7 @@
  * @param len Length of byte source
  * @returns 0 on success, -1 on failure
  */
-inline int UTIL_format_byte_str(char *dst, const uint8_t *src, uint16_t len) {
+inline int UTIL_format_byte_str(char* dst, const uint8_t* src, uint16_t len) {
   if (!dst || !src) return -1;
 
   sprintf(dst, "INIT");

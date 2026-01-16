@@ -18,8 +18,8 @@
 #include <stdint.h>
 // #include <stdatomic.h>
 
-#include "data/s_list.h"
-#include "log/log_ansi_color.h"
+#include "data/s_list.hpp"
+#include "log/log_ansi_color.hpp"
 
 #define LOG_USE_LOCATION false
 #define LOG_USE_COLOR true
@@ -44,8 +44,8 @@
 #define LOG_LEVEL_ENTRY(entry) LOG_##entry
 typedef enum _log_level { LOG_LEVEL_ENTRIES } LOG_level;
 
-extern const char *const _LOG_level_color[];
-extern const char *const log_level_names[];
+extern const char* const _LOG_level_color[];
+extern const char* const log_level_names[];
 
 // Threshold shortcuts
 
@@ -71,8 +71,8 @@ extern const char *const log_level_names[];
  * @brief Creates an asynchronous print request
  * @return 0 on success, -1 on failure
  */
-int8_t LOG_print(const char *file, uint16_t line, int8_t console_threshold,
-                 int8_t file_threshold, int8_t level, const char *fmt, ...);
+int8_t LOG_print(const char* file, uint16_t line, int8_t console_threshold,
+                 int8_t file_threshold, int8_t level, const char* fmt, ...);
 
 /**
  * @brief Prepares the logs functions; Should be one of the very first lines in
@@ -88,7 +88,7 @@ int8_t LOG_prep();
  * @param log_loc Location of the log file
  * @return 0 on success, -1 on failure
  */
-int8_t LOG_init(const char *log_loc);
+int8_t LOG_init(const char* log_loc);
 
 /**
  * @brief Starts the log thread

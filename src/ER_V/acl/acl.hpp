@@ -11,7 +11,7 @@
 #include <stdint.h>
 
 #include "api/api.hpp"
-#include "data/s_list.h"
+#include "data/s_list.hpp"
 
 #define ACL_CMD_SIZE 64
 
@@ -64,7 +64,7 @@ int ACL_init();
  * Commands
  * @returns 0 on success, -1 on failure
  */
-int ACL_flush_tx(S_List *cmd_queue);
+int ACL_flush_tx(S_List* cmd_queue);
 
 /**
  * @brief Dellocates memory for an ACL_Resource's array of ACL_Commands
@@ -82,7 +82,7 @@ int ACL_destroy();
  * @param cmd ACL_Command to initialize
  * @returns 0 on success, -1 on failure
  */
-int ACL_Command_init(ACL_Command *cmd);
+int ACL_Command_init(ACL_Command* cmd);
 
 /**
  * @brief Populates cmd_queue with a formatted queue for executing a polar pan,
@@ -94,7 +94,7 @@ int ACL_Command_init(ACL_Command *cmd);
  * @param pan Polar Pan command struct pointer
  * @returns 0 on success, -1 on failure
  */
-int ACL_convert_polar_pan_abort(S_List *cmd_queue, const API::PolarPan *pan);
+int ACL_convert_polar_pan_abort(S_List* cmd_queue, const API::PolarPan* pan);
 
 /**
  * @brief Populates cmd_queue with a formatted queue for executing a polar pan,
@@ -106,7 +106,7 @@ int ACL_convert_polar_pan_abort(S_List *cmd_queue, const API::PolarPan *pan);
  * @param pan Polar Pan command struct pointer
  * @returns 0 on success, -1 on failure
  */
-int ACL_convert_polar_pan_direct(S_List *cmd_queue, const API::PolarPan *pan);
+int ACL_convert_polar_pan_direct(S_List* cmd_queue, const API::PolarPan* pan);
 
 /**
  * @brief Populates cmd_queue with a formatted queue for executing a polar pan,
@@ -119,7 +119,7 @@ int ACL_convert_polar_pan_direct(S_List *cmd_queue, const API::PolarPan *pan);
  * @param pan Polar Pan command struct pointer
  * @returns 0 on success, -1 on failure
  */
-int ACL_convert_polar_pan_ignore(S_List *cmd_queue, const API::PolarPan *pan);
+int ACL_convert_polar_pan_ignore(S_List* cmd_queue, const API::PolarPan* pan);
 
 /**
  * @brief Populates cmd_queue with a formatted queue for toggle manual mode on
@@ -127,14 +127,14 @@ int ACL_convert_polar_pan_ignore(S_List *cmd_queue, const API::PolarPan *pan);
  * @details Only works when the Scorbot ER V controller is in DIRECT mode
  * @returns 0 on success, -1 on failure
  */
-int ACL_enqueue_manual_mode_toggle_cmd(S_List *cmd_queue);
+int ACL_enqueue_manual_mode_toggle_cmd(S_List* cmd_queue);
 
 /**
  * @brief Allocates and enqueues ACL HOME Command in input cmd_queue
  * @param cmd_queue S_List to append to
  * @returns 0 on success, -1 on failure
  */
-int ACL_enqueue_here_cmd(S_List *cmd_queue);
+int ACL_enqueue_here_cmd(S_List* cmd_queue);
 
 /**
  * @brief Inserts a delay into the cmd_queue sequence
@@ -142,7 +142,7 @@ int ACL_enqueue_here_cmd(S_List *cmd_queue);
  * @param delay_ms Number of milliseconds to delay
  * @returns 0 on success, -1 on failure
  */
-int ACL_enqueue_delay(S_List *cmd_queue, uint16_t delay_ms);
+int ACL_enqueue_delay(S_List* cmd_queue, uint16_t delay_ms);
 
 /**
  * @brief Generates and enqueues a home command and sets ACL_VAR_POS as the
@@ -150,11 +150,11 @@ int ACL_enqueue_delay(S_List *cmd_queue, uint16_t delay_ms);
  * @param cmd_queue The command queue to fill
  * @returns 0 on success, -1 on failure
  */
-int ACL_home_sequence(S_List *cmd_queue);
+int ACL_home_sequence(S_List* cmd_queue);
 
 /**
  * @brief Returns the ACL character corresponding to the desired angular vector,
  * according to the received payload
  * @returns Corresponding ACL character on success, NULL character on failure
  */
-char ACL_get_polar_pan_continuous_vector(API::PolarPanStart *payload);
+char ACL_get_polar_pan_continuous_vector(API::PolarPanStart* payload);
