@@ -11,7 +11,7 @@ TEST_GROUP(IchorArmTest)
     {
         // TODO: Provide appropriate constructor arguments
         // const char *isr_dev, const char *i2c_dev, uint8_t dac0_addr, uint8_t dac1_addr, uint8_t adc_addr
-        ichorArm = new Ichor("/dev/ichor0", "/dev/i2c0", 0x10, 0x11, 0x12);
+        ichorArm = new Ichor("/dev/i2c0", 0x10, 0x11);
     }
     
     void teardown()
