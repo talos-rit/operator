@@ -5,9 +5,9 @@
 #include "CppUTest/TestHarness.h"
 #include "log/log.h"
 
-TEST_GROUP(base){};
+TEST_GROUP(s_list_base){};
 
-TEST(base, node_init) {
+TEST(s_list_base, node_init) {
   S_List_Node node;
   node.next = (S_List_Node *)-5;
 
@@ -16,7 +16,7 @@ TEST(base, node_init) {
   POINTERS_EQUAL(NULL, node.next);
 }
 
-TEST(base, list_init) {
+TEST(s_list_base, list_init) {
   S_List list;
   list.head = (S_List_Node *)-1;
   list.tail = (S_List_Node *)-2;
@@ -29,7 +29,7 @@ TEST(base, list_init) {
   CHECK_EQUAL(0, list.len);
 }
 
-TEST_GROUP(nominal) {
+TEST_GROUP(s_list_nominal) {
   S_List list;
   S_List_Node node;
 
@@ -41,7 +41,7 @@ TEST_GROUP(nominal) {
   void teardown() { DATA_S_List_deinit(&list); }
 };
 
-TEST(nominal, append_onto_empty) {
+TEST(s_list_nominal, append_onto_empty) {
   POINTERS_EQUAL(NULL, list.head);
   POINTERS_EQUAL(NULL, list.tail);
   CHECK_EQUAL(0, list.len);
@@ -54,7 +54,7 @@ TEST(nominal, append_onto_empty) {
   CHECK_EQUAL(1, list.len);
 }
 
-TEST(nominal, insert_into_empty) {
+TEST(s_list_nominal, insert_into_empty) {
   POINTERS_EQUAL(NULL, list.head);
   POINTERS_EQUAL(NULL, list.tail);
   CHECK_EQUAL(0, list.len);
@@ -67,7 +67,7 @@ TEST(nominal, insert_into_empty) {
   CHECK_EQUAL(1, list.len);
 }
 
-TEST(nominal, prepend_onto_empty) {
+TEST(s_list_nominal, prepend_onto_empty) {
   POINTERS_EQUAL(NULL, list.head);
   POINTERS_EQUAL(NULL, list.tail);
   CHECK_EQUAL(0, list.len);
@@ -80,7 +80,7 @@ TEST(nominal, prepend_onto_empty) {
   CHECK_EQUAL(1, list.len);
 }
 
-TEST(nominal, pop_last) {
+TEST(s_list_nominal, pop_last) {
   DATA_S_List_append(&list, &node);
 
   POINTERS_EQUAL(NULL, node.next);
@@ -95,7 +95,7 @@ TEST(nominal, pop_last) {
   CHECK_EQUAL(0, list.len);
 }
 
-TEST_GROUP(nominal_large) {
+TEST_GROUP(s_list_nominal_large) {
   S_List list;
 
   typedef struct _test_struct {
@@ -108,7 +108,7 @@ TEST_GROUP(nominal_large) {
   const uint8_t structs_len = 5;
 
   void setup() {
-    LOG_init();
+    // LOG_init();
     DATA_S_List_init(&list);
     for (uint8_t n_iter = 0; n_iter < structs_len; n_iter++) {
       structs[n_iter].id = n_iter;
@@ -123,7 +123,7 @@ TEST_GROUP(nominal_large) {
   }
 };
 
-TEST(nominal_large, append_and_pop) {
+TEST(s_list_nominal_large, append_and_pop) {
   for (uint8_t n_iter = 0; n_iter < structs_len; n_iter++) {
     CHECK_EQUAL(n_iter, list.len);
     CHECK_EQUAL(0, DATA_S_List_append(&list, &structs[n_iter].node));
@@ -155,7 +155,7 @@ TEST(nominal_large, append_and_pop) {
   POINTERS_EQUAL(NULL, DATA_S_List_pop(&list));
 }
 
-TEST(nominal_large, append_and_insert) {
+TEST(s_list_nominal_large, append_and_insert) {
   // Append 0,1,3,4
   for (uint8_t n_iter = 0; n_iter < 2; n_iter++) {
     CHECK_EQUAL(n_iter, list.len);
@@ -195,7 +195,7 @@ TEST(nominal_large, append_and_insert) {
   }
 }
 
-TEST(nominal_large, append_and_prepend) {
+TEST(s_list_nominal_large, append_and_prepend) {
   // Append 1,2,3,4
   for (uint8_t n_iter = 1; n_iter < structs_len; n_iter++) {
     CHECK_EQUAL(n_iter - 1, list.len);
