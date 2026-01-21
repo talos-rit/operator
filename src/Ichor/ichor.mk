@@ -29,22 +29,26 @@ PHONIES 	+= all ichor_re clean fclean
 
 
 # Executable
-ichor: $(COMMON_OBJS) $(ICHOR_OBJS) $(ICHOR_MAIN)
+$(BIN_DIR)/ichor: $(COMMON_OBJS) $(ICHOR_OBJS) $(ICHOR_MAIN)
 	@mkdir -p $(dir $@)
-	$(CC) $^ $(FLAGS) -o $(BIN_DIR)/$@
+	$(CC) $^ $(FLAGS) -o $@
 	@echo "    Target    $@"
 
-ichor_test: ichor_re $(COMMON_OBJS) $(COMMON_UTEST_OBJS) $(ICHOR_OBJS) $(ICHOR_UTEST_OBJS)
+$(BIN_DIR)/ichor_test: ichor_re $(COMMON_OBJS) $(COMMON_UTEST_OBJS) $(ICHOR_OBJS) $(ICHOR_UTEST_OBJS)
 	@mkdir -p $(dir $@)
-	$(CC) $(filter-out $(PHONIES),$^) $(FLAGS) $(UTEST_LIB) -o $(BIN_DIR)/$@
-	$(BIN_DIR)/$@
+	$(CC) $(filter-out $(PHONIES),$^) $(FLAGS) $(UTEST_LIB) -o $@
+	$@
 
-dummy: $(COMMON_OBJS) $(ICHOR_OBJS) $(SRC_DIR)/$(ICHOR_DIR)/dummy_main.cpp
+$(BIN_DIR)/dummy: $(COMMON_OBJS) $(ICHOR_OBJS) $(SRC_DIR)/$(ICHOR_DIR)/dummy_main.cpp
 	@mkdir -p $(dir $@)
-	$(CC) $^ $(FLAGS) -o $(BIN_DIR)/$@
+	$(CC) $^ $(FLAGS) -o $@
 	@echo "    Target    $@"
 
 ichor_re: fclean
+
+ichor: $(BIN_DIR)/ichor
+ichor_test: $(BIN_DIR)/ichor_test
+dummy: $(BIN_DIR)/dummy
 
 #------------------------------------------------#
 #   SPEC                                         #
