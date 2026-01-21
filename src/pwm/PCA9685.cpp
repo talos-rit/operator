@@ -144,8 +144,6 @@ bool PCA9685::writeChannelRegisters(Channel channel, uint16_t on,
     return false;
   }
   ChannelRegisters regs = getChannelRegisters(channel);
-  uint8_t buffer[5];
-  buffer[0] = static_cast<uint8_t>(regs.on_low);
 
   // The PCA9685 uses 12-bit PWM values for each channel (0–4095).
   // These 12 bits are split across two 8-bit registers:
@@ -164,10 +162,11 @@ bool PCA9685::writeChannelRegisters(Channel channel, uint16_t on,
   // 0xFF = 1111 1111b  -> mask for low byte
   // 0x0F = 0000 1111b  -> mask for PWM bits 11..8 in high byte
   //
-  buffer[1] = static_cast<uint8_t>(on & 0xFF);
-  buffer[2] = static_cast<uint8_t>((on >> 8) & 0x1F);
-  buffer[3] = static_cast<uint8_t>(off & 0xFF);
-  buffer[4] = static_cast<uint8_t>((off >> 8) & 0x1F);
+  //
+  uint8_t buffer[5] = {
+      static_cast<uint8_t>(regs.on_low), static_cast<uint8_t>(on & 0xFF),
+      static_cast<uint8_t>((on >> 8) & 0x1F), static_cast<uint8_t>(off & 0xFF),
+      static_cast<uint8_t>((off >> 8) & 0x1F)};
 
   ssize_t bytes_written = ::write(fd_.get(), buffer, sizeof(buffer));
   return bytes_written == sizeof(buffer);
