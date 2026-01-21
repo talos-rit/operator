@@ -40,6 +40,19 @@ dummy: $(COMMON_OBJS) $(ICHOR_OBJS) $(SRC_DIR)/$(ICHOR_DIR)/dummy_main.cpp
 	$(CC) $^ $(FLAGS) -o $(BIN_DIR)/$@
 	@echo "    Target    $@"
 
+analyze_ichor: 
+	@echo "Creating compile_commands.json for Ichor..."
+	make clean
+	@bear --output $(SRC_DIR)/$(ICHOR_DIR)/compile_commands.json -- $(MAKE) ichor
+
+	@echo "Analyzing Ichor with cppcheck..."
+	@cppcheck --enable=all --inconclusive --project=src/Ichor/compile_commands.json --language=c++ --platform=unix64 2> ichor_cppcheck.txt
+	@echo "Ichor cppcheck analysis complete. Results saved to ichor_cppcheck.txt"
+	
+	@echo "Analyzing Ichor with clang-tidy..."
+	@run-clang-tidy -p src/Ichor/ -quiet > ichor_clang_tidy.txt
+	@echo "Ichor clang-tidy analysis complete. Results saved to ichor_clang_tidy.txt"
+
 ichor_re: fclean
 
 #------------------------------------------------#

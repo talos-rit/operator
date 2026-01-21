@@ -35,6 +35,18 @@ erv: $(COMMON_OBJS) $(ERV_OBJS) $(ERV_MAIN)
 erv_re:
 	@$(RM) $(OBJ_DIR)/$(ERV_DIR)
 
+analyze_erv: 
+	@echo "Creating compile_commands.json for ER_V..."
+	make clean
+	@bear --output $(SRC_DIR)/$(ERV_DIR)/compile_commands.json -- $(MAKE) erv
+
+	@echo "Analyzing ER_V with cppcheck..."
+	@cppcheck --enable=all --inconclusive --project=src/ER_V/compile_commands.json --language=c++ --platform=unix64 2> erv_cppcheck.txt
+	@echo "ER V cppcheck analysis complete. Results saved to erv_cppcheck.txt"
+	
+	@echo "Analyzing ER_V with clang-tidy..."
+	@run-clang-tidy -p src/ER_V/ -quiet > erv_clang_tidy.txt
+	@echo "ER V clang-tidy analysis complete. Results saved to erv_clang_tidy.txt"
 
 #------------------------------------------------#
 #   SPEC                                         #
