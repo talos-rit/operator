@@ -4,6 +4,7 @@
 #include <linux/i2c-dev.h>
 #include <sys/ioctl.h>
 
+#include <cstdint>
 #include <stdexcept>
 
 MCP23017::MCP23017(const std::string& device_path, uint8_t address)
@@ -27,17 +28,27 @@ MCP23017::~MCP23017() {}
 
 bool MCP23017::initialize() {
   if (!writeRegister(Register::GPINTEN_A, 0x00)) {
-    throw std::runtime_error("Failed to initialize MCP23017");
+    return false;
   }
 
   if (!writeRegister(Register::GPINTEN_B, 0x00)) {
-    throw std::runtime_error("Failed to initialize MCP23017");
+    return false;
   }
+
+  return true;
 }
 
 bool MCP23017::setMirror() {
-  auto iocon_a = readRegister(Register::IOCON_A);
-  auto iocon_b = readRegister(Register::IOCON_B);
+  bool ret;
+  uint8_t iocon_a, iocon_b;
+  ret = readRegister(Register::IOCON_A, iocon_a);
+  if (!ret) {
+    return false;
+  }
+  ret = readRegister(Register::IOCON_B, iocon_b);
+  if (!ret) {
+    return false;
+  }
   iocon_a |=
       (1 << 6);  // Set MIRROR bit while preserving other configuration bits
   iocon_b |=
@@ -49,12 +60,16 @@ bool MCP23017::setMirror() {
 
 bool MCP23017::setPinMode(uint8_t pin, Port port, bool isOutput) {
   if (pin > 7) {
-    throw std::invalid_argument("Invalid pin number");
+    return false;
   }
 
   Register iodir_reg =
       (port == Port::A) ? Register::IODIR_A : Register::IODIR_B;
-  auto iodir = readRegister(iodir_reg);
+  uint8_t iodir;
+  bool ret = readRegister(iodir_reg, iodir);
+  if (!ret) {
+    return false;
+  }
   if (isOutput) {
     iodir &= ~(1 << pin);  // Set as output
   } else {
@@ -63,14 +78,19 @@ bool MCP23017::setPinMode(uint8_t pin, Port port, bool isOutput) {
   return writeRegister(iodir_reg, iodir);
 }
 
-bool MCP23017::readPin(uint8_t pin, Port port) {
+bool MCP23017::readPin(uint8_t pin, Port port, bool& out) {
   if (pin > 7) {
-    throw std::invalid_argument("Invalid pin number");
+    return false;
   }
 
   Register gpio_reg = (port == Port::A) ? Register::GPIO_A : Register::GPIO_B;
-  auto gpio = readRegister(gpio_reg);
-  return (gpio >> pin) & 0x01;
+  uint8_t gpio;
+  bool ret = readRegister(gpio_reg, gpio);
+  if (!ret) {
+    return false;
+  }
+  out = (gpio >> pin) & 0x01;
+  return true;
 }
 
 
@@ -80,18 +100,19 @@ bool MCP23017::writeRegister(MCP23017::Register reg, uint8_t value) {
   return bytes_written == sizeof(buffer);
 }
 
-uint8_t MCP23017::readRegister(MCP23017::Register reg) {
+bool MCP23017::readRegister(MCP23017::Register reg, uint8_t& out) {
   uint8_t addr = static_cast<uint8_t>(reg);
   ssize_t bytes_written = ::write(fd_.get(), &addr, 1);
   if (bytes_written != 1) {
-    throw std::runtime_error("Failed to write register address");
+    return false;
   }
 
   uint8_t value;
   ssize_t bytes_read = ::read(fd_.get(), &value, 1);
   if (bytes_read != 1) {
-    throw std::runtime_error("Failed to read register value");
+    return false;
   }
 
-  return value;
+  out = value;
+  return true;
 }

@@ -53,10 +53,10 @@ class MCP23017 {
    * port: 0 for GPIOA, 1 for GPIOB
    * Returns true if the pin is HIGH, false if LOW
    */
-  bool readPin(uint8_t pin, Port port);
+  bool readPin(uint8_t pin, Port port, bool& out);
 
  private:
-  uint8_t readRegister(Register reg);
+  bool readRegister(Register reg, uint8_t& out);
   bool writeRegister(Register reg, uint8_t value);
 
   FileDescriptor fd_;
