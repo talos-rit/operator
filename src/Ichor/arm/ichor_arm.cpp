@@ -23,8 +23,6 @@ Ichor::Ichor(const char* i2c_dev, uint8_t dac0_addr, uint8_t dac1_addr) {
   mcp_gpio = new MCP23017("/dev/i2c-1", 0x21);
   for (uint8_t pin = 0; pin < 5; pin++) {
     mcp_gpio->setPinMode(pin, MCP23017::Port::A, false);  // Set as input
-    mcp_gpio->setInterrupt(pin, MCP23017::Port::A,
-                           MCP23017::InterruptMode::FALLING);
   }
   // TODO: Add adc
 }
@@ -41,16 +39,6 @@ bool Ichor::initialize() {
 
 void Ichor::poll() {
   // TODO                 // Check ADC values (overcurrent / overexertion)
-
-  std::span<const MCP23017::InterruptPin> status =
-      mcp_gpio->getInterruptStatuses(MCP23017::Port::A);
-
-  for (const auto& pin : status) {
-    if (pin.port == MCP23017::Port::A) {
-      LOG_WARN("GPIO Interrupt on MCP23017 Port A Pin %d", pin.pin);
-      // Handle specific pin interrupts here
-    }
-  }
 
   usleep(25e3);  // 25 ms delay (defacto delay in Talos Operator so far)
 }
