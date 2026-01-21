@@ -10,7 +10,8 @@
 class MCP23017 {
  public:
   enum class Register : uint8_t {
-    IOCON = 0x0A,
+    IOCON_A = 0x0A,
+    IOCON_B = 0x0B,
     IODIR_A = 0x00,
     IODIR_B = 0x01,
     GPIO_A = 0x12,
@@ -29,20 +30,18 @@ class MCP23017 {
   };
 
   enum class Port { A = 0, B = 1 };
-  enum class InterruptMode { NONE = 0, RISING = 1, FALLING = 2, CHANGE = 3 };
-
-  struct InterruptPin {
-    Port port;
-    uint8_t pin;
-  };
 
   MCP23017(const std::string& device_path, uint8_t address);
   ~MCP23017();
 
+  /* Initializes the MCP23017 by setting all pins as inputs and
+   * disabling interrupts.
+   */
+  bool initialize();
+
   /* Sets the mirror bit in the IOCON register.
    * When set, INT pins are internally connected.
    */
-
   bool setMirror();
   /* Sets the mode of a pin on the specified port.
    * port: 0 for GPIOA, 1 for GPIOB
@@ -56,25 +55,10 @@ class MCP23017 {
    */
   bool readPin(uint8_t pin, Port port);
 
-  /* Configures interrupt for a pin on the specified port.
-   * mode: NONE, RISING, FALLING, CHANGE
-   */
-  bool setInterrupt(uint8_t pin, Port port, InterruptMode mode);
-
-  /* Retrieves the list of pins that have triggered an interrupt
-   * on the specified port since the last call.
-   */
-  std::span<const InterruptPin> getInterruptStatuses(Port port);
-
  private:
   uint8_t readRegister(Register reg);
   bool writeRegister(Register reg, uint8_t value);
-  InterruptMode getInterruptMode(uint8_t pin, Port port);
-  bool getPrevPinState(uint8_t pin, Port port);
 
   FileDescriptor fd_;
   uint8_t address_;
-  std::array<InterruptPin, 16> interrupt_buffer_;
-  std::array<InterruptMode, 16> interrupt_modes_;
-  std::array<bool, 16> prev_pin_states_;
 };

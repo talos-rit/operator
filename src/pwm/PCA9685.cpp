@@ -172,15 +172,13 @@ uint8_t PCA9685::readRegister(Register reg) {
   uint8_t reg_addr = static_cast<uint8_t>(reg);
   ssize_t bytes_written = ::write(fd_.get(), &reg_addr, sizeof(reg_addr));
   if (bytes_written != sizeof(reg_addr)) {
-    throw std::runtime_error("Failed to write PCA9685 register address " +
-                             std::to_string(static_cast<uint8_t>(reg)));
+    return 0;
   }
 
   uint8_t value = 0;
   ssize_t bytes_read = ::read(fd_.get(), &value, sizeof(value));
   if (bytes_read != sizeof(value)) {
-    throw std::runtime_error("Failed to read PCA9685 register " +
-                             std::to_string(static_cast<uint8_t>(reg)));
+    return 0;
   }
 
   return value;
@@ -194,7 +192,8 @@ bool PCA9685::writeRegister(Register reg, uint8_t value) {
 
 constexpr PCA9685::ChannelRegisters PCA9685::getChannelRegisters(
     PCA9685::Channel ch) {
-  const uint8_t base_addr = static_cast<uint8_t>(0x06 + 4 * static_cast<uint8_t>(ch));
+  const uint8_t base_addr =
+      static_cast<uint8_t>(0x06 + 4 * static_cast<uint8_t>(ch));
   return {
       static_cast<Register>(base_addr + 0),  // ON_L
       static_cast<Register>(base_addr + 1),  // ON_H
