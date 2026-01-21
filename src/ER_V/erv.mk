@@ -3,7 +3,7 @@
 ####################################### BEG_3 ####
 
 NAME        := erv
-ERV_DIR			:= ER_V
+ERV_DIR     := ER_V
 
 # C sources
 SRCS        := acl/acl.c
@@ -11,17 +11,16 @@ SRCS        := acl/acl.c
 # C++ sources
 MAIN_CPP    := main.cpp
 SRCS_CPP    := erv_arm/erv.cpp
-SRCS_CPP	+= erv_conf/erv_conf.cpp
+SRCS_CPP    += erv_conf/erv_conf.cpp
 
 # Object reformatting
-ERV_OBJS 		:= $(SRCS:%.c=$(OBJ_DIR)/$(ERV_DIR)/%.o)
-ERV_OBJS 		+= $(SRCS_CPP:%.cpp=$(OBJ_DIR)/$(ERV_DIR)/%.o)
-ERV_MAIN 		:= $(MAIN_CPP:%.cpp=$(OBJ_DIR)/$(ERV_DIR)/%.o)
+ERV_OBJS    := $(SRCS:%.c=$(OBJ_DIR)/$(ERV_DIR)/%.o)
+ERV_OBJS    += $(SRCS_CPP:%.cpp=$(OBJ_DIR)/$(ERV_DIR)/%.o)
+ERV_MAIN    := $(MAIN_CPP:%.cpp=$(OBJ_DIR)/$(ERV_DIR)/%.o)
 
 RM          := rm -rf
 # MAKEFLAGS   += --no-print-directory
-PHONIES 	+= erv erv_test erv_re
-
+PHONIES     += erv erv_test erv_re
 erv_print:
 	$(info PHONIES: )
 
