@@ -164,7 +164,7 @@ class PCA9685 {
   static constexpr ChannelRegisters getChannelRegisters(Channel channel);
 
  private:
-  uint8_t readRegister(Register reg);
+  bool readRegister(Register reg, uint8_t& out);
   bool writeRegister(Register reg, uint8_t value);
   bool writeChannelRegisters(Channel channel, uint16_t on, uint16_t off);
   FileDescriptor fd_;

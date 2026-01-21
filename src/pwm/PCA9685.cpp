@@ -48,7 +48,12 @@ bool PCA9685::initialize(float frequency_hz) {
   uint8_t prescale = static_cast<uint8_t>(prescaleval + 0.5f);
 
   // Put the device to sleep to set the prescale
-  uint8_t oldmode = readRegister(Register::MODE1);
+  uint8_t oldmode;
+  bool ret = readRegister(Register::MODE1, oldmode);
+  if (!ret) {
+    LOG_ERROR("Failed to read PCA9685 MODE1 register");
+    return false;
+  }
   uint8_t newmode = (oldmode & 0x7F) | 0x10;  // Sleep
   if (!writeRegister(Register::MODE1, newmode)) {
     LOG_ERROR("Failed to put PCA9685 to sleep");
@@ -168,20 +173,21 @@ bool PCA9685::writeChannelRegisters(Channel channel, uint16_t on,
   return bytes_written == sizeof(buffer);
 };
 
-uint8_t PCA9685::readRegister(Register reg) {
+bool PCA9685::readRegister(Register reg, uint8_t& out) {
   uint8_t reg_addr = static_cast<uint8_t>(reg);
   ssize_t bytes_written = ::write(fd_.get(), &reg_addr, sizeof(reg_addr));
   if (bytes_written != sizeof(reg_addr)) {
-    return 0;
+    return false;
   }
 
   uint8_t value = 0;
   ssize_t bytes_read = ::read(fd_.get(), &value, sizeof(value));
   if (bytes_read != sizeof(value)) {
-    return 0;
+    return false;
   }
 
-  return value;
+  out = value;
+  return true;
 }
 
 bool PCA9685::writeRegister(Register reg, uint8_t value) {
