@@ -15,7 +15,9 @@ PHONIES := clean
 .PHONY: clean
 
 clean:
-	@rm -rf build/
+	@rm -rf build
+
+analyze: clean analyze_erv analyze_ichor
 
 # C
 $(OBJ_DIR)/%.o: $(SRC_DIR)/%.c
