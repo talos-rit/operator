@@ -2,7 +2,8 @@ COMMON_TEST_EXE := common_test
 COMMON_REPORT_DIR := $(REPORT_DIR)/common
 COMMON_TEST_OBJ_DIR := $(TEST_OBJ_DIR)/common
 
-COMMON_UTEST_SRCS := conf/test_config_sys.cpp
+COMMON_UTEST_SRCS := api/test_api.cpp
+COMMON_UTEST_SRCS += conf/test_config_sys.cpp
 COMMON_UTEST_SRCS += conf/test_config_parsing.cpp
 COMMON_UTEST_SRCS += data/s_list_test.cpp
 COMMON_UTEST_SRCS += log/test_log_config.cpp
