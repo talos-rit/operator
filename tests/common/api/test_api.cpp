@@ -180,6 +180,7 @@ TEST(APITest, ValidateCommand_InvalidCommandID)
     header.reserved_1 = 0;
     header.cmd_id = htobe16(0xFFFF); // Invalid command ID
     header.len = htobe16(0);
+    
     uint8_t *buffer = reinterpret_cast<uint8_t *>(&header);
 
     int result = API::validate_command(buffer, sizeof(API::DataHeader));
