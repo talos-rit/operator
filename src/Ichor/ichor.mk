@@ -45,14 +45,16 @@ analyze_ichor:
 	make clean
 	@bear --output $(SRC_DIR)/$(ICHOR_DIR)/compile_commands.json -- $(MAKE) ichor
 
+	@echo "Check if folder for analysis output exists..."
+	@mkdir -p analysis_reports
+
 	@echo "Analyzing Ichor with cppcheck..."
-	@cppcheck --enable=all --inconclusive --project=src/Ichor/compile_commands.json --language=c++ --platform=unix64 2> ichor_cppcheck.txt
-	@echo "Ichor cppcheck analysis complete. Results saved to ichor_cppcheck.txt"
+	@cppcheck --enable=all --inconclusive --project=src/Ichor/compile_commands.json --language=c++ --platform=unix64 2> analysis_reports/ichor_cppcheck.txt
+	@echo "Ichor cppcheck analysis complete. Results saved to analysis_reports/ichor_cppcheck.txt\n"
 	
 	@echo "Analyzing Ichor with clang-tidy..."
-	@run-clang-tidy -p src/Ichor/ -quiet > ichor_clang_tidy.txt
-	@echo "Ichor clang-tidy analysis complete. Results saved to ichor_clang_tidy.txt"
-
+	@run-clang-tidy -p src/Ichor/ -quiet > analysis_reports/ichor_clang_tidy.txt
+	@echo "Ichor clang-tidy analysis complete. Results saved to analysis_reports/ichor_clang_tidy.txt"
 ichor_re: fclean
 
 #------------------------------------------------#

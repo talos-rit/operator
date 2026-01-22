@@ -40,13 +40,16 @@ analyze_erv:
 	make clean
 	@bear --output $(SRC_DIR)/$(ERV_DIR)/compile_commands.json -- $(MAKE) erv
 
+	@echo "Check if folder for analysis output exists..."
+	@mkdir -p analysis_reports
+
 	@echo "Analyzing ER_V with cppcheck..."
-	@cppcheck --enable=all --inconclusive --project=src/ER_V/compile_commands.json --language=c++ --platform=unix64 2> erv_cppcheck.txt
-	@echo "ER V cppcheck analysis complete. Results saved to erv_cppcheck.txt"
+	@cppcheck --enable=all --inconclusive --project=src/ER_V/compile_commands.json --language=c++ --platform=unix64 2> analysis_reports/erv_cppcheck.txt
+	@echo "ER V cppcheck analysis complete. Results saved to analysis_reports/erv_cppcheck.txt\n"
 	
 	@echo "Analyzing ER_V with clang-tidy..."
-	@run-clang-tidy -p src/ER_V/ -quiet > erv_clang_tidy.txt
-	@echo "ER V clang-tidy analysis complete. Results saved to erv_clang_tidy.txt"
+	@run-clang-tidy -p src/ER_V/ -quiet > analysis_reports/erv_clang_tidy.txt
+	@echo "ER V clang-tidy analysis complete. Results saved to analysis_reports/erv_clang_tidy.txt"
 
 #------------------------------------------------#
 #   SPEC                                         #
