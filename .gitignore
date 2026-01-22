@@ -9,3 +9,4 @@ operator.log
 operator.yml
 coverage/
 coverage.info
+analysis_reports/
