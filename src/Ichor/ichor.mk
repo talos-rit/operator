@@ -49,9 +49,13 @@ analyze_ichor:
 	@mkdir -p analysis_reports
 
 	@echo "Analyzing Ichor with cppcheck..."
-	@cppcheck --enable=all --inconclusive --project=src/Ichor/compile_commands.json --language=c++ --platform=unix64 2> analysis_reports/ichor_cppcheck.txt
-	@echo "Ichor cppcheck analysis complete. Results saved to analysis_reports/ichor_cppcheck.txt\n"
-	
+	@cppcheck --enable=all --inconclusive --project=src/Ichor/compile_commands.json --language=c++ --platform=unix64  --xml 2> analysis_reports/ichor_cppcheck.xml
+	@echo "Ichor cppcheck analysis complete. Results saved to analysis_reports/ichor_cppcheck.xml\n"
+
+	@echo "Generating HTML report for Ichor cppcheck results..."
+	@cppcheck-htmlreport --file=analysis_reports/ichor_cppcheck.xml --report-dir=analysis_reports/ichor_cppcheck_report --source-dir=src/
+	@echo "HTML report generated at analysis_reports/ichor_cppcheck_report"
+
 	@echo "Analyzing Ichor with clang-tidy..."
 	@run-clang-tidy -p src/Ichor/ -quiet > analysis_reports/ichor_clang_tidy.txt
 	@echo "Ichor clang-tidy analysis complete. Results saved to analysis_reports/ichor_clang_tidy.txt"
