@@ -79,26 +79,27 @@ TEST(APITest, ValidateCommand_InsufficientLength)
 TEST(APITest, ValidateCommand_ValidHandshakeCommand)
 {
     // Prepare a valid Handshake command buffer
-    API::DataHeader header;
-    header.msg_id = htobe32(1);
-    header.reserved_1 = 0;
-    header.cmd_id = htobe16(static_cast<uint16_t>(API::CommandID::Handshake));
-    header.len = htobe16(0);
-    uint8_t buffer[sizeof(API::DataHeader)];
-    memcpy(buffer, &header, sizeof(API::DataHeader));
+    API::DataHeader header = {
+        .msg_id = htobe32(1),
+        .reserved_1 = 0,
+        .cmd_id = htobe16(static_cast<uint16_t>(API::CommandID::Handshake)),
+        .len = htobe16(0)
+    };
+    uint8_t *buffer = reinterpret_cast<uint8_t *>(&header);
 
-    int result = API::validate_command(buffer, sizeof(buffer));
+    int result = API::validate_command(buffer, sizeof(API::DataHeader));
     CHECK_EQUAL(0, result);
 }
 
 TEST(APITest, ValidateCommand_ValidPolarPanStartCommand)
 {
     // Prepare a valid PolarPanStart command buffer
-    API::DataHeader header;
-    header.msg_id = htobe32(1);
-    header.reserved_1 = 0;
-    header.cmd_id = htobe16(static_cast<uint16_t>(API::CommandID::PolarPanStart));
-    header.len = htobe16(0);
+    API::DataHeader header = {
+        .msg_id = htobe32(1),
+        .reserved_1 = 0,
+        .cmd_id = htobe16(static_cast<uint16_t>(API::CommandID::PolarPanStart)),
+        .len = htobe16(0)
+    };
     uint8_t *buffer = reinterpret_cast<uint8_t *>(&header);
 
     int result = API::validate_command(buffer, sizeof(API::DataHeader));
@@ -108,11 +109,12 @@ TEST(APITest, ValidateCommand_ValidPolarPanStartCommand)
 TEST(APITest, ValidateCommand_ValidPolarPanStopCommand)
 {
     // Prepare a valid PolarPanStop command buffer
-    API::DataHeader header;
-    header.msg_id = htobe32(1);
-    header.reserved_1 = 0;
-    header.cmd_id = htobe16(static_cast<uint16_t>(API::CommandID::PolarPanStop));
-    header.len = htobe16(0);
+    API::DataHeader header = {
+        .msg_id = htobe32(1),
+        .reserved_1 = 0,
+        .cmd_id = htobe16(static_cast<uint16_t>(API::CommandID::PolarPanStop)),
+        .len = htobe16(0)
+    };
     uint8_t *buffer = reinterpret_cast<uint8_t *>(&header);
 
     int result = API::validate_command(buffer, sizeof(API::DataHeader));
@@ -122,11 +124,12 @@ TEST(APITest, ValidateCommand_ValidPolarPanStopCommand)
 TEST(APITest, ValidateCommand_ValidPolarPanCommand)
 {
     // Prepare a valid PolarPan command buffer
-    API::DataHeader header;
-    header.msg_id = htobe32(1);
-    header.reserved_1 = 0;
-    header.cmd_id = htobe16(static_cast<uint16_t>(API::CommandID::PolarPan));
-    header.len = htobe16(sizeof(API::PolarPan));
+    API::DataHeader header = {
+        .msg_id = htobe32(1),
+        .reserved_1 = 0,
+        .cmd_id = htobe16(static_cast<uint16_t>(API::CommandID::PolarPan)),
+        .len = htobe16(sizeof(API::PolarPan))
+    };
 
     API::DataWrapper wrapper = {};
     memcpy(&wrapper.header, &header, sizeof(API::DataHeader));
@@ -152,11 +155,12 @@ TEST(APITest, ValidateCommand_ValidPolarPanCommand)
 TEST(APITest, ValidateCommand_ValidHomeCommand)
 {
     // Prepare a valid Home command buffer
-    API::DataHeader header;
-    header.msg_id = htobe32(1);
-    header.reserved_1 = 0;
-    header.cmd_id = htobe16(static_cast<uint16_t>(API::CommandID::Home));
-    header.len = htobe16(sizeof(API::Home));
+    API::DataHeader header = {
+        .msg_id = htobe32(1),
+        .reserved_1 = 0,
+        .cmd_id = htobe16(static_cast<uint16_t>(API::CommandID::Home)),
+        .len = htobe16(sizeof(API::Home))
+    };
 
     API::DataWrapper wrapper = {};
     memcpy(&wrapper.header, &header, sizeof(API::DataHeader));
@@ -175,12 +179,13 @@ TEST(APITest, ValidateCommand_ValidHomeCommand)
 TEST(APITest, ValidateCommand_InvalidCommandID)
 {
     // Prepare a command buffer with an invalid command ID
-    API::DataHeader header;
-    header.msg_id = htobe32(1);
-    header.reserved_1 = 0;
-    header.cmd_id = htobe16(0xFFFF); // Invalid command ID
-    header.len = htobe16(0);
-    
+    API::DataHeader header = {
+        .msg_id = htobe32(1),
+        .reserved_1 = 0,
+        .cmd_id = htobe16(0xFFFF), // Invalid command ID
+        .len = htobe16(0)
+    };
+
     uint8_t *buffer = reinterpret_cast<uint8_t *>(&header);
 
     int result = API::validate_command(buffer, sizeof(API::DataHeader));
