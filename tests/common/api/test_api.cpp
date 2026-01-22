@@ -72,7 +72,7 @@ TEST(APITest, ValidateCommand_NullBuffer)
 TEST(APITest, ValidateCommand_InsufficientLength)
 {
     uint8_t buffer[sizeof(API::DataHeader) - 1] = {0};
-    int result = API::validate_command(buffer, 1);
+    int result = API::validate_command(buffer, sizeof(buffer));
     CHECK_EQUAL(-1, result);
 }
 
@@ -128,7 +128,7 @@ TEST(APITest, ValidateCommand_ValidPolarPanCommand)
     header.cmd_id = htobe16(static_cast<uint16_t>(API::CommandID::PolarPan));
     header.len = htobe16(sizeof(API::PolarPan));
 
-    API::DataWrapper wrapper;
+    API::DataWrapper wrapper = {};
     memcpy(&wrapper.header, &header, sizeof(API::DataHeader));
     
     auto *payload = reinterpret_cast<API::PolarPan *>(&wrapper.payload_head);
@@ -158,9 +158,9 @@ TEST(APITest, ValidateCommand_ValidHomeCommand)
     header.cmd_id = htobe16(static_cast<uint16_t>(API::CommandID::Home));
     header.len = htobe16(sizeof(API::Home));
 
-    API::DataWrapper wrapper;
+    API::DataWrapper wrapper = {};
     memcpy(&wrapper.header, &header, sizeof(API::DataHeader));
-    
+
     auto *payload = reinterpret_cast<API::Home *>(&wrapper.payload_head);
     payload->delay_ms = htobe32(300);
     uint8_t *buffer = reinterpret_cast<uint8_t *>(&wrapper);
