@@ -118,6 +118,21 @@ Two different tools are currently used for static analysis of operator and Ichor
 apt-get install bear
 ```
 
+After `bear` is installed, there are two approaches to running static analysis: using [make](#using-make) or a [manual approach](#manual-approach).
+
+#### Using `make`
+To run static analysis using `cppcheck` and `clang-tidy` with `make`, use the following commands:
+```bash
+# ER V operator
+make analyze_erv
+
+# Ichor + operator
+make analyze_ichor
+```
+
+The output will be saved to the `analysis_reports/` directory.
+
+#### Manual Approach
 After `bear` is installed, you can generate the `compile_commands.json` files for both operator and Ichor with the following commands:
 ```bash
 # ER V operator
@@ -132,9 +147,6 @@ bear --output src/Ichor/compile_commands.json -- make ichor
 <!-- cppcheck can rely on compile_commands.json that is anywhere -->
 To run `cppcheck` use the provided make target:
 ```bash
-# With make: TBD
-
-# Without make:
 # ER V operator
 cppcheck --enable=all --inconclusive --project=src/ER_V/compile_commands.json --language=c++ --output-file=erv_cppcheck.ansi --platform=unix64
 
@@ -146,9 +158,6 @@ cppcheck --enable=all --inconclusive --project=src/Ichor/compile_commands.json -
 
 To run `clang-tidy` we use the `run-clang-tidy` python script to run `clang-tidy` on all of the source files included in the `compile_commands.json`:
 ```bash
-# With make: TBD
-
-# Without make:
 # ER V operator
 run-clang-tidy -format -p src/ER_V/ > erv_clang_tidy.ansi
 
