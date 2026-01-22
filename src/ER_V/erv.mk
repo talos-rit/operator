@@ -45,12 +45,12 @@ analyze_erv:
 
 	@echo "Analyzing ER_V with cppcheck..."
 	@cppcheck --enable=all --inconclusive --project=src/ER_V/compile_commands.json --language=c++ --platform=unix64 --xml 2> analysis_reports/erv_cppcheck.xml
-	@echo "ER V cppcheck analysis complete. Results saved to analysis_reports/erv_cppcheck.xml\n"
+	@echo "ER V cppcheck analysis complete. Results saved to analysis_reports/erv_cppcheck.xml"
 	
 	@echo "Generating HTML report for ER_V cppcheck results..."
-	@cppcheck-htmlreport --file=analysis_reports/erv_cppcheck.xml --report-dir=analysis_reports/erv_cppcheck_report --source-dir=src/
-	@echo "HTML report generated at analysis_reports/erv_cppcheck_report"
-	
+	@cppcheck-htmlreport --file=analysis_reports/erv_cppcheck.xml --report-dir=analysis_reports/erv_cppcheck_report
+	@echo "\n"
+
 	@echo "Analyzing ER_V with clang-tidy..."
 	@run-clang-tidy -p src/ER_V/ -quiet > analysis_reports/erv_clang_tidy.txt
 	@echo "ER V clang-tidy analysis complete. Results saved to analysis_reports/erv_clang_tidy.txt"
