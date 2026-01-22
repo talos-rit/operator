@@ -10,6 +10,6 @@ target_sources(erv PRIVATE
 
 # Link libraries
 target_link_libraries(erv PRIVATE
-    common
+    common_objs
     Threads::Threads
 )
