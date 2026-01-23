@@ -72,8 +72,8 @@ add_custom_target(coverage_report
             --exclude '/usr/include/*' 
             --exclude '*/tests/*'
     COMMAND ${GENHTML_PATH} ${CMAKE_BINARY_DIR}/coverage.info 
-            --output-directory ${CMAKE_BINARY_DIR}/coverage
-    COMMAND echo "Coverage report generated at ${CMAKE_BINARY_DIR}/coverage/index.html"
+            --output-directory ${CMAKE_BINARY_DIR}/coverage_report
+    COMMAND echo "Coverage report generated at ${CMAKE_BINARY_DIR}/coverage_report/index.html"
     COMMENT "Generating coverage report"
     DEPENDS test_all
 )
