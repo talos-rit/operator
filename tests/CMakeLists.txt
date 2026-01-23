@@ -37,9 +37,9 @@ set(CTEST_USE_LAUNCHERS ON)      # Better IDE integration
 # ============================================================================
 add_custom_target(build_tests
     DEPENDS
-        common_test_exe
-        erv_test_exe
-        ichor_test_exe
+        test_common_exe
+        test_erv_exe
+        test_ichor_exe
     COMMENT "Building all test executables"
 )
 
@@ -64,7 +64,7 @@ add_custom_target(test_verbose
 add_custom_target(test_all_report
     COMMAND ${CMAKE_CTEST_COMMAND} --output-junit ${CMAKE_BINARY_DIR}/reports/test-results.xml
     COMMENT "Running tests with JUnit output"
-    DEPENDS common_test_exe erv_test_exe ichor_test_exe
+    DEPENDS test_common_exe erv_test_exe ichor_test_exe
 )
 
 # Coverage report target
