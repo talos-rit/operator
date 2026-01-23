@@ -55,3 +55,20 @@ add_subdirectory(src/Ichor)
 if(BUILD_TESTING)
     add_subdirectory(tests)
 endif()
+
+add_custom_target(analyze
+	COMMAND echo "Check if folder for analysis output exists..."
+	COMMAND mkdir -p ${CMAKE_BINARY_DIR}/analysis_reports
+
+	COMMAND echo "Analyzing with cppcheck..."
+	COMMAND cppcheck --enable=all --inconclusive --project="${CMAKE_BINARY_DIR}/compile_commands.json" --language=c++ --platform=unix64 --xml 2> ${CMAKE_BINARY_DIR}/analysis_reports/cppcheck.xml
+	COMMAND echo "cppcheck analysis complete. Results saved to ${CMAKE_BINARY_DIR}/analysis_reports/cppcheck.xml"
+
+	COMMAND echo "Generating HTML report for cppcheck results..."
+	COMMAND cppcheck-htmlreport --file="${CMAKE_BINARY_DIR}/analysis_reports/cppcheck.xml" --report-dir="${CMAKE_BINARY_DIR}/analysis_reports/cppcheck_report"
+	COMMAND echo "\n"
+
+	COMMAND echo "Analyzing with clang-tidy..."
+	COMMAND run-clang-tidy -p ${CMAKE_BINARY_DIR} -quiet > ${CMAKE_BINARY_DIR}/analysis_reports/clang_tidy.txt
+	COMMAND echo "clang-tidy analysis complete. Results saved to ${CMAKE_BINARY_DIR}/analysis_reports/clang_tidy.txt"
+)
