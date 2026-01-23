@@ -1,11 +1,11 @@
-ERV_TEST_EXE := erv_test
-ERV_REPORT_DIR := $(REPORT_DIR)/ER_V
+ERV_TEST_EXE     := erv_test
+ERV_REPORT_DIR   := $(REPORT_DIR)/ER_V
 ERV_TEST_OBJ_DIR := $(TEST_OBJ_DIR)/ER_V
 
-ERV_UTEST_SRCS := all_tests.cpp
-ERV_UTEST_SRCS += erv_conf/test_erv_config.cpp
-ERV_UTEST_SRCS += erv_arm/test_erv_arm.cpp
-ERV_UTEST_OBJS := $(ERV_UTEST_SRCS:%.cpp=$(ERV_TEST_OBJ_DIR)/%.o)
+ERV_UTEST_SRCS   := all_tests.cpp
+ERV_UTEST_SRCS   += erv_conf/test_erv_config.cpp
+ERV_UTEST_SRCS   += erv_arm/test_erv_arm.cpp
+ERV_UTEST_OBJS   := $(ERV_UTEST_SRCS:%.cpp=$(ERV_TEST_OBJ_DIR)/%.o)
 
 test_erv_build: test_erv_re $(COMMON_OBJS) $(ERV_OBJS) $(ERV_UTEST_OBJS)
 	@mkdir -p $(TEST_BIN_DIR)

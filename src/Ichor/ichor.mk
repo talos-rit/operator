@@ -1,10 +1,10 @@
 NAME        := ichor
-ICHOR_DIR	:= Ichor
-DRIVER_DIR	 = $(ICHOR_DIR)/driver
+ICHOR_DIR   := Ichor
+DRIVER_DIR  = $(ICHOR_DIR)/driver
 
 include $(SRC_DIR)/$(DRIVER_DIR)/driver.mk
 
-FLAGS += -I$(SRC_DIR)/$(ICHOR_DIR)
+FLAGS       += -I$(SRC_DIR)/$(ICHOR_DIR)
 
 # Main file (separated to not interfere with CPPUTEST)
 MAIN_CPP    := main.cpp
@@ -14,32 +14,55 @@ SRCS        :=
 
 # C++ sources
 ICHOR_CPP   := arm/ichor_arm.cpp
-ICHOR_CPP	+= conf/ichor_conf.cpp
+ICHOR_CPP   += conf/ichor_conf.cpp
 
 # Object reformatting
-ICHOR_OBJS		:= $(DRIVER_OBJS)
-ICHOR_OBJS 		+= $(SRCS:%.c=$(OBJ_DIR)/$(ICHOR_DIR)/%.o)
-ICHOR_OBJS 		+= $(ICHOR_CPP:%.cpp=$(OBJ_DIR)/$(ICHOR_DIR)/%.o)
-ICHOR_MAIN 		:= $(MAIN_CPP:%.cpp=$(OBJ_DIR)/$(ICHOR_DIR)/%.o)
+ICHOR_OBJS  := $(DRIVER_OBJS)
+ICHOR_OBJS  += $(SRCS:%.c=$(OBJ_DIR)/$(ICHOR_DIR)/%.o)
+ICHOR_OBJS  += $(ICHOR_CPP:%.cpp=$(OBJ_DIR)/$(ICHOR_DIR)/%.o)
+ICHOR_MAIN  := $(MAIN_CPP:%.cpp=$(OBJ_DIR)/$(ICHOR_DIR)/%.o)
 
 RM          := rm -rf
 # MAKEFLAGS   += --no-print-directory
-DIR_DUP      = mkdir -p $(@D)
-PHONIES 	+= all ichor_re clean fclean
+PHONIES     += all ichor_re clean fclean
 
 
 
 # Executable
 ichor: $(COMMON_OBJS) $(ICHOR_OBJS) $(ICHOR_MAIN)
 	@mkdir -p $(BIN_DIR)
-	$(CC) $^ $(FLAGS) -o $(BIN_DIR)/$@
+	$(CC) $^ $(FLAGS) -o $@
 	@echo "    Target    $@"
+
+ichor_test: ichor_re $(COMMON_OBJS) $(COMMON_UTEST_OBJS) $(ICHOR_OBJS) $(ICHOR_UTEST_OBJS)
+	@mkdir -p $(BIN_DIR)
+	$(CC) $(filter-out $(PHONIES),$^) $(FLAGS) $(UTEST_LIB) -o $@
+	$@
 
 dummy: $(COMMON_OBJS) $(ICHOR_OBJS) $(SRC_DIR)/$(ICHOR_DIR)/dummy_main.cpp
 	@mkdir -p $(BIN_DIR)
-	$(CC) $^ $(FLAGS) -o $(BIN_DIR)/$@
+	$(CC) $^ $(FLAGS) -o $@
 	@echo "    Target    $@"
 
+analyze_ichor: 
+	@echo "Creating compile_commands.json for Ichor..."
+	make clean
+	@bear --output $(SRC_DIR)/$(ICHOR_DIR)/compile_commands.json -- $(MAKE) ichor
+
+	@echo "Check if folder for analysis output exists..."
+	@mkdir -p analysis_reports
+
+	@echo "Analyzing Ichor with cppcheck..."
+	@cppcheck --enable=all --inconclusive --project=src/Ichor/compile_commands.json --language=c++ --platform=unix64  --xml 2> analysis_reports/ichor_cppcheck.xml
+	@echo "Ichor cppcheck analysis complete. Results saved to analysis_reports/ichor_cppcheck.xml\n"
+
+	@echo "Generating HTML report for Ichor cppcheck results..."
+	@cppcheck-htmlreport --file=analysis_reports/ichor_cppcheck.xml --report-dir=analysis_reports/ichor_cppcheck_report
+	@echo "\n"
+
+	@echo "Analyzing Ichor with clang-tidy..."
+	@run-clang-tidy -p src/Ichor/ -quiet > analysis_reports/ichor_clang_tidy.txt
+	@echo "Ichor clang-tidy analysis complete. Results saved to analysis_reports/ichor_clang_tidy.txt"
 ichor_re: fclean
 
 #------------------------------------------------#

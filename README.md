@@ -29,6 +29,43 @@ If you are on `macOS` or `Windows`, it is impossible to compile the operator/dri
 3. Open the cloned repository in VS Code.
 4. Open the Command Palette (`Ctrl+Shift+P` or `Cmd+Shift+P` on macOS) and select `Dev Containers: Open Folder in Container`.
 
+### Generating Documentation
+#### UML Diagrams
+UML diagrams can be generated using `clang-uml`. To install `clang-uml`, follow the installation instructions on the [clang-uml GitHub page](https://clang-uml.github.io/md_docs_2installation.html) for your OS. If you are using the Dev Container, `clang-uml` is already installed. 
+
+Before you can use `clang-uml`, you need to generate a `compile_commands.json` file for the operator. This file can be generated using `bear`, which is already included if using the dev container. If you do not have `bear` installed, use the following command to install it:
+```bash
+apt-get install bear
+```
+After `bear` is installed, you can generate the `compile_commands.json` files for both operator and Ichor with the following commands:
+```bash
+# ER V operator
+make clean
+bear --output src/ER_V/compile_commands.json -- make erv
+
+# Ichor + operator
+make clean
+bear --output src/Ichor/compile_commands.json -- make ichor
+```
+
+There are several different types of diagrams that can be generated using `clang-uml`, including class diagrams, sequence diagrams, and component diagrams. The configuration for generating the UML diagrams is stored in the `.clang-uml` file in the root of the repository. Below are some of the commands to generate individual UML diagrams.
+##### Class Diagrams
+To generate the class diagrams for all of the classes in the ER V operator and Ichor, run the following command from the root of the repo:
+```bash
+# For ER V operator:
+clang-uml -d src/ER_V/compile_commands.json -n all_classes -g mermaid
+# For Ichor:
+clang-uml -d src/Ichor/compile_commands.json -n all_classes -g mermaid
+```
+##### Package Diagrams
+To generate the package diagrams for the ER V operator and Ichor, run the following command from the root of repo:
+```bash
+# For ER V operator:
+clang-uml -d src/ER_V/compile_commands.json -n all_packages -g mermaid
+# For Ichor:
+clang-uml -d src/Ichor/compile_commands.json -n all_packages -g mermaid
+```
+
 ### Running Tests
 The tests are written using the `Cpputest` unit test framework. To learn more about `Cpputest` see the [Cpputest documentation](https://cpputest.github.io/manual.html). The test suite is split up into three different parts that are executed separately for each of the major components of operator and Ichor. Below are the commands for running the tests both with and without code coverage.
 
@@ -72,4 +109,58 @@ make cov_report
 # Without make
 lcov --capture --directory build/obj/ --output-file coverage.info --exclude '*/12/*' --exclude '/usr/include/*' --exclude '*/tests/*'
 genhtml coverage.info --output-directory coverage
+```
+
+### Running Static Analysis
+Two different tools are currently used for static analysis of operator and Ichor code: `cppcheck` and `clang-tidy`. However, to use these tools you will also need to install `bear`, which is already included if using the dev container, to generate a compile_commands.json file for operator and Ichor. If you do not have `bear` installed, use the following command to install it:
+
+```bash
+apt-get install bear
+```
+
+After `bear` is installed, there are two approaches to running static analysis: using [make](#using-make) or a [manual approach](#manual-approach).
+
+#### Using `make`
+To run static analysis using `cppcheck` and `clang-tidy` with `make`, use the following commands:
+```bash
+# ER V operator
+make analyze_erv
+
+# Ichor + operator
+make analyze_ichor
+```
+
+The output will be saved to the `analysis_reports/` directory.
+
+#### Manual Approach
+After `bear` is installed, you can generate the `compile_commands.json` files for both operator and Ichor with the following commands:
+```bash
+# ER V operator
+make clean
+bear --output src/ER_V/compile_commands.json -- make erv
+
+# Ichor + operator
+make clean
+bear --output src/Ichor/compile_commands.json -- make ichor
+```
+
+<!-- cppcheck can rely on compile_commands.json that is anywhere -->
+To run `cppcheck` use the provided make target:
+```bash
+# ER V operator
+cppcheck --enable=all --inconclusive --project=src/ER_V/compile_commands.json --language=c++ --output-file=erv_cppcheck.ansi --platform=unix64
+
+# Ichor + operator
+make clean
+bear -- make ichor
+cppcheck --enable=all --inconclusive --project=src/Ichor/compile_commands.json --language=c++ --output-file=ichor_cppcheck.ansi --platform=unix64
+```
+
+To run `clang-tidy` we use the `run-clang-tidy` python script to run `clang-tidy` on all of the source files included in the `compile_commands.json`:
+```bash
+# ER V operator
+run-clang-tidy -format -p src/ER_V/ > erv_clang_tidy.ansi
+
+# Ichor + operator
+run-clang-tidy -format -p src/Ichor/ > ichor_clang_tidy.ansi
 ```

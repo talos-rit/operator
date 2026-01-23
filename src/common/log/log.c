@@ -24,10 +24,10 @@
 
 Log the_log;
 
-static int8_t LOG_timestamp(char *dst_str) {
+static int8_t LOG_timestamp(char* dst_str) {
   struct timespec ts;
   int ret = clock_gettime(LOG_CLOCK, &ts);
-  char *str_iter = dst_str;
+  char* str_iter = dst_str;
 
   ret = UTIL_time_iso8601_timestamp_UTC(str_iter, ts.tv_sec);
   if (ret == -1) return -1;  // Can't log error: recursive call
@@ -40,7 +40,7 @@ static int8_t LOG_timestamp(char *dst_str) {
   return str_iter - dst_str;
 }
 
-static uint8_t get_level_name(char *dst, uint8_t level, bool color) {
+static uint8_t get_level_name(char* dst, uint8_t level, bool color) {
   if (level > 9 + (uint8_t)LOG_VERBOSE) return -1;
 
   int8_t vlev = -1;
@@ -65,7 +65,7 @@ static uint8_t get_level_name(char *dst, uint8_t level, bool color) {
   return offset;
 }
 
-static uint16_t format_log_entry(char *dst, LOG_Buffer *buf, bool use_color) {
+static uint16_t format_log_entry(char* dst, LOG_Buffer* buf, bool use_color) {
   uint16_t msg_iter = 0;
 
   // Timestamp
@@ -82,7 +82,7 @@ static uint16_t format_log_entry(char *dst, LOG_Buffer *buf, bool use_color) {
   return msg_iter;
 }
 
-void LOG_thread_print(LOG_Buffer *buf) {
+void LOG_thread_print(LOG_Buffer* buf) {
   char msg[1024];
 
   // Console out
@@ -105,7 +105,7 @@ void LOG_thread_print(LOG_Buffer *buf) {
   }
 }
 
-static int8_t LOG_Buffer_init(LOG_Buffer *buf) {
+static int8_t LOG_Buffer_init(LOG_Buffer* buf) {
   if (!buf) return -1;
   memset(buf, 0, sizeof(LOG_Buffer));
   DATA_S_List_Node_init(&buf->node);
@@ -115,11 +115,11 @@ static int8_t LOG_Buffer_init(LOG_Buffer *buf) {
 
 void LOG_thread_poll() {
   pthread_mutex_lock(&the_log.wr_lock);
-  S_List_Node *node = DATA_S_List_pop(&the_log.wr_queue);
+  S_List_Node* node = DATA_S_List_pop(&the_log.wr_queue);
   pthread_mutex_unlock(&the_log.wr_lock);
 
   if (!node) return;
-  LOG_Buffer *buf = DATA_LIST_GET_OBJ(node, LOG_Buffer, node);
+  LOG_Buffer* buf = DATA_LIST_GET_OBJ(node, LOG_Buffer, node);
   LOG_thread_print(buf);
 
   pthread_mutex_lock(&the_log.free_lock);
@@ -128,17 +128,17 @@ void LOG_thread_poll() {
   pthread_mutex_unlock(&the_log.free_lock);
 }
 
-static LOG_Buffer *get_buffer(Log *log) {
+static LOG_Buffer* get_buffer(Log* log) {
   pthread_mutex_lock(&log->free_lock);
-  S_List_Node *node = DATA_S_List_pop(&log->free_queue);
+  S_List_Node* node = DATA_S_List_pop(&log->free_queue);
   pthread_mutex_unlock(&log->free_lock);
 
   if (!node) return NULL;
-  LOG_Buffer *buf = DATA_LIST_GET_OBJ(node, LOG_Buffer, node);
+  LOG_Buffer* buf = DATA_LIST_GET_OBJ(node, LOG_Buffer, node);
   return buf;
 }
 
-static int8_t push_buffer(Log *log, LOG_Buffer *buf) {
+static int8_t push_buffer(Log* log, LOG_Buffer* buf) {
   if (!log || !buf) return -1;
   pthread_mutex_lock(&log->wr_lock);
   DATA_S_List_append(&log->wr_queue, &buf->node);
@@ -146,8 +146,8 @@ static int8_t push_buffer(Log *log, LOG_Buffer *buf) {
   return 0;
 }
 
-int8_t LOG_print(const char *file, uint16_t line, int8_t console_threshold,
-                 int8_t file_threshold, int8_t level, const char *fmt, ...) {
+int8_t LOG_print(const char* file, uint16_t line, int8_t console_threshold,
+                 int8_t file_threshold, int8_t level, const char* fmt, ...) {
   // Check if message is important enough to print
   uint8_t flags = 0;
   if (level <= console_threshold) flags |= (1 << LOG_BUFFER_FLAG_OUT_CONSOLE);
@@ -161,7 +161,7 @@ int8_t LOG_print(const char *file, uint16_t line, int8_t console_threshold,
 
   // Get buffer
   LOG_Buffer tmp;
-  LOG_Buffer *buf;
+  LOG_Buffer* buf;
 
   if (the_log.config.en) {
     buf = get_buffer(&the_log);
@@ -200,7 +200,7 @@ int8_t LOG_print(const char *file, uint16_t line, int8_t console_threshold,
   return 0;
 }
 
-static void *LOG_run(void *) {
+static void* LOG_run(void*) {
   // TODO: add exit polling
   while (1) {
     if (0 == the_log.wr_queue.len) {
@@ -214,7 +214,7 @@ static void *LOG_run(void *) {
   return 0;
 }
 
-static int8_t init_log_lists(Log *log) {
+static int8_t init_log_lists(Log* log) {
   if (!log) return -1;
 
   DATA_S_List_init(&log->free_queue);
@@ -231,7 +231,7 @@ static int8_t init_log_lists(Log *log) {
 int8_t LOG_prep() {
   memset(&the_log, 0, sizeof(Log));
   the_log.buffer_pool =
-      (LOG_Buffer *)malloc(LOG_MAX_BUFFER * sizeof(LOG_Buffer));
+      (LOG_Buffer*)malloc(LOG_MAX_BUFFER * sizeof(LOG_Buffer));
   the_log.pool_count = LOG_MAX_BUFFER;
 
   if (-1 == pthread_mutex_init(&the_log.gen_lock, NULL)) return -1;
@@ -243,7 +243,7 @@ int8_t LOG_prep() {
   return 0;
 }
 
-int8_t LOG_init(const char *log_loc) {
+int8_t LOG_init(const char* log_loc) {
   if (!log_loc) STD_FAIL;
   the_log.config.path = log_loc;
   the_log.fd = open(the_log.config.path, LOG_FILE_FLAG, LOG_FILE_PERM);
@@ -266,7 +266,7 @@ int8_t LOG_stop() {
   return 0;
 }
 
-int8_t LOG_destory() {
+int8_t LOG_destroy() {
   if (-1 != the_log.fd) close(the_log.fd);
   pthread_mutex_destroy(&the_log.gen_lock);
   DATA_S_List_deinit(&the_log.free_queue);
