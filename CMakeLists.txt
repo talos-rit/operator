@@ -69,6 +69,6 @@ add_custom_target(analyze
 	COMMAND echo "\n"
 
 	COMMAND echo "Analyzing with clang-tidy..."
-	COMMAND run-clang-tidy -p ${CMAKE_BINARY_DIR} -quiet > ${CMAKE_BINARY_DIR}/analysis_reports/clang_tidy.txt
-	COMMAND echo "clang-tidy analysis complete. Results saved to ${CMAKE_BINARY_DIR}/analysis_reports/clang_tidy.txt"
+	COMMAND run-clang-tidy -p ${CMAKE_BINARY_DIR} -quiet > ${CMAKE_BINARY_DIR}/analysis_reports/clang_tidy.ansi
+	COMMAND echo "clang-tidy analysis complete. Results saved to ${CMAKE_BINARY_DIR}/analysis_reports/clang_tidy.ansi"
 )
