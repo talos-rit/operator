@@ -28,3 +28,13 @@ add_custom_target(test_common
     COMMAND ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/test_common_exe
     COMMENT "Running common tests"
 )
+
+set(COMMON_REPORT_DIR ${CMAKE_BINARY_DIR}/test_reports/common)
+
+add_custom_target(test_common_report
+    DEPENDS test_common_exe
+    COMMAND mkdir -p ${COMMON_REPORT_DIR}
+    COMMAND echo "${CMAKE_BINARY_DIR}"
+	COMMAND cd ${COMMON_REPORT_DIR} && ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/test_common_exe -ojunit
+    COMMENT "Running common tests with JUnit report"
+)

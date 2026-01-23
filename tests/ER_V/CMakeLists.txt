@@ -21,3 +21,13 @@ add_custom_target(test_erv
     COMMAND ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/test_erv_exe
     COMMENT "Running ER_V tests"
 )
+
+set(ERV_REPORT_DIR ${CMAKE_BINARY_DIR}/test_reports/erv)
+
+add_custom_target(test_erv_report
+    DEPENDS test_erv_exe
+    COMMAND mkdir -p ${ERV_REPORT_DIR}
+    COMMAND echo "${CMAKE_BINARY_DIR}"
+	COMMAND cd ${ERV_REPORT_DIR} && ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/test_erv_exe -ojunit
+    COMMENT "Running ER_V tests with JUnit report"
+)

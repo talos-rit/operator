@@ -22,3 +22,13 @@ add_custom_target(test_ichor
     COMMAND ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/test_ichor_exe
     COMMENT "Running Ichor tests"
 )
+
+set(ICHOR_REPORT_DIR ${CMAKE_BINARY_DIR}/test_reports/ichor)
+
+add_custom_target(test_ichor_report
+    DEPENDS test_ichor_exe
+    COMMAND mkdir -p ${ICHOR_REPORT_DIR}
+    COMMAND echo "${CMAKE_BINARY_DIR}"
+	COMMAND cd ${ICHOR_REPORT_DIR} && ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/test_ichor_exe -ojunit
+    COMMENT "Running Ichor tests with JUnit report"
+)
