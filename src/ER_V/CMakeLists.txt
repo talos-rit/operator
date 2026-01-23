@@ -29,5 +29,6 @@ target_sources(erv PRIVATE
 # Link libraries
 target_link_libraries(erv PRIVATE
     common_objs
+    erv_objs
     Threads::Threads
 )
