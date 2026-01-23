@@ -1,0 +1,2 @@
+# ER_V Diagrams
+See the [ER V folder](https://github.com/talos-rit/project_documentation/tree/master/technical/operator/diagrams/ER_V) in the [project documentation repo](https://github.com/talos-rit/project_documentation) for the ER V diagrams.

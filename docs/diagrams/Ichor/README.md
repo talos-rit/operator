@@ -1,0 +1,2 @@
+# ER_V Diagrams
+See the [Ichor folder](https://github.com/talos-rit/project_documentation/tree/master/technical/operator/diagrams/Ichor) in the [project documentation repo](https://github.com/talos-rit/project_documentation) for the Ichor diagrams.
