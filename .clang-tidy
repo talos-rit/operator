@@ -1,0 +1,16 @@
+Checks: >
+  -*,
+  bugprone-*,
+  performance-*,
+  concurrency-*,
+  portability-*,
+  readability-*,
+  clang-analyzer-*,
+  cppcoreguidelines-*,
+  modernize-*,
+  -modernize-use-trailing-return-type,
+  
+WarningsAsErrors: ''
+HeaderFilterRegex: '.*'
+UseColor: false
+FormatStyle: file

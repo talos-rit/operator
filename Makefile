@@ -17,7 +17,9 @@ PHONIES := clean
 .PHONY: clean
 
 clean:
-	@rm -rf build/
+	@rm -rf build
+
+analyze: clean analyze_erv analyze_ichor
 
 # Compilation rules
 # C

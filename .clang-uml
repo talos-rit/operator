@@ -1,0 +1,132 @@
+# To generate compilation database for each target, see the README.md
+compilation_database_dir: .
+output_directory: docs/diagrams
+diagrams:
+  # --------------------------------
+  # -------- Class Diagrams --------
+  # --------------------------------
+  # Command: clang-uml -n all_classes -g mermaid
+  all_classes:
+    type: class
+    generate_packages: true
+    package_type: directory
+    glob:
+      - src/*/*.cpp
+      - src/*/*.hpp
+      - src/*/*.h
+      - src/*/*.c
+    mermaid:
+      after:
+        - direction RL
+  # Command: clang-uml -n arm_classes -g mermaid
+  arm_classes:
+    type: class
+    generate_packages: true
+    package_type: directory
+    glob:
+      - src/arm/*.cpp
+      - src/arm/*.hpp
+      - src/arm/*.c
+      - src/arm/*.h
+      - src/ER_V/erv_arm/*.cpp
+      - src/ER_V/erv_arm/*.hpp
+      - src/ER_V/erv_arm/*.c
+      - src/ER_V/erv_arm/*.h
+      - src/Ichor/arm/*.cpp
+      - src/Ichor/arm/*.hpp
+      - src/Ichor/arm/*.c
+      - src/Ichor/arm/*.h
+    mermaid:
+      after:
+        - direction RL
+  # --------------------------------
+  # ------- Package Diagrams -------
+  # --------------------------------
+  # Command: clang-uml -n all_packages -g mermaid
+  all_packages:
+    type: package
+    generate_packages: true
+    package_type: directory
+    glob:
+      - src/*/*.cpp
+      - src/*/*.h
+      - src/*/*.c
+    mermaid:
+      after:
+        - direction TB
+  # --------------------------------
+  # ------- Include Diagrams -------
+  # --------------------------------
+  # Command: clang-uml -n all_includes -g mermaid
+  all_includes:
+    type: include
+    glob:
+      - src/*/*.cpp
+      - src/*/*.h
+      - src/*/*.c
+    include:
+      paths:
+        - src/
+    mermaid:
+      after:
+        - direction TB
+  # --------------------------------
+  # ------ Sequence Diagrams -------
+  # --------------------------------
+  # Command: clang-uml -n socket_poll -g mermaid 
+  socket_poll:
+    type: sequence
+    glob:
+      include:
+        - src/common/socket/*.cpp
+        - src/ER_V/*.cpp
+    exclude:
+      paths:
+        - src/common/log/log.h
+    combine_free_functions_into_file_participants: true
+    inline_lambda_messages: false
+    generate_message_comments: false
+    fold_repeated_activities: false
+    generate_condition_statements: true
+    # generate_return_types: true
+    generate_return_values: true
+    start_from:
+      - function: Socket::poll()
+  # Command: clang-uml -n arm_process_queue -g mermaid
+  arm_process_queue:
+    type: sequence
+    glob:
+      include:
+        - src/common/arm/*.cpp
+        - src/ER_V/*.cpp
+    exclude:
+      paths:
+        - src/common/log/log.h
+    combine_free_functions_into_file_participants: true
+    inline_lambda_messages: false
+    generate_message_comments: false
+    fold_repeated_activities: false
+    generate_condition_statements: true
+    # generate_return_types: true
+    generate_return_values: true
+    start_from:
+      - function: Arm::processCommand()
+  # Command: clang-uml -n arm_runLoop -g mermaid
+  arm_runLoop:
+    type: sequence
+    glob:
+      include:
+        - src/common/arm/*.cpp
+        - src/ER_V/*.cpp
+    exclude:
+      paths:
+        - src/common/log/log.h
+    combine_free_functions_into_file_participants: true
+    inline_lambda_messages: false
+    generate_message_comments: false
+    fold_repeated_activities: false
+    generate_condition_statements: true
+    # generate_return_types: true
+    generate_return_values: true
+    start_from:
+      - function: Arm::runLoop()
