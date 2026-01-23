@@ -1,6 +1,7 @@
 # tests/common/CMakeLists.txt
 # Common test sources
 set(COMMON_TEST_SRCS
+    api/test_api.cpp
     conf/test_config_sys.cpp
     conf/test_config_parsing.cpp
     data/s_list_test.cpp
