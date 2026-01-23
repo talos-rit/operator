@@ -82,7 +82,7 @@ diagrams:
         - src/ER_V/*.cpp
     exclude:
       paths:
-        - src/common/log/log.h
+        - src/common/log/log.hpp
     combine_free_functions_into_file_participants: true
     inline_lambda_messages: false
     generate_message_comments: false
@@ -101,7 +101,7 @@ diagrams:
         - src/ER_V/*.cpp
     exclude:
       paths:
-        - src/common/log/log.h
+        - src/common/log/log.hpp
     combine_free_functions_into_file_participants: true
     inline_lambda_messages: false
     generate_message_comments: false
@@ -120,7 +120,7 @@ diagrams:
         - src/ER_V/*.cpp
     exclude:
       paths:
-        - src/common/log/log.h
+        - src/common/log/log.hpp
     combine_free_functions_into_file_participants: true
     inline_lambda_messages: false
     generate_message_comments: false
