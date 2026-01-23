@@ -14,7 +14,7 @@
 #include "socket/socket.hpp"
 #include "sub/sub.hpp"
 #include "util/array.hpp"
-#include "util/comm.h"
+#include "util/comm.hpp"
 
 #define LOG_FILE_THRESHOLD_THIS LOG_THRESHOLD_MAX
 #define LOG_CONSOLE_THRESHOLD_THIS LOG_THRESHOLD_MAX

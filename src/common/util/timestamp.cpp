@@ -5,10 +5,9 @@
 #include <string.h>
 #include <sys/time.h>
 
-#include <time.hpp>
-
 #include "log/log.hpp"
 #include "util/array.hpp"
+#include "util/time.hpp"
 
 // NOTE: can't use debug logs: logs use timestamps
 

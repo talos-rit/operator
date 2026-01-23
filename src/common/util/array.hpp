@@ -7,7 +7,7 @@
 #include <stdint.h>
 #include <stdio.h>
 
-#include "util/comm.h"
+#include "util/comm.hpp"
 
 #define UTIL_len(arr) (sizeof(arr) / sizeof(arr[0]))
 #define UTIL_modulo(a, b) (((a % b) + b) % b)

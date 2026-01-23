@@ -1,7 +1,9 @@
-# src/ER_V/CMakeLists.txt
+# src/Ichor/CMakeLists.txt
 include_directories(
     ${CMAKE_SOURCE_DIR}/src/Ichor
 )
+
+
 
 # Ichor executable
 set(ICHOR_CPP_SRCS
@@ -14,11 +16,21 @@ add_executable(ichor
     ${ICHOR_CPP_SRCS}
 )
 
+
+target_include_directories(ichor PRIVATE
+    ${CMAKE_SOURCE_DIR}/src/Ichor
+    ${CMAKE_SOURCE_DIR}/src/common
+)
+
 add_subdirectory(driver)
 
-target_link_libraries(ichor
+target_include_directories(ichor PRIVATE
+    ${CMAKE_SOURCE_DIR}/src/Ichor/driver/src
+)
+
+target_link_libraries(ichor PRIVATE
     common_objs
-    driver_objs
+    driver
     Threads::Threads
 )
 

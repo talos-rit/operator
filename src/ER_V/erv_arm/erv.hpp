@@ -2,7 +2,7 @@
 
 #include "api/api.hpp"
 #include "arm/arm.hpp"
-#include "data/s_list.hpp"
+#include "data/s_list.h"
 
 #define ERV_RX_TIMEOUT_MS 500
 #define ERV_CONT_POLAR_PAN_TIMEOUT_MS 500

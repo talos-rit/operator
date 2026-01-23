@@ -11,7 +11,7 @@
 #include <stdint.h>
 
 #include "api/api.hpp"
-#include "data/s_list.hpp"
+#include "data/s_list.h"
 
 #define ACL_CMD_SIZE 64
 

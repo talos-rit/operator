@@ -7,7 +7,7 @@
 #include <stdint.h>
 #include <time.h>
 
-#include "data/s_list.hpp"
+#include "data/s_list.h"
 #include "log/log.hpp"
 
 const char* const _LOG_level_color[] = {

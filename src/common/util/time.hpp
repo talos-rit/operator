@@ -1,6 +1,7 @@
-#include <stdint.h>
+#pragma once
 
-#include <sys/time.hpp>
+#include <stdint.h>
+#include <sys/time.h>
 
 static inline uint16_t tval_diff_ms(struct timeval* end,
                                     struct timeval* start) {

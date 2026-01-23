@@ -11,7 +11,7 @@
 #include "log/log.hpp"
 #include "mcp/MCP23017.hpp"
 #include "motorhat/MotorHAT.hpp"
-#include "util/comm.h"
+#include "util/comm.hpp"
 
 #define LOG_CONSOLE_THRESHOLD_THIS LOG_THRESHOLD_DEFAULT
 #define LOG_FILE_THRESHOLD_THIS LOG_THRESHOLD_MAX

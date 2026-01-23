@@ -8,8 +8,13 @@ target_sources(erv PRIVATE
     erv_conf/erv_conf.cpp
 )
 
+
 # Link libraries
 target_link_libraries(erv PRIVATE
     common_objs
     Threads::Threads
+)
+
+target_include_directories(erv PRIVATE
+    ${CMAKE_SOURCE_DIR}/src/ER_V
 )
