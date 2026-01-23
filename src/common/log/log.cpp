@@ -266,7 +266,7 @@ int8_t LOG_stop() {
   return 0;
 }
 
-int8_t LOG_destory() {
+int8_t LOG_destroy() {
   if (-1 != the_log.fd) close(the_log.fd);
   pthread_mutex_destroy(&the_log.gen_lock);
   DATA_S_List_deinit(&the_log.free_queue);

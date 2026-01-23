@@ -16,7 +16,7 @@
  * @brief Helper function for simulating incoming message header
  * @param header Command header to prepare
  */
-static void prep_header(API_Data_Header *header) {
+static void prep_header(API_Data_Header* header) {
   header->cmd_id = htobe32(header->cmd_id);
   header->cmd_val = htobe16(header->cmd_val);
   header->len = htobe16(header->len);
@@ -26,7 +26,7 @@ static void prep_header(API_Data_Header *header) {
  * @brief Helper function for simulating incoming polar pan message
  * @param payload Payload to prep
  */
-static void prep_polar_pan(API_Data_Polar_Pan *payload) {
+static void prep_polar_pan(API_Data_Polar_Pan* payload) {
   payload->delta_altitude = htobe32(payload->delta_altitude);
   payload->delta_azimuth = htobe32(payload->delta_azimuth);
   payload->delay_ms = htobe32(payload->delay_ms);
@@ -37,19 +37,19 @@ static void prep_polar_pan(API_Data_Polar_Pan *payload) {
  * @brief Helper function for simulating incoming command
  * @param cmd Command Wrapper
  */
-static void prep_polar_pan_wrapper(API_Data_Wrapper *cmd) {
+static void prep_polar_pan_wrapper(API_Data_Wrapper* cmd) {
   prep_header(&cmd->header);
-  prep_polar_pan((API_Data_Polar_Pan *)&cmd->payload_head);
+  prep_polar_pan((API_Data_Polar_Pan*)&cmd->payload_head);
 }
 
 /**
  * @brief fills byte array with simulated data
  * @param bytes Byte array
  */
-static void fill_simulated_command(uint8_t *bytes) {
-  API_Data_Wrapper *cmd = (API_Data_Wrapper *)bytes;
-  API_Data_Header *header = (API_Data_Header *)&cmd->header;
-  API_Data_Polar_Pan *payload = (API_Data_Polar_Pan *)&cmd->payload_head;
+static void fill_simulated_command(uint8_t* bytes) {
+  API_Data_Wrapper* cmd = (API_Data_Wrapper*)bytes;
+  API_Data_Header* header = (API_Data_Header*)&cmd->header;
+  API_Data_Polar_Pan* payload = (API_Data_Polar_Pan*)&cmd->payload_head;
 
   // Assign test values to header
   header->cmd_id = 0xBE;
@@ -77,7 +77,7 @@ int main() {
 
   // Prep simulated incoming message
   fill_simulated_command(&bytes[0]);
-  API_Data_Wrapper *cmd = (API_Data_Wrapper *)&bytes[0];
+  API_Data_Wrapper* cmd = (API_Data_Wrapper*)&bytes[0];
   UTIL_format_byte_str(&text[0], &bytes[0], byte_len);
   LOG_VERBOSE(4, "Init: %s", text);
 
@@ -94,5 +94,5 @@ int main() {
 
   LOG_INFO("Demo Ending...");
   LOG_stop();
-  LOG_destory();
+  LOG_destroy();
 }

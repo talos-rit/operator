@@ -1,10 +1,11 @@
-
+#include <condition_variable>
 #include <atomic>
 #include <csignal>
 #include <cstdio>
 #include <cstdlib>
 #include <iostream>
 #include <memory>
+#include <mutex>
 
 #include "erv_arm/erv.hpp"
 #include "erv_conf/erv_conf.hpp"
@@ -18,8 +19,13 @@
 namespace {
 
 std::atomic<int> quit_sig{0};
+std::mutex quit_mutex;
+std::condition_variable quit_cv;
 
-void quit_handler(int signum) { quit_sig.store(signum); }
+void quit_handler(int signum) {
+  quit_sig.store(signum);
+  quit_cv.notify_one();
+}
 
 void register_signals() {
   struct sigaction sa{};
@@ -93,14 +99,13 @@ int main(int argc, char* argv[]) {
 
   // Start
   hermes.start();
-  if (false == bot->start()) quit_handler(SIGABRT);
+  bot->start();
   inbox->start();
 
-  // Loop
-  if (!quit_sig.load()) LOG_INFO("Ready.");
-
-  while (!quit_sig.load()) {
-    std::this_thread::sleep_for(std::chrono::milliseconds(100));
+  // Wait for quit signal
+  {
+    std::unique_lock<std::mutex> lock(quit_mutex);
+    quit_cv.wait(lock, [] { return quit_sig.load() != 0; });
   }
 
   LOG_VERBOSE(0, "Quit signal: %d", quit_sig.load());
@@ -114,5 +119,5 @@ int main(int argc, char* argv[]) {
   // End demo
   LOG_INFO("End Program.");
   LOG_stop();
-  LOG_destory();
+  LOG_destroy();
 }
