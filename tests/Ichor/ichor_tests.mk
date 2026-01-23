@@ -1,11 +1,11 @@
-ICHOR_TEST_EXE := ichor_test
-ICHOR_REPORT_DIR := $(REPORT_DIR)/Ichor
+ICHOR_TEST_EXE     := ichor_test
+ICHOR_REPORT_DIR   := $(REPORT_DIR)/Ichor
 ICHOR_TEST_OBJ_DIR := $(TEST_OBJ_DIR)/Ichor
 
-ICHOR_UTEST_SRCS := all_tests.cpp
-ICHOR_UTEST_SRCS += arm/test_ichor_arm.cpp
-ICHOR_UTEST_SRCS += conf/test_ichor_conf.cpp
-ICHOR_UTEST_OBJS := $(ICHOR_UTEST_SRCS:%.cpp=$(ICHOR_TEST_OBJ_DIR)/%.o)
+ICHOR_UTEST_SRCS   := all_tests.cpp
+ICHOR_UTEST_SRCS   += arm/test_ichor_arm.cpp
+ICHOR_UTEST_SRCS   += conf/test_ichor_conf.cpp
+ICHOR_UTEST_OBJS   := $(ICHOR_UTEST_SRCS:%.cpp=$(ICHOR_TEST_OBJ_DIR)/%.o)
 
 test_ichor_build: test_ichor_re $(COMMON_OBJS) $(ICHOR_OBJS) $(ICHOR_UTEST_OBJS)
 	@mkdir -p $(TEST_BIN_DIR)

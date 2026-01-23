@@ -1,38 +1,37 @@
-TESTS_DIR	 = tests
+TESTS_DIR     = tests
 TEST_OBJ_DIR := $(OBJ_DIR)/tests
 TEST_BIN_DIR := $(BIN_DIR)/tests
-REPORT_DIR	:= build/reports
+REPORT_DIR   := build/reports
 
-COV_FLAGS := --coverage -lgcov
+COV_FLAGS    := --coverage -lgcov
 
-RM := rm -rf
-DIR_DUP = mkdir -p $(@D)
+RM           := rm -rf
 
 # Patterns for test object files
 # Conditionally overriding some rules to add --coverage flag when building tests
 ifneq (,$(findstring test, $(MAKECMDGOALS)))
 # C
 $(OBJ_DIR)/%.o: $(SRC_DIR)/%.c
-	$(DIR_DUP)
+	@mkdir -p $(dir $@)
 	@$(CC) $(FLAGS) -c $(COV_FLAGS) -o $(MAKE_DIR)/$@ $<
 	@echo "    CC        $@"
 
 # C++
 $(OBJ_DIR)/%.o: $(SRC_DIR)/%.cpp
-	$(DIR_DUP)
+	@mkdir -p $(dir $@)
 	@$(CC) $(FLAGS) -c $(COV_FLAGS) -o $(MAKE_DIR)/$@ $<
 	@echo "    CC        $@"
 endif
 
 # C
 $(TEST_OBJ_DIR)/%.o: $(TESTS_DIR)/%.c
-	$(DIR_DUP)
+	@mkdir -p $(dir $@)
 	@$(CC) $(FLAGS) -c -o $(MAKE_DIR)/$@ $<
 	@echo "  TEST CC     $@"
 
 # C++
 $(TEST_OBJ_DIR)/%.o: $(TESTS_DIR)/%.cpp
-	$(DIR_DUP)
+	@mkdir -p $(dir $@)
 	@$(CC) $(FLAGS) -c -o $(MAKE_DIR)/$@ $<
 	@echo "  TEST CC     $@"
 
