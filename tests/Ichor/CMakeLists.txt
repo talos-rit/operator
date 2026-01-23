@@ -5,19 +5,25 @@ add_executable(ichor_test_exe
     conf/test_ichor_conf.cpp
 )
 
+target_include_directories(ichor_test_exe PRIVATE
+    ${CMAKE_SOURCE_DIR}/src/Ichor
+    ${CMAKE_SOURCE_DIR}/src/common
+    ${CMAKE_SOURCE_DIR}/src/Ichor/driver/src
+)
+
 target_link_libraries(ichor_test_exe
     common_objs
-    driver_objs
-    $<TARGET_OBJECTS:ichor>
+    driver
     CppUTest
     CppUTestExt
     Threads::Threads
 )
 
-add_test(NAME ichor_test COMMAND ichor_test_exe)
+add_test(NAME ichor_test
+    COMMAND ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/ichor_test_exe)
 
 add_custom_target(test_ichor
     DEPENDS ichor_test_exe
-    COMMAND ./ichor_test_exe
+    COMMAND ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/ichor_test_exe
     COMMENT "Running Ichor tests"
 )

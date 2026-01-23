@@ -9,21 +9,22 @@ set(COMMON_TEST_SRCS
     all_tests.cpp 
 )
 
-add_executable(common_test_exe
+add_executable(test_common_exe
     ${COMMON_TEST_SRCS}
 )
 
-target_link_libraries(common_test_exe
+target_link_libraries(test_common_exe
     common_objs
     CppUTest
     CppUTestExt
     Threads::Threads
 )
 
-add_test(NAME common_tests COMMAND common_test_exe)
+add_test(NAME test_common
+    COMMAND ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/test_common_exe)
 
 add_custom_target(test_common
-    DEPENDS common_test_exe
-    COMMAND ./common_test_exe
+    DEPENDS test_common_exe
+    COMMAND ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/test_common_exe
     COMMENT "Running common tests"
 )
