@@ -5,15 +5,10 @@ add_executable(ichor_test_exe
     conf/test_ichor_conf.cpp
 )
 
-target_include_directories(ichor_test_exe PRIVATE
-    ${CMAKE_SOURCE_DIR}/src/Ichor
-    ${CMAKE_SOURCE_DIR}/src/common
-    ${CMAKE_SOURCE_DIR}/src/Ichor/driver/src
-)
-
 target_link_libraries(ichor_test_exe
     common_objs
     driver
+    ichor_objs
     CppUTest
     CppUTestExt
     Threads::Threads

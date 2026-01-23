@@ -1,11 +1,12 @@
 # ER_V executable
 add_executable(erv)
 
-target_sources(erv PRIVATE
-    main.cpp
-    acl/acl.cpp
-    erv_arm/erv.cpp
-    erv_conf/erv_conf.cpp
+target_sources(erv 
+    PRIVATE
+        main.cpp
+        acl/acl.cpp
+        erv_arm/erv.cpp
+        erv_conf/erv_conf.cpp
 )
 
 
@@ -15,6 +16,7 @@ target_link_libraries(erv PRIVATE
     Threads::Threads
 )
 
-target_include_directories(erv PRIVATE
-    ${CMAKE_SOURCE_DIR}/src/ER_V
+target_include_directories(erv 
+    PUBLIC
+        ${CMAKE_CURRENT_SOURCE_DIR}
 )
