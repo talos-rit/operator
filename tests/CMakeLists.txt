@@ -6,10 +6,6 @@ message(STATUS "Found CppUTest version ${CPPUTEST_VERSION}")
 include_directories(${CPPUTEST_INCLUDE_DIRS} ../src/)
 link_directories(${CPPUTEST_LIBRARIES})
 
-
-option(ENABLE_COVERAGE "Enable code coverage for tests. Requires Debug build type. Automatically applied for unit testing" OFF)
-option(ENABLE_REPORT "Enable generation of coverage report after tests. Requires ENABLE_COVERAGE" OFF)
-
 # Coverage flags (only for Debug builds)
 if(CMAKE_BUILD_TYPE STREQUAL "Debug")
     set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} --coverage")
@@ -72,23 +68,19 @@ add_custom_target(test_all_report
 )
 
 # Coverage report target
-if(ENABLE_COVERAGE AND ENABLE_REPORT AND CMAKE_BUILD_TYPE STREQUAL "Debug")
-    find_program(LCOV_PATH lcov)
-    find_program(GENHTML_PATH genhtml)
-    
-    if(LCOV_PATH AND GENHTML_PATH)
-        add_custom_target(coverage_report
-            COMMAND ${LCOV_PATH} --capture 
-                    --directory ${CMAKE_BINARY_DIR}/obj 
-                    --output-file ${CMAKE_BINARY_DIR}/coverage.info 
-                    --exclude '*/12/*' 
-                    --exclude '/usr/include/*' 
-                    --exclude '*/tests/*'
-            COMMAND ${GENHTML_PATH} ${CMAKE_BINARY_DIR}/coverage.info 
-                    --output-directory ${CMAKE_BINARY_DIR}/coverage
-            COMMAND echo "Coverage report generated at ${CMAKE_BINARY_DIR}/coverage/index.html"
-            COMMENT "Generating coverage report"
-            DEPENDS test_all
-        )
-    endif()
-endif()
+find_program(LCOV_PATH lcov)
+find_program(GENHTML_PATH genhtml)
+
+add_custom_target(coverage_report
+    COMMAND ${LCOV_PATH} --capture 
+            --directory ${CMAKE_BINARY_DIR}/obj 
+            --output-file ${CMAKE_BINARY_DIR}/coverage.info 
+            --exclude '*/12/*' 
+            --exclude '/usr/include/*' 
+            --exclude '*/tests/*'
+    COMMAND ${GENHTML_PATH} ${CMAKE_BINARY_DIR}/coverage.info 
+            --output-directory ${CMAKE_BINARY_DIR}/coverage
+    COMMAND echo "Coverage report generated at ${CMAKE_BINARY_DIR}/coverage/index.html"
+    COMMENT "Generating coverage report"
+    DEPENDS test_all
+)
