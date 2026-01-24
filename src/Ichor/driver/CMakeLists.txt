@@ -18,8 +18,3 @@ target_link_libraries(driver PUBLIC
     common_objs
     Threads::Threads
 )
-
-# Set position independent code
-set_target_properties(driver PROPERTIES
-    POSITION_INDEPENDENT_CODE ON
-)
