@@ -1,4 +1,4 @@
-#include "acl/acl.h"
+#include "acl/acl.hpp"
 
 #define ACL_VAR_POS "DELTA" /** variable position moniker for ACL commands */
 
@@ -63,7 +63,7 @@ typedef enum _acl_manual_axis {
 typedef struct _acl_resources {
   // ACL_Command     cmd_pool[ACL_CMD_COUNT];    /** Statically Allocated
   // ACL_Command pool */
-  ACL_Command *cmd_pool; /** Dynamically Allocated ACL_Command pool */
+  ACL_Command* cmd_pool; /** Dynamically Allocated ACL_Command pool */
   uint32_t cmd_count;    /** Number of ACL_Commands in cmd_pool */
   S_List free_queue;     /** Queue of free ACL_Commands */
   uint8_t manaul_mode;   /** Manual mode tracker */
@@ -79,14 +79,14 @@ typedef struct _acl_resources {
  * @param degree_count Amount of degrees to convert to Encoder Count
  * @returns 0 on success, -1 on failure
  */
-int ACL_enqueue_shift_cmd(S_List *cmd_queue, ACL_Axis axis, float degree_count);
+int ACL_enqueue_shift_cmd(S_List* cmd_queue, ACL_Axis axis, float degree_count);
 
 /**
  * @brief Allocates and enqueues ACL MOVE Command in input cmd_queue
  * @param cmd_queue S_List to append to
  * @returns 0 on success, -1 on failure
  */
-int ACL_enqueue_move_cmd(S_List *cmd_queue);
+int ACL_enqueue_move_cmd(S_List* cmd_queue);
 
 /**
  * @brief Allocates and enqueues ACL ABORT Command in input cmd_queue
@@ -94,4 +94,4 @@ int ACL_enqueue_move_cmd(S_List *cmd_queue);
  * @param cmd_queue S_List to append to
  * @returns 0 on success, -1 on failure
  */
-int ACL_enqueue_clrbuf_cmd(S_List *cmd_queue);
+int ACL_enqueue_clrbuf_cmd(S_List* cmd_queue);

@@ -8,7 +8,7 @@
 #include <thread>
 
 #include "api/api.hpp"
-#include "log/log.h"
+#include "log/log.hpp"
 #include "sub/sub.hpp"
 
 #define LOG_CONSOLE_THRESHOLD_THIS LOG_THRESHOLD_DEFAULT
@@ -40,7 +40,7 @@ bool Socket::init() {
   props_.server.sin_addr.s_addr = INADDR_ANY;
   props_.server.sin_port = ::htons(props_.port);
 
-  if (::bind(props_.sockfd, reinterpret_cast<struct sockaddr *>(&props_.server),
+  if (::bind(props_.sockfd, reinterpret_cast<struct sockaddr*>(&props_.server),
              sizeof(props_.server)) < 0) {
     LOG_ERROR("Could not bind socket: (%d) %s", errno, strerror(errno));
     return false;
@@ -54,7 +54,7 @@ bool Socket::waitForConnection() {
   socklen_t client_len = sizeof(props_.client);
   while (props_.running && !props_.connfd.valid()) {
     int fd = ::accept(props_.sockfd,
-                      reinterpret_cast<struct sockaddr *>(&props_.client),
+                      reinterpret_cast<struct sockaddr*>(&props_.client),
                       &client_len);
     if (fd > 0) {
       props_.connfd = FileDescriptor(fd);
@@ -115,7 +115,7 @@ void Socket::poll() {
     buf_iter += ret;
 
     while (buf_iter >= sizeof(API::DataHeader) + 2) {
-      auto *msg = reinterpret_cast<API::DataWrapper *>(buffer.data());
+      auto* msg = reinterpret_cast<API::DataWrapper*>(buffer.data());
       uint16_t total_len =
           sizeof(API::DataHeader) + be16toh(msg->header.len) + 2;
       if (buf_iter < total_len) break;
@@ -125,7 +125,7 @@ void Socket::poll() {
         break;
       }
 
-      if (auto *buf = props_.sub->dequeueBuffer(Sub_Queue::Free)) {
+      if (auto* buf = props_.sub->dequeueBuffer(Sub_Queue::Free)) {
         buf->len = total_len;
         std::memcpy(&buf->body[0], buffer.data(), total_len);
         props_.sub->enqueueBuffer(Sub_Queue::Command, buf);
@@ -167,4 +167,4 @@ void Socket::stop() {
   LOG_INFO("Socket stopped.");
 }
 
-void Socket::registerSubscriber(Subscriber *sub) { props_.sub = sub; }
+void Socket::registerSubscriber(Subscriber* sub) { props_.sub = sub; }

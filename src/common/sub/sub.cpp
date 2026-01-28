@@ -1,22 +1,22 @@
 #include "sub/sub.hpp"
 
-#include "log/log.h"
+#include "log/log.hpp"
 
 #define LOG_CONSOLE_THRESHOLD_THIS LOG_THRESHOLD_DEFAULT
 #define LOG_FILE_THRESHOLD_THIS LOG_THRESHOLD_MAX
 
 void Subscriber::prepareBuffers() noexcept {
   pool_.resize(SUB_MSG_COUNT);
-  for (auto &q : queues_) {
+  for (auto& q : queues_) {
     q.buffers.clear();
   }
 
-  auto &freeQueue = queues_[static_cast<size_t>(Sub_Queue::Free)];
-  for (auto &buf : pool_) freeQueue.buffers.push_back(&buf);
+  auto& freeQueue = queues_[static_cast<size_t>(Sub_Queue::Free)];
+  for (auto& buf : pool_) freeQueue.buffers.push_back(&buf);
 }
 
 void Subscriber::destroyBuffers() noexcept {
-  for (auto &q : queues_) {
+  for (auto& q : queues_) {
     std::lock_guard<std::mutex> lock(q.mtx);
     q.buffers.clear();
   }
@@ -58,7 +58,7 @@ bool Subscriber::stop() {
   return true;
 }
 
-Sub_Buffer *Subscriber::dequeueBuffer(Sub_Queue queue) {
+Sub_Buffer* Subscriber::dequeueBuffer(Sub_Queue queue) {
   if (state_ != State::Run) {
     LOG_ERROR("Subscriber DequeueBuffer: Subscriber not running");
     return nullptr;
@@ -70,19 +70,19 @@ Sub_Buffer *Subscriber::dequeueBuffer(Sub_Queue queue) {
     return nullptr;
   }
 
-  auto &q = queues_[queueIndex];
+  auto& q = queues_[queueIndex];
   std::lock_guard<std::mutex> lock(q.mtx);
 
   if (q.buffers.empty()) {
     return nullptr;
   }
 
-  Sub_Buffer *buf = q.buffers.front();
+  Sub_Buffer* buf = q.buffers.front();
   q.buffers.pop_front();
   return buf;
 }
 
-bool Subscriber::enqueueBuffer(Sub_Queue queue, Sub_Buffer *buf) {
+bool Subscriber::enqueueBuffer(Sub_Queue queue, Sub_Buffer* buf) {
   if (state_ != State::Run) {
     LOG_ERROR("Subscriber EnqueueBuffer: Subscriber not running");
     return false;
@@ -98,7 +98,7 @@ bool Subscriber::enqueueBuffer(Sub_Queue queue, Sub_Buffer *buf) {
     buf->reset();
   }
 
-  auto &q = queues_[queueIndex];
+  auto& q = queues_[queueIndex];
 
   // Block for releasing lock after pushing buffer
   {

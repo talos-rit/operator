@@ -1,4 +1,4 @@
-#include "conf/config.h"
+#include "conf/config.hpp"
 
 #include <errno.h>
 #include <fcntl.h>
@@ -9,8 +9,8 @@
 #include <string.h>
 #include <unistd.h>
 
-#include "log/log.h"
-#include "util/comm.h"
+#include "log/log.hpp"
+#include "util/comm.hpp"
 
 #define LOG_CONSOLE_THRESHOLD_THIS LOG_THRESHOLD_DEFAULT
 #define LOG_FILE_THRESHOLD_THIS LOG_THRESHOLD_MAX
@@ -27,15 +27,15 @@ Config::~Config() { ClearKeyVals(); }
  * @param entry Entry to initialize
  * @returns 0 on success, -1 on failure
  */
-static int CONF_Entry_init(CONF_Entry *entry) {
+static int CONF_Entry_init(CONF_Entry* entry) {
   if (!entry) STD_FAIL;
   memset(entry, 0, sizeof(CONF_Entry));
   return 0;
 }
 
-const char *Config::GetFilePath() { return &path[0]; }
+const char* Config::GetFilePath() { return &path[0]; }
 
-int Config::SetFilePath(const char *file_path) {
+int Config::SetFilePath(const char* file_path) {
   if (!file_path) STD_FAIL;
 
   if (strlen(file_path) >= CONF_MEMBER_LEN) {
@@ -83,13 +83,13 @@ static int is_term(char ch) {
  * @param src Original string from which matches are extracted
  * @param group Match information
  */
-static void copy_regex_group(char *dst, const char *src, regmatch_t *group) {
+static void copy_regex_group(char* dst, const char* src, regmatch_t* group) {
   uint8_t match_len = group->rm_eo - group->rm_so;
   strncpy(&dst[0], &src[group->rm_so], match_len);
   dst[match_len] = '\0';
 }
 
-int Config::GetKeyIndex(const char *key) {
+int Config::GetKeyIndex(const char* key) {
   int16_t idx = -1;
   for (uint8_t iter = 0; iter < key_count; iter++) {
     if (0 == strcmp(key, &pairs[iter].key[0])) {
@@ -139,7 +139,7 @@ int Config::ParseYaml(int fd) {
       if (-1 == idx) {
         LOG_VERBOSE(4, "Unrecognized key; Moving on");
       } else {
-        char *val = &pairs[idx].val[0];
+        char* val = &pairs[idx].val[0];
         copy_regex_group(val, &buffer[0], &matches[2]);
         LOG_VERBOSE(4, "VAL: %s", val);
       }
@@ -178,7 +178,7 @@ int Config::ParseConfig() {
   return 0;
 }
 
-int Config::AddKey(const char *key, const char *deflt, CONF_Data_Type type) {
+int Config::AddKey(const char* key, const char* deflt, CONF_Data_Type type) {
   if (!key) STD_FAIL;
   if (!deflt) STD_FAIL;
   if (CONF_PAIR_LIMIT <= key_count) STD_FAIL;
@@ -189,26 +189,26 @@ int Config::AddKey(const char *key, const char *deflt, CONF_Data_Type type) {
   return key_count++;
 }
 
-int Config::AddKey(const char *key, const char *deflt) {
+int Config::AddKey(const char* key, const char* deflt) {
   return AddKey(key, deflt, CONF_DATA_STRING);
 }
 
-int Config::AddKey(const char *key, int deflt) {
+int Config::AddKey(const char* key, int deflt) {
   char val[10];
   sprintf(&val[0], "%d", deflt);
   return AddKey(key, val, CONF_DATA_INT);
 }
 
-int Config::AddKey(const char *key, bool deflt) {
+int Config::AddKey(const char* key, bool deflt) {
   return AddKey(key, deflt ? "true" : "false", CONF_DATA_BOOL);
 }
 
-const char *Config::GetVal(uint8_t idx) {
+const char* Config::GetVal(uint8_t idx) {
   if (idx >= key_count) STD_FAIL_VOID_PTR;
   return &pairs[idx].val[0];
 }
 
-const char *Config::GetVal(const char *key) {
+const char* Config::GetVal(const char* key) {
   if (!key) STD_FAIL_VOID_PTR;
 
   int idx = GetKeyIndex(key);
@@ -236,7 +236,7 @@ bool Config::GetBool(int idx) {
     return fail_get_bool(idx);
   }
 
-  const char *val = GetVal(idx);
+  const char* val = GetVal(idx);
   bool set;
 
   if (0 == strcmp(val, "true"))
@@ -251,7 +251,7 @@ bool Config::GetBool(int idx) {
   return set;
 }
 
-bool Config::GetBool(const char *key) {
+bool Config::GetBool(const char* key) {
   if (!key) STD_FAIL;
   int idx = GetKeyIndex(key);
   if (-1 == idx) STD_FAIL;
@@ -259,12 +259,12 @@ bool Config::GetBool(const char *key) {
 }
 
 int Config::GetInt(int idx) {
-  const char *val = GetVal(idx);
+  const char* val = GetVal(idx);
   if (!val) STD_FAIL;
   return atoi(val);
 }
 
-int Config::GetInt(const char *key) {
+int Config::GetInt(const char* key) {
   if (!key) STD_FAIL;
   int idx = GetKeyIndex(key);
   if (-1 == idx) STD_FAIL;
@@ -278,7 +278,7 @@ void Config::ClearKeyVals() {
   key_count = 0;
 }
 
-int Config::OverrideValue(uint8_t key_idx, const char *val) {
+int Config::OverrideValue(uint8_t key_idx, const char* val) {
   if (key_idx > key_count) STD_FAIL;
   if (!val) STD_FAIL;
 
@@ -292,12 +292,12 @@ int Config::OverrideValue(uint8_t key_idx, const char *val) {
 }
 
 int Config::OverrideValue(uint8_t key_idx, bool val) {
-  const char *str_val = val ? "true" : "false";
+  const char* str_val = val ? "true" : "false";
   return OverrideValue(key_idx, str_val);
 }
 
 void Config::DumpToLog(int log_level) {
-  const char *delim =
+  const char* delim =
       "=============================================================";
   LOG_write(log_level, delim);
   LOG_write(log_level, "Config parameters:");

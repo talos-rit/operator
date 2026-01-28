@@ -1,4 +1,4 @@
-#include "log/log.h"
+#include "log/log.hpp"
 
 #include <errno.h>
 #include <fcntl.h>
@@ -12,9 +12,9 @@
 #include <sys/time.h>
 #include <unistd.h>
 
-#include "log/log_private.h"
-#include "util/comm.h"
-#include "util/timestamp.h"
+#include "log/log_private.hpp"
+#include "util/comm.hpp"
+#include "util/timestamp.hpp"
 
 #define LOG_CLOCK CLOCK_REALTIME
 #define LOG_TS_LEN (UTIL_TIMESTAMP_LEN + UTIL_TS_MSEC_LEN + 1)

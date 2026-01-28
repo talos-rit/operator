@@ -22,4 +22,4 @@ jobs:
           artifact: test-results
           name: CppUTest Report
           reporter: java-junit
-          path: */cpputest_*.xml
+          path: "*/cpputest_*.xml"

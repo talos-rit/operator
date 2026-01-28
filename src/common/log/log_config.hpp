@@ -1,6 +1,6 @@
 #pragma once
 
-#include "conf/config.h"
+#include "conf/config.hpp"
 
 #define LOG_CONF_LOC_KEY "log_loc"
 #define LOG_CONF_LOC_DEFAULT "/etc/talos/logs/operator.log"
@@ -14,6 +14,6 @@ class LogConfig : virtual public Config {
   LogConfig();
   ~LogConfig();
 
-  const char *GetLogLocation();
-  int SetLogLocation(const char *log_location);
+  const char* GetLogLocation();
+  int SetLogLocation(const char* log_location);
 };

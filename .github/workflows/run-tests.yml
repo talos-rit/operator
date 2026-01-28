@@ -26,17 +26,24 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install -y cpputest
+
+      - name: Run CMake
+        run: |
+          cmake -B build -DCMAKE_BUILD_TYPE=Debug -DBUILD_TESTING=ON
       
       # Build and Run Tests with Reporting and Coverage
       - name: Run Common Unit Tests
+        working-directory: ./build
         run: |
           make test_common_report
 
       - name: Run ERV Unit Tests
+        working-directory: ./build
         run: |
           make test_erv_report
 
       - name: Run Ichor Unit Tests
+        working-directory: ./build
         run: |
           make test_ichor_report
       
@@ -45,7 +52,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: test-results
-          path: build/reports/**/cpputest_*.xml
+          path: build/test_reports/**/cpputest_*.xml
         if: ${{ !cancelled() }}
       
       # TODO: Decide between lcov, gcov, gcovr, codecov, coveralls, and SonarQube for code coverage reporting

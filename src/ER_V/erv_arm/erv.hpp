@@ -9,7 +9,7 @@
 
 class Scorbot : public Arm {
  public:
-  Scorbot(const char *dev);
+  Scorbot(const char* dev);
   ~Scorbot();
 
  private:
@@ -22,10 +22,10 @@ class Scorbot : public Arm {
   struct timeval last_start;
 
   int handShake();
-  int polarPan(API::PolarPan *pan);
-  int polarPanStart(API::PolarPanStart *pan);
+  int polarPan(API::PolarPan* pan);
+  int polarPanStart(API::PolarPanStart* pan);
   int polarPanStop();
-  int home(API::Home *home);
-  int writeCommandQueue(S_List *cmd_list);
+  int home(API::Home* home);
+  int writeCommandQueue(S_List* cmd_list);
   void poll();
 };

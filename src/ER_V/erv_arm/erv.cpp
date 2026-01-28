@@ -10,9 +10,9 @@
 #include <termios.h>
 #include <unistd.h>
 
-#include "acl/acl.h"
-#include "log/log.h"
-#include "util/comm.h"
+#include "acl/acl.hpp"
+#include "log/log.hpp"
+#include "util/comm.hpp"
 
 #define LOG_CONSOLE_THRESHOLD_THIS LOG_THRESHOLD_DEFAULT
 #define LOG_FILE_THRESHOLD_THIS LOG_THRESHOLD_MAX
@@ -22,7 +22,7 @@
 
 #define ERV_CLOCK CLOCK_REALTIME
 
-Scorbot::Scorbot(const char *dev) {
+Scorbot::Scorbot(const char* dev) {
   // Setup device
   LOG_VERBOSE(4, "Scorbot device path: %s", dev);
   strcpy(&this->dev[0], &dev[0]);
@@ -82,7 +82,7 @@ static uint8_t is_term(char ch) {
  * storing the rx data
  * @param len Number of chars to flush
  */
-static void flush_buffer(char *tty_buffer, uint16_t len) {
+static void flush_buffer(char* tty_buffer, uint16_t len) {
   if (!tty_buffer) STD_FAIL_VOID;
   if (!len) return;
 
@@ -92,7 +92,7 @@ static void flush_buffer(char *tty_buffer, uint16_t len) {
   LOG_VERBOSE(0, "SCOR: %s", tty_buffer);
 }
 
-static uint16_t tval_diff_ms(struct timeval *end, struct timeval *start) {
+static uint16_t tval_diff_ms(struct timeval* end, struct timeval* start) {
   time_t start_ms = (start->tv_sec * 1000) + (start->tv_usec / 1000);
   time_t end_ms = (end->tv_sec * 1000) + (end->tv_usec / 1000);
   return end_ms - start_ms;
@@ -110,8 +110,8 @@ static uint16_t tval_diff_ms(struct timeval *end, struct timeval *start) {
  * @param manual_mode Pointer to the bool tracking the current mode of the
  * controller
  */
-static void poll_polar_pan(int fd, char *polar_pan_cont,
-                           struct timeval *last_start, bool *manual_mode) {
+static void poll_polar_pan(int fd, char* polar_pan_cont,
+                           struct timeval* last_start, bool* manual_mode) {
   static char last_pan_cont;
 
   struct timeval now;
@@ -179,7 +179,7 @@ static void poll_tty_rx(int fd) {
   }
 }
 
-static void execute_acl_cmd(int fd, ACL_Command *command) {
+static void execute_acl_cmd(int fd, ACL_Command* command) {
   write(fd, &command->payload[0], command->len);
   LOG_VERBOSE(4, "Sending Command: %s", &command->payload[0]);
   LOG_VERBOSE(4, "Delay_ms: %u", command->delay_ms);
@@ -191,7 +191,7 @@ static void execute_acl_cmd(int fd, ACL_Command *command) {
  * @param fd File descriptor to write commands to
  * @param cmd_buffer List of commands to execute
  */
-static void poll_cmd_buffer(int fd, S_List *cmd_buffer) {
+static void poll_cmd_buffer(int fd, S_List* cmd_buffer) {
   static bool init = false;
   static uint16_t last_delay_ms = 0;
   static struct timeval last_cmd_ts;
@@ -214,10 +214,10 @@ static void poll_cmd_buffer(int fd, S_List *cmd_buffer) {
   }
 
   // Execute next command
-  S_List_Node *node = DATA_S_List_pop(cmd_buffer);
+  S_List_Node* node = DATA_S_List_pop(cmd_buffer);
   if (!node) STD_FAIL_VOID;
 
-  ACL_Command *cmd = DATA_LIST_GET_OBJ(node, ACL_Command, node);
+  ACL_Command* cmd = DATA_LIST_GET_OBJ(node, ACL_Command, node);
   last_delay_ms = cmd->delay_ms;
   gettimeofday(&last_cmd_ts, NULL);
   execute_acl_cmd(fd, cmd);
@@ -238,7 +238,7 @@ int Scorbot::handShake() {
   return 0;
 }
 
-int Scorbot::polarPan(API::PolarPan *pan) {
+int Scorbot::polarPan(API::PolarPan* pan) {
   uint8_t iter = 0;
   char text[255];
 
@@ -271,7 +271,7 @@ int Scorbot::polarPan(API::PolarPan *pan) {
   return 0;
 }
 
-int Scorbot::polarPanStart(API::PolarPanStart *pan) {
+int Scorbot::polarPanStart(API::PolarPanStart* pan) {
   uint8_t iter = 0;
   char text[255];
 
@@ -299,7 +299,7 @@ int Scorbot::polarPanStop() {
   return 0;
 }
 
-int Scorbot::home(API::Home *home) {
+int Scorbot::home(API::Home* home) {
   uint8_t iter = 0;
   char text[255];
 
@@ -317,7 +317,7 @@ int Scorbot::home(API::Home *home) {
   return 0;
 }
 
-int Scorbot::writeCommandQueue(S_List *cmd_list) {
+int Scorbot::writeCommandQueue(S_List* cmd_list) {
   if (!cmd_list) STD_FAIL;
   if (-1 == fd) STD_FAIL;
 
