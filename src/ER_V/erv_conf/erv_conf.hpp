@@ -2,9 +2,9 @@
 
 #include <stdint.h>
 
-#include "conf/config.h"
-#include "log/log_config.h"
-#include "socket/socket_conf.h"
+#include "conf/config.hpp"
+#include "log/log_config.hpp"
+#include "socket/socket_conf.hpp"
 
 #define ERV_CONF_DEV_KEY "scorbot_dev"
 #define ERV_CONF_DEV_DEFAULT "/dev/ttyUSB0"
@@ -22,7 +22,7 @@ class ERVConfig : public LogConfig, public SocketConfig {
    * Scorbot ER V serial connection
    * @returns const char pointer on success, NULL on failure
    */
-  const char *GetScorbotDevicePath();
+  const char* GetScorbotDevicePath();
 
   /**
    * @brief Loads the ER V default configuration

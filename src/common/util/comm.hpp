@@ -3,7 +3,7 @@
  */
 
 #pragma once
-#include "log/log.h"
+#include "log/log.hpp"
 
 #define STD_FAIL \
   {              \

@@ -1,6 +1,6 @@
 #include "motorhat/MotorHAT.hpp"
 
-#include "log/log.h"
+#include "log/log.hpp"
 
 #define LOG_CONSOLE_THRESHOLD_THIS LOG_THRESHOLD_DEFAULT
 #define LOG_FILE_THRESHOLD_THIS LOG_THRESHOLD_MAX

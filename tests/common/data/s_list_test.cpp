@@ -3,13 +3,13 @@
 #include <stddef.h>
 
 #include "CppUTest/TestHarness.h"
-#include "log/log.h"
+#include "log/log.hpp"
 
 TEST_GROUP(s_list_base){};
 
 TEST(s_list_base, node_init) {
   S_List_Node node;
-  node.next = (S_List_Node *)-5;
+  node.next = (S_List_Node*)-5;
 
   DATA_S_List_Node_init(&node);
 
@@ -18,8 +18,8 @@ TEST(s_list_base, node_init) {
 
 TEST(s_list_base, list_init) {
   S_List list;
-  list.head = (S_List_Node *)-1;
-  list.tail = (S_List_Node *)-2;
+  list.head = (S_List_Node*)-1;
+  list.tail = (S_List_Node*)-2;
   list.len = 45;
 
   DATA_S_List_init(&list);
@@ -131,7 +131,7 @@ TEST(s_list_nominal_large, append_and_pop) {
 
   CHECK_EQUAL(structs_len, list.len);
 
-  S_List_Node *iter = list.head;
+  S_List_Node* iter = list.head;
   uint8_t n_iter = 0;
   for (; n_iter < structs_len - 1; n_iter++) {
     POINTERS_EQUAL(&structs[n_iter].node, iter);
@@ -143,10 +143,10 @@ TEST(s_list_nominal_large, append_and_pop) {
 
   iter = list.head;
   n_iter = 0;
-  S_List_Node *pop;
+  S_List_Node* pop;
   for (; n_iter < structs_len; n_iter++) {
     POINTERS_EQUAL(list.head, iter);
-    S_List_Node *next = iter->next;
+    S_List_Node* next = iter->next;
     pop = DATA_S_List_pop(&list);
     POINTERS_EQUAL(iter, pop);
     iter = next;
@@ -171,14 +171,14 @@ TEST(s_list_nominal_large, append_and_insert) {
   }
 
   // Confirm order
-  S_List_Node *iter = list.head;
+  S_List_Node* iter = list.head;
   for (uint8_t n_iter = 0; n_iter < 2; n_iter++) {
-    Test_Struct *ts = DATA_LIST_GET_OBJ(iter, Test_Struct, node);
+    Test_Struct* ts = DATA_LIST_GET_OBJ(iter, Test_Struct, node);
     POINTERS_EQUAL(n_iter, ts->id);
     iter = iter->next;
   }
   for (uint8_t n_iter = 3; n_iter < structs_len; n_iter++) {
-    Test_Struct *ts = DATA_LIST_GET_OBJ(iter, Test_Struct, node);
+    Test_Struct* ts = DATA_LIST_GET_OBJ(iter, Test_Struct, node);
     POINTERS_EQUAL(n_iter, ts->id);
     iter = iter->next;
   }
@@ -189,7 +189,7 @@ TEST(s_list_nominal_large, append_and_insert) {
   // Confirm order
   iter = list.head;
   for (uint8_t n_iter = 0; n_iter < structs_len; n_iter++) {
-    Test_Struct *ts = DATA_LIST_GET_OBJ(iter, Test_Struct, node);
+    Test_Struct* ts = DATA_LIST_GET_OBJ(iter, Test_Struct, node);
     POINTERS_EQUAL(n_iter, ts->id);
     iter = iter->next;
   }
@@ -205,9 +205,9 @@ TEST(s_list_nominal_large, append_and_prepend) {
   }
 
   // Confirm order
-  S_List_Node *iter = list.head;
+  S_List_Node* iter = list.head;
   for (uint8_t n_iter = 1; n_iter < structs_len; n_iter++) {
-    Test_Struct *ts = DATA_LIST_GET_OBJ(iter, Test_Struct, node);
+    Test_Struct* ts = DATA_LIST_GET_OBJ(iter, Test_Struct, node);
     POINTERS_EQUAL(n_iter, ts->id);
     iter = iter->next;
   }
@@ -218,7 +218,7 @@ TEST(s_list_nominal_large, append_and_prepend) {
   // Confirm order
   iter = list.head;
   for (uint8_t n_iter = 0; n_iter < structs_len; n_iter++) {
-    Test_Struct *ts = DATA_LIST_GET_OBJ(iter, Test_Struct, node);
+    Test_Struct* ts = DATA_LIST_GET_OBJ(iter, Test_Struct, node);
     POINTERS_EQUAL(n_iter, ts->id);
     iter = iter->next;
   }

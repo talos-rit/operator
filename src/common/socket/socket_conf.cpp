@@ -1,5 +1,5 @@
 
-#include "socket/socket_conf.h"
+#include "socket/socket_conf.hpp"
 
 #include <arpa/inet.h>
 #include <signal.h>
@@ -7,9 +7,9 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#include "conf/config.h"
-#include "log/log.h"
-#include "util/comm.h"
+#include "conf/config.hpp"
+#include "log/log.hpp"
+#include "util/comm.hpp"
 
 #define LOG_CONSOLE_THRESHOLD_THIS LOG_THRESHOLD_DEFAULT
 #define LOG_FILE_THRESHOLD_THIS LOG_THRESHOLD_MAX
@@ -45,10 +45,10 @@ int SocketConfig::SetBindingAddress(uint32_t addr) {
     STD_FAIL;
   }
 
-  return SetBindingAddress((const char *)&tmp);
+  return SetBindingAddress((const char*)&tmp);
 }
 
-int SocketConfig::SetBindingAddress(const char *addr) {
+int SocketConfig::SetBindingAddress(const char* addr) {
   if (OverrideValue(address_idx, addr)) {
     LOG_WARN("Failed to override binding address; bad address");
     STD_FAIL;
