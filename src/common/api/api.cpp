@@ -71,8 +71,7 @@ int validate_command(const uint8_t* buf, uint16_t len) {
 
   // Check CRC
   // TODO: Implement
-  uint16_t* crc = (uint16_t*)(&cmd->payload_head + cmd->header.len);
-  *crc = be16toh(*crc);
+  uint8_t* crc = (uint8_t*)(&cmd->payload_head + cmd->header.len);
 
   return 0;
 }
