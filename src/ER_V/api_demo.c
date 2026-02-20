@@ -69,7 +69,7 @@ int main() {
   LOG_INFO("Staring demo...");
 
   // Setup buffers
-  uint16_t byte_len = sizeof(API_Data_Header) + sizeof(API_Data_Polar_Pan) + 2;
+  uint16_t byte_len = sizeof(API_Data_Header) + sizeof(API_Data_Polar_Pan) + 1;
   uint8_t bytes[byte_len];
   memset(&bytes[0], 0, byte_len);
   char text[UTIL_BYTE_STR_FMT_LEN(byte_len)];

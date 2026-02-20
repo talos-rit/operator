@@ -114,10 +114,10 @@ void Socket::poll() {
 
     buf_iter += ret;
 
-    while (buf_iter >= sizeof(API::DataHeader) + 2) {
+    while (buf_iter >= sizeof(API::DataHeader) + 1) {
       auto* msg = reinterpret_cast<API::DataWrapper*>(buffer.data());
       uint16_t total_len =
-          sizeof(API::DataHeader) + be16toh(msg->header.len) + 2;
+          sizeof(API::DataHeader) + be16toh(msg->header.len) + 1;
       if (buf_iter < total_len) break;
 
       if (!props_.sub) {

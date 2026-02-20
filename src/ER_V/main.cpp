@@ -58,7 +58,7 @@ static void dummy_msg(Subscriber* hermes) {
 
   cmd->delay_ms = 0;
 
-  buf->len = sizeof(API_Data_Home) + sizeof(API_Data_Header) + 2;
+  buf->len = sizeof(API_Data_Home) + sizeof(API_Data_Header) + 1;
   hermes->EnqueueBuffer(SUB_QUEUE_COMMAND, buf);
 }
 #endif
