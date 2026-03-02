@@ -1,5 +1,5 @@
 # Operator
-
+[![Ask DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/talos-rit/operator)
 
 ## Initial Setup
 1. Clone the repo with `--recursive`to get the driver submodule:
