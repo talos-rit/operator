@@ -2,9 +2,9 @@
 [![Ask DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/talos-rit/operator)
 
 ## Initial Setup
-1. Clone the repo with `--recursive`to get the driver submodule:
+1. Clone the repo
 ```bash
-git clone --recursive <repo-url>
+git clone <repo-url>
 ```
 *Note: Replace `<repo-url>` with the actual URL of the repository.*
 
