@@ -80,6 +80,12 @@ int validate_command(const uint8_t* buf, uint16_t len) {
           break;
         case API::HardwareOperationID::JointMoveRelative:
           if (cmd->header.len != sizeof(API::HardwareOperation) + sizeof(API::JointMoveRelative)) return -1;
+          {
+            auto* move = reinterpret_cast<API::JointMoveRelative*>(operation + 1);
+            move->shoulder = be32toh(move->shoulder);
+            move->elbow = be32toh(move->elbow);
+            move->wrist_pitch = be32toh(move->wrist_pitch);
+          }
           break;
         default:
           return -1;
