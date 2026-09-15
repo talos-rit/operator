@@ -163,6 +163,16 @@ int ACL_enqueue_shift_cmd(S_List* cmd_queue, ACL_Axis axis,
   return 0;
 }
 
+int ACL_enqueue_shift_counts_cmd(S_List* cmd_queue, uint8_t axis,
+                                 int32_t encoder_count) {
+  ACL_Command* cmd = get_cmd(cmd_queue);
+  if (!cmd) STD_FAIL;
+  cmd->len = sprintf(&cmd->payload[0], ACL_SHIFT_FMT, ACL_VAR_POS, axis, encoder_count);
+  cmd->type = ACL_CMD_SHIFT;
+  DATA_S_List_append(cmd_queue, &cmd->node);
+  return 0;
+}
+
 int ACL_enqueue_here_cmd(S_List* cmd_queue) {
   ACL_Command* cmd = get_cmd(cmd_queue);
   if (!cmd) STD_FAIL;

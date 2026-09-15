@@ -74,6 +74,7 @@ bool Socket::waitForConnection() {
 }
 
 bool Socket::sendResponse(std::span<const char> msg) {
+  std::lock_guard<std::mutex> lock(send_mutex_);
   int sent = ::send(props_.connfd, msg.data(), msg.size(), 0);
   if (sent < 0) {
     LOG_ERROR("Failed to send response: (%d) %s", errno, strerror(errno));
@@ -82,6 +83,11 @@ bool Socket::sendResponse(std::span<const char> msg) {
   LOG_INFO("Response sent (%d bytes)", sent);
   return true;
 };
+
+void Socket::sendTelemetry(std::string_view message) {
+  if (props_.connfd.valid())
+    sendResponse(std::span<const char>(message.data(), message.size()));
+}
 
 void Socket::poll() {
   std::array<char, SOCKET_BUF_LEN> buffer;
@@ -137,7 +143,7 @@ void Socket::poll() {
       buf_iter -= total_len;
       std::memmove(buffer.data(), buffer.data() + total_len, buf_iter);
 
-      static const char resp[] = "ACK";
+      static const char resp[] = "ACK\n";
       sendResponse(resp);
     }
   }

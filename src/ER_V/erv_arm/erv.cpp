@@ -5,7 +5,9 @@
 #include <signal.h>
 #include <stddef.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
+#include <sys/ioctl.h>
 #include <sys/time.h>
 #include <termios.h>
 #include <unistd.h>
@@ -22,6 +24,22 @@
 
 #define ERV_CLOCK CLOCK_REALTIME
 
+static int configure_tty(int fd) {
+  struct termios settings;
+  if (tcgetattr(fd, &settings) < 0) return -1;
+  cfmakeraw(&settings);
+  cfsetispeed(&settings, B9600);
+  cfsetospeed(&settings, B9600);
+  settings.c_cflag |= (CS8 | CLOCAL | CREAD);
+  settings.c_cflag &= ~(PARENB | CSTOPB | CRTSCTS);
+  settings.c_iflag |= (IXON | IXOFF);
+  if (tcsetattr(fd, TCSANOW, &settings) < 0) return -1;
+  int modem_bits;
+  if (ioctl(fd, TIOCMGET, &modem_bits) < 0) return -1;
+  modem_bits |= TIOCM_DTR | TIOCM_RTS;
+  return ioctl(fd, TIOCMSET, &modem_bits);
+}
+
 Scorbot::Scorbot(const char* dev) {
   // Setup device
   LOG_VERBOSE(4, "Scorbot device path: %s", dev);
@@ -32,10 +50,20 @@ Scorbot::Scorbot(const char* dev) {
     raise(SIGABRT);
     return;
   }
+  if (configure_tty(fd) < 0) {
+    LOG_ERROR("Could not configure Scorbot serial device: %s", strerror(errno));
+    close(fd);
+    fd = -1;
+    raise(SIGABRT);
+    return;
+  }
 
   // Setup config
   polar_pan_cont = '\0';
   manual_mode = false;
+  direct_mode = false;
+  telemetry_request_pending = false;
+  telemetry_delay_ms = ERV_HOME_SETTLE_MS;
   oversteer = OversteerConfig::Abort;
 
   // Setup ACL
@@ -44,6 +72,13 @@ Scorbot::Scorbot(const char* dev) {
   gettimeofday(&last_start, NULL);
 
   ACL_flush_tx(&cmd_buffer);
+  // A home cycle establishes the encoder-zero reference required for telemetry.
+  S_List home_commands;
+  DATA_S_List_init(&home_commands);
+  ACL_home_sequence(&home_commands);
+  writeCommandQueue(&home_commands);
+  gettimeofday(&telemetry_not_before, NULL);
+  write(fd, "\r", 1);
 }
 
 Scorbot::~Scorbot() {
@@ -111,7 +146,10 @@ static uint16_t tval_diff_ms(struct timeval* end, struct timeval* start) {
  * controller
  */
 static bool poll_polar_pan(int fd, char* polar_pan_cont,
-                           struct timeval* last_start, bool* manual_mode) {
+                           struct timeval* last_start, bool* manual_mode,
+                           bool* direct_mode, bool* telemetry_request_pending,
+                           struct timeval* telemetry_not_before,
+                           uint16_t* telemetry_delay_ms) {
   static char last_pan_cont;
   bool timed_out = false;
 
@@ -124,6 +162,14 @@ static bool poll_polar_pan(int fd, char* polar_pan_cont,
     timed_out = true;
   }
 
+  if (*polar_pan_cont && *telemetry_request_pending) {
+    write(fd, "\003", 1);
+    *telemetry_request_pending = false;
+    *direct_mode = false;
+    return timed_out;
+  }
+  if (*polar_pan_cont && !*direct_mode) return timed_out;
+
   if (last_pan_cont != *polar_pan_cont) {
     // flush write buffer
     tcflush(fd, TCOFLUSH);
@@ -131,6 +177,11 @@ static bool poll_polar_pan(int fd, char* polar_pan_cont,
       // Manual mode is toggling
       write(fd, "~", 1);
       *manual_mode = !(*manual_mode);
+      *direct_mode = !(*manual_mode);
+      if (!*manual_mode) {
+        gettimeofday(telemetry_not_before, NULL);
+        *telemetry_delay_ms = 1000;
+      }
     }
   }
 
@@ -149,7 +200,8 @@ static bool poll_polar_pan(int fd, char* polar_pan_cont,
  * serial bus
  * @param fd File descriptor for Scorbot ER V serial device
  */
-static void poll_tty_rx(int fd) {
+static void poll_tty_rx(int fd, bool* direct_mode,
+                        bool* telemetry_request_pending, TelemetrySink* sink) {
   static clock_t last_print;
   static char buffer[ERV_TTY_BUFFER_LEN];
   static uint16_t len = 0;
@@ -160,6 +212,39 @@ static void poll_tty_rx(int fd) {
   if (-1 != result) {
     for (uint16_t iter = 0; iter < result; iter++) {
       if (is_term(inbox[iter])) {
+        if (inbox[iter] == '>') {
+          *direct_mode = true;
+          *telemetry_request_pending = false;
+        }
+        char* cursor = buffer;
+        long values[11];
+        bool encoders = len > 0;
+        for (int axis = 0; axis < 11 && encoders; axis++) {
+          char* end = nullptr;
+          values[axis] = strtol(cursor, &end, 10);
+          encoders = end != cursor;
+          cursor = end;
+        }
+        if (encoders && sink) {
+          char telemetry[160];
+          int telemetry_len = snprintf(
+              telemetry, sizeof(telemetry),
+              "\nTEL %ld %ld %ld %ld %ld %ld %ld %ld %ld %ld %ld\n", values[0],
+              values[1], values[2], values[3], values[4], values[5], values[6],
+              values[7], values[8], values[9], values[10]);
+          if (telemetry_len > 0) sink->sendTelemetry(
+              std::string_view(telemetry, telemetry_len));
+        }
+        long shoulder, elbow, wrist_pitch, wrist_roll;
+        if (sink && sscanf(buffer, " %*d:%ld %*d:%ld %*d:%ld %*d:%ld",
+                           &shoulder, &elbow, &wrist_pitch, &wrist_roll) == 4) {
+          char telemetry[96];
+          int telemetry_len = snprintf(telemetry, sizeof(telemetry),
+              "\nTELP %ld %ld %ld %ld\n", shoulder, elbow, wrist_pitch,
+              wrist_roll);
+          if (telemetry_len > 0)
+            sink->sendTelemetry(std::string_view(telemetry, telemetry_len));
+        }
         flush_buffer(buffer, len);
         memset(buffer, 0, sizeof(buffer));
         len = 0;
@@ -231,11 +316,23 @@ static void poll_cmd_buffer(int fd, S_List* cmd_buffer) {
 void Scorbot::poll() {
   if (-1 == fd) return;
 
-  if (poll_polar_pan(fd, &polar_pan_cont, &last_start, &manual_mode)) {
+  if (poll_polar_pan(fd, &polar_pan_cont, &last_start, &manual_mode,
+                     &direct_mode, &telemetry_request_pending,
+                     &telemetry_not_before, &telemetry_delay_ms)) {
     polarPanStop();
   }
-  poll_tty_rx(fd);
+  poll_tty_rx(fd, &direct_mode, &telemetry_request_pending, telemetrySink());
   poll_cmd_buffer(fd, &cmd_buffer);
+  struct timeval now;
+  gettimeofday(&now, NULL);
+  if (direct_mode && !telemetry_request_pending && !manual_mode &&
+      !polar_pan_cont &&
+      tval_diff_ms(&now, &telemetry_not_before) >= telemetry_delay_ms) {
+    write(fd, "LISTPV POSITION\r", 16);
+    telemetry_request_pending = true;
+    gettimeofday(&telemetry_not_before, NULL);
+    telemetry_delay_ms = ERV_TELEMETRY_INTERVAL_MS;
+  }
 }
 
 int Scorbot::handShake() {
@@ -318,6 +415,19 @@ int Scorbot::executeHardwareOperation(API::HardwareOperation* operation) {
     }
     case API::HardwareOperationID::JointJogStop:
       return polarPanStop();
+    case API::HardwareOperationID::JointMoveRelative: {
+      auto* move = reinterpret_cast<API::JointMoveRelative*>(operation + 1);
+      if (abs(move->shoulder) > 500 || abs(move->elbow) > 500 || abs(move->wrist_pitch) > 500) STD_FAIL;
+      S_List commands;
+      DATA_S_List_init(&commands);
+      ACL_enqueue_here_cmd(&commands);
+      ACL_enqueue_shift_counts_cmd(&commands, 2, move->shoulder);
+      ACL_enqueue_shift_counts_cmd(&commands, 3, move->elbow);
+      ACL_enqueue_shift_counts_cmd(&commands, 4, move->wrist_pitch);
+      ACL_generate_enqueue_moved_cmd(&commands);
+      writeCommandQueue(&commands);
+      return 0;
+    }
     default:
       STD_FAIL;
   }

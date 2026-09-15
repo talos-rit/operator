@@ -56,6 +56,8 @@ typedef struct _acl_command {
  * @returns 0 on success, -1 on failure
  */
 int ACL_init();
+int ACL_enqueue_shift_counts_cmd(S_List* cmd_queue, uint8_t axis, int32_t encoder_count);
+int ACL_generate_enqueue_moved_cmd(S_List* cmd_queue);
 
 /**
  * @brief Clears the tx buffer to the Scorbot to ensure a blank slate

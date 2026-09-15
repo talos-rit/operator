@@ -78,6 +78,9 @@ int validate_command(const uint8_t* buf, uint16_t len) {
         case API::HardwareOperationID::JointJogStop:
           if (cmd->header.len != sizeof(API::HardwareOperation)) return -1;
           break;
+        case API::HardwareOperationID::JointMoveRelative:
+          if (cmd->header.len != sizeof(API::HardwareOperation) + sizeof(API::JointMoveRelative)) return -1;
+          break;
         default:
           return -1;
       }

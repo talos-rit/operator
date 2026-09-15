@@ -21,6 +21,7 @@ enum class CommandID {
 enum class HardwareOperationID : uint8_t {
   JointJogStart = 0x01,
   JointJogStop = 0x02,
+  JointMoveRelative = 0x03,
 };
 
 #pragma pack(push, 1)
@@ -63,6 +64,7 @@ struct JointJogStart {
   uint8_t axis;
   int8_t direction;
 };
+struct JointMoveRelative { int32_t shoulder; int32_t elbow; int32_t wrist_pitch; };
 
 #pragma pack(pop)
 

@@ -5,12 +5,19 @@
 #pragma once
 
 #include <atomic>
+#include <string_view>
 #include <thread>
 
 #include "api/api.hpp"
 #include "sub/sub.hpp"
 
 constexpr std::chrono::milliseconds ARM_LOOP_PERIOD{10};
+
+class TelemetrySink {
+ public:
+  virtual ~TelemetrySink() = default;
+  virtual void sendTelemetry(std::string_view message) = 0;
+};
 
 class Arm {
  public:
@@ -35,6 +42,7 @@ class Arm {
    */
   bool processCommand();
   bool registerSubscriber(Subscriber *sub);
+  void registerTelemetrySink(TelemetrySink *sink) { telemetry_sink_ = sink; }
 
   /**
    * @brief Function that is called by the parent Arm thread in a timed loop;
@@ -49,9 +57,17 @@ class Arm {
   std::thread thread_;
   std::atomic<bool> running_{false};
   Subscriber *sub_{nullptr};
+  TelemetrySink *telemetry_sink_{nullptr};
 
   void runLoop();
 
+ protected:
+  void publishTelemetry(std::string_view message) const {
+    if (telemetry_sink_) telemetry_sink_->sendTelemetry(message);
+  }
+  TelemetrySink *telemetrySink() const { return telemetry_sink_; }
+
+ private:
   virtual int handShake() = 0;
   virtual int polarPan(API::PolarPan *pan) = 0;
   virtual int polarPanStart(API::PolarPanStart *pan) = 0;

@@ -96,6 +96,7 @@ int main(int argc, char* argv[]) {
 
   inbox->registerSubscriber(&hermes);
   bot->registerSubscriber(&hermes);
+  bot->registerTelemetrySink(inbox.get());
 
   // Start
   hermes.start();
