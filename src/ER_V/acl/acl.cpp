@@ -116,6 +116,19 @@ char ACL_get_polar_pan_continuous_vector(API::PolarPanStart* payload) {
   return (char)vector;
 }
 
+char ACL_get_joint_jog_vector(uint8_t axis, int8_t direction) {
+  if (direction != -1 && direction != 1) return '\0';
+  switch (axis) {
+    case ACL_AXIS_SHOULDER:
+      return direction > 0 ? ACL_MAN_POS_SHOULDER_AXIS
+                           : ACL_MAN_NEG_SHOULDER_AXIS;
+    case ACL_AXIS_ELBOW:
+      return direction > 0 ? ACL_MAN_POS_ELBOW_AXIS : ACL_MAN_NEG_ELBOW_AXIS;
+    default:
+      return '\0';
+  }
+}
+
 int ACL_enqueue_shift_cmd(S_List* cmd_queue, ACL_Axis axis,
                           float degree_count) {
   ACL_Command* cmd = get_cmd(cmd_queue);

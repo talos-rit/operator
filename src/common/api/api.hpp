@@ -15,6 +15,12 @@ enum class CommandID {
   Home = 0x0002,
   PolarPanStart = 0x0003,
   PolarPanStop = 0x0004,
+  ExecuteHardwareOperation = 0x0008,
+};
+
+enum class HardwareOperationID : uint8_t {
+  JointJogStart = 0x01,
+  JointJogStop = 0x02,
 };
 
 #pragma pack(push, 1)
@@ -46,6 +52,16 @@ struct PolarPanStart {
 
 struct Home {
   uint32_t delay_ms; /** How long to wait until executing pan */
+};
+
+struct HardwareOperation {
+  uint8_t subcommand;
+  uint32_t reserved;
+};
+
+struct JointJogStart {
+  uint8_t axis;
+  int8_t direction;
 };
 
 #pragma pack(pop)

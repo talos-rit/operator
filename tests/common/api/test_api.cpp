@@ -191,3 +191,51 @@ TEST(APITest, ValidateCommand_InvalidCommandID)
     int result = API::validate_command(buffer, sizeof(API::DataHeader));
     CHECK_EQUAL(-1, result);
 }
+
+TEST(APITest, ValidateCommand_JointJogStartAndStop)
+{
+    struct JointJogMessage {
+        API::DataHeader header;
+        API::HardwareOperation operation;
+        API::JointJogStart jog;
+    } start = {
+        .header = {.msg_id = htobe32(1), .reserved_1 = 0,
+                   .cmd_id = htobe16(static_cast<uint16_t>(API::CommandID::ExecuteHardwareOperation)),
+                   .len = htobe16(sizeof(API::HardwareOperation) + sizeof(API::JointJogStart))},
+        .operation = {.subcommand = static_cast<uint8_t>(API::HardwareOperationID::JointJogStart), .reserved = 0},
+        .jog = {.axis = 2, .direction = -1},
+    };
+    CHECK_EQUAL(0, API::validate_command(reinterpret_cast<uint8_t*>(&start), sizeof(start)));
+
+    struct JointJogStopMessage {
+        API::DataHeader header;
+        API::HardwareOperation operation;
+    } stop = {
+        .header = {.msg_id = htobe32(1), .reserved_1 = 0,
+                   .cmd_id = htobe16(static_cast<uint16_t>(API::CommandID::ExecuteHardwareOperation)),
+                   .len = htobe16(sizeof(API::HardwareOperation))},
+        .operation = {.subcommand = static_cast<uint8_t>(API::HardwareOperationID::JointJogStop), .reserved = 0},
+    };
+    CHECK_EQUAL(0, API::validate_command(reinterpret_cast<uint8_t*>(&stop), sizeof(stop)));
+}
+
+TEST(APITest, ValidateCommand_RejectsMalformedJointJog)
+{
+    struct JointJogMessage {
+        API::DataHeader header;
+        API::HardwareOperation operation;
+        API::JointJogStart jog;
+    } message = {
+        .header = {.msg_id = htobe32(1), .reserved_1 = 0,
+                   .cmd_id = htobe16(static_cast<uint16_t>(API::CommandID::ExecuteHardwareOperation)),
+                   .len = htobe16(sizeof(API::HardwareOperation) + sizeof(API::JointJogStart))},
+        .operation = {.subcommand = static_cast<uint8_t>(API::HardwareOperationID::JointJogStart), .reserved = 0},
+        .jog = {.axis = 4, .direction = 0},
+    };
+    CHECK_EQUAL(-1, API::validate_command(reinterpret_cast<uint8_t*>(&message), sizeof(message)));
+
+    message.header.len = htobe16(sizeof(API::HardwareOperation));
+    message.jog.axis = 2;
+    message.jog.direction = 1;
+    CHECK_EQUAL(-1, API::validate_command(reinterpret_cast<uint8_t*>(&message), sizeof(message)));
+}

@@ -61,6 +61,28 @@ int validate_command(const uint8_t* buf, uint16_t len) {
     case API::CommandID::Home:
       prep_home((API::Home*)&cmd->payload_head);
       break;
+    case API::CommandID::ExecuteHardwareOperation: {
+      if (cmd->header.len < sizeof(API::HardwareOperation)) return -1;
+      auto* operation = (API::HardwareOperation*)&cmd->payload_head;
+      switch (static_cast<API::HardwareOperationID>(operation->subcommand)) {
+        case API::HardwareOperationID::JointJogStart: {
+          if (cmd->header.len !=
+              sizeof(API::HardwareOperation) + sizeof(API::JointJogStart))
+            return -1;
+          auto* jog = reinterpret_cast<API::JointJogStart*>(operation + 1);
+          if ((jog->axis != 2 && jog->axis != 3) ||
+              (jog->direction != -1 && jog->direction != 1))
+            return -1;
+          break;
+        }
+        case API::HardwareOperationID::JointJogStop:
+          if (cmd->header.len != sizeof(API::HardwareOperation)) return -1;
+          break;
+        default:
+          return -1;
+      }
+      break;
+    }
     default:
       LOG_ERROR(
           "API: Failed to process Command ID %d: Unrecognized Command Value: "

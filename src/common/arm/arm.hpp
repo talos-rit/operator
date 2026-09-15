@@ -56,5 +56,9 @@ class Arm {
   virtual int polarPan(API::PolarPan *pan) = 0;
   virtual int polarPanStart(API::PolarPanStart *pan) = 0;
   virtual int polarPanStop() = 0;
+  virtual int executeHardwareOperation(API::HardwareOperation *operation) {
+    (void)operation;
+    return -1;
+  }
   virtual int home(API::Home *home) = 0;
 };

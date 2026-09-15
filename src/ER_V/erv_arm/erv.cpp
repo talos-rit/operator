@@ -110,9 +110,10 @@ static uint16_t tval_diff_ms(struct timeval* end, struct timeval* start) {
  * @param manual_mode Pointer to the bool tracking the current mode of the
  * controller
  */
-static void poll_polar_pan(int fd, char* polar_pan_cont,
+static bool poll_polar_pan(int fd, char* polar_pan_cont,
                            struct timeval* last_start, bool* manual_mode) {
   static char last_pan_cont;
+  bool timed_out = false;
 
   struct timeval now;
   gettimeofday(&now, NULL);
@@ -120,6 +121,7 @@ static void poll_polar_pan(int fd, char* polar_pan_cont,
       tval_diff_ms(&now, last_start) > ERV_CONT_POLAR_PAN_TIMEOUT_MS) {
     LOG_WARN("Continuous Polar Pan timeout");
     *polar_pan_cont = '\0';
+    timed_out = true;
   }
 
   if (last_pan_cont != *polar_pan_cont) {
@@ -139,6 +141,7 @@ static void poll_polar_pan(int fd, char* polar_pan_cont,
   }
 
   last_pan_cont = *polar_pan_cont;
+  return timed_out;
 }
 
 /**
@@ -228,7 +231,9 @@ static void poll_cmd_buffer(int fd, S_List* cmd_buffer) {
 void Scorbot::poll() {
   if (-1 == fd) return;
 
-  poll_polar_pan(fd, &polar_pan_cont, &last_start, &manual_mode);
+  if (poll_polar_pan(fd, &polar_pan_cont, &last_start, &manual_mode)) {
+    polarPanStop();
+  }
   poll_tty_rx(fd);
   poll_cmd_buffer(fd, &cmd_buffer);
 }
@@ -297,6 +302,25 @@ int Scorbot::polarPanStop() {
   writeCommandQueue(&cmd_list);
 
   return 0;
+}
+
+int Scorbot::executeHardwareOperation(API::HardwareOperation* operation) {
+  if (!operation) STD_FAIL;
+
+  switch (static_cast<API::HardwareOperationID>(operation->subcommand)) {
+    case API::HardwareOperationID::JointJogStart: {
+      auto* jog = reinterpret_cast<API::JointJogStart*>(operation + 1);
+      char vector = ACL_get_joint_jog_vector(jog->axis, jog->direction);
+      if ('\0' == vector) STD_FAIL;
+      polar_pan_cont = vector;
+      gettimeofday(&last_start, NULL);
+      return 0;
+    }
+    case API::HardwareOperationID::JointJogStop:
+      return polarPanStop();
+    default:
+      STD_FAIL;
+  }
 }
 
 int Scorbot::home(API::Home* home) {

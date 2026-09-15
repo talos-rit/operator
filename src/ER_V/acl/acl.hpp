@@ -158,3 +158,6 @@ int ACL_home_sequence(S_List* cmd_queue);
  * @returns Corresponding ACL character on success, NULL character on failure
  */
 char ACL_get_polar_pan_continuous_vector(API::PolarPanStart* payload);
+
+/** Returns the ACL manual-mode character for an ER-V shoulder or elbow jog. */
+char ACL_get_joint_jog_vector(uint8_t axis, int8_t direction);
