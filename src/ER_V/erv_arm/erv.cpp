@@ -125,6 +125,7 @@ static void flush_buffer(char* tty_buffer, uint16_t len) {
   if (len + 1 < ERV_TTY_BUFFER_LEN) tty_buffer[len + 1] = '\0';
 
   LOG_VERBOSE(0, "SCOR: %s", tty_buffer);
+  LOG_INFO("ACL RX: %s", tty_buffer);
 }
 
 static uint16_t tval_diff_ms(struct timeval* end, struct timeval* start) {
@@ -268,6 +269,7 @@ static void poll_tty_rx(int fd, bool* direct_mode,
 }
 
 static void execute_acl_cmd(int fd, ACL_Command* command) {
+  LOG_INFO("ACL TX: %.*s", command->len, &command->payload[0]);
   write(fd, &command->payload[0], command->len);
   LOG_VERBOSE(4, "Sending Command: %s", &command->payload[0]);
   LOG_VERBOSE(4, "Delay_ms: %u", command->delay_ms);
@@ -322,11 +324,18 @@ void Scorbot::poll() {
     polarPanStop();
   }
   poll_tty_rx(fd, &direct_mode, &telemetry_request_pending, telemetrySink());
+  bool command_queue_was_active = cmd_buffer.len > 0;
   poll_cmd_buffer(fd, &cmd_buffer);
   struct timeval now;
   gettimeofday(&now, NULL);
+  if (command_queue_was_active) {
+    // The controller has no command framing beyond its prompt.  Do not append
+    // a telemetry query to the final MOVE command while it is still executing.
+    telemetry_not_before = now;
+    telemetry_delay_ms = 500;
+  }
   if (direct_mode && !telemetry_request_pending && !manual_mode &&
-      !polar_pan_cont &&
+      !polar_pan_cont && cmd_buffer.len == 0 &&
       tval_diff_ms(&now, &telemetry_not_before) >= telemetry_delay_ms) {
     write(fd, "LISTPV POSITION\r", 16);
     telemetry_request_pending = true;
@@ -417,6 +426,8 @@ int Scorbot::executeHardwareOperation(API::HardwareOperation* operation) {
       return polarPanStop();
     case API::HardwareOperationID::JointMoveRelative: {
       auto* move = reinterpret_cast<API::JointMoveRelative*>(operation + 1);
+      LOG_INFO("Joint target counts: shoulder=%d elbow=%d pitch=%d",
+               move->shoulder, move->elbow, move->wrist_pitch);
       if (abs(move->shoulder) > 500 || abs(move->elbow) > 500 || abs(move->wrist_pitch) > 500) STD_FAIL;
       S_List commands;
       DATA_S_List_init(&commands);
@@ -424,7 +435,9 @@ int Scorbot::executeHardwareOperation(API::HardwareOperation* operation) {
       ACL_enqueue_shift_counts_cmd(&commands, 2, move->shoulder);
       ACL_enqueue_shift_counts_cmd(&commands, 3, move->elbow);
       ACL_enqueue_shift_counts_cmd(&commands, 4, move->wrist_pitch);
-      ACL_generate_enqueue_moved_cmd(&commands);
+      // Use the discrete sequence that is already physically verified.
+      ACL_enqueue_clrbuf_cmd(&commands);
+      ACL_enqueue_move_cmd(&commands);
       writeCommandQueue(&commands);
       return 0;
     }

@@ -57,6 +57,8 @@ typedef struct _acl_command {
  */
 int ACL_init();
 int ACL_enqueue_shift_counts_cmd(S_List* cmd_queue, uint8_t axis, int32_t encoder_count);
+int ACL_enqueue_clrbuf_cmd(S_List* cmd_queue);
+int ACL_enqueue_move_cmd(S_List* cmd_queue);
 int ACL_generate_enqueue_moved_cmd(S_List* cmd_queue);
 
 /**
