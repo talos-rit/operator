@@ -35,6 +35,12 @@ find_package(Threads REQUIRED)
 # Option to build tests
 option(BUILD_TESTING "Build the testing tree" ON)
 
+# Must be enabled from the top-level build so CTest writes a root
+# CTestTestfile.cmake and discovers tests registered by tests/*/CMakeLists.txt.
+if(BUILD_TESTING)
+    enable_testing()
+endif()
+
 # # Dependencies for proto/gRPC code (provided by Conan when installed)
 # find_package(protobuf CONFIG QUIET)
 # find_package(gRPC CONFIG QUIET)

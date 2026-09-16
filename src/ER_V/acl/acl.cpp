@@ -120,10 +120,10 @@ char ACL_get_joint_jog_vector(uint8_t axis, int8_t direction) {
   if (direction != -1 && direction != 1) return '\0';
   switch (axis) {
     case ACL_AXIS_SHOULDER:
-      return direction > 0 ? ACL_MAN_POS_SHOULDER_AXIS
-                           : ACL_MAN_NEG_SHOULDER_AXIS;
+      return direction > 0 ? ACL_MAN_NEG_SHOULDER_AXIS
+                           : ACL_MAN_POS_SHOULDER_AXIS;
     case ACL_AXIS_ELBOW:
-      return direction > 0 ? ACL_MAN_POS_ELBOW_AXIS : ACL_MAN_NEG_ELBOW_AXIS;
+      return direction > 0 ? ACL_MAN_NEG_ELBOW_AXIS : ACL_MAN_POS_ELBOW_AXIS;
     default:
       return '\0';
   }

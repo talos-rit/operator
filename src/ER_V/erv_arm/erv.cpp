@@ -31,13 +31,16 @@ static int configure_tty(int fd) {
   cfsetispeed(&settings, B9600);
   cfsetospeed(&settings, B9600);
   settings.c_cflag |= (CS8 | CLOCAL | CREAD);
-  settings.c_cflag &= ~(PARENB | CSTOPB | CRTSCTS);
+  // Keep DTR asserted across a close/reopen and eliminate stale controller
+  // bytes before the startup HOME/telemetry sequence begins.
+  settings.c_cflag &= ~(PARENB | CSTOPB | CRTSCTS | HUPCL);
   settings.c_iflag |= (IXON | IXOFF);
   if (tcsetattr(fd, TCSANOW, &settings) < 0) return -1;
   int modem_bits;
   if (ioctl(fd, TIOCMGET, &modem_bits) < 0) return -1;
   modem_bits |= TIOCM_DTR | TIOCM_RTS;
-  return ioctl(fd, TIOCMSET, &modem_bits);
+  if (ioctl(fd, TIOCMSET, &modem_bits) < 0) return -1;
+  return tcflush(fd, TCIOFLUSH);
 }
 
 Scorbot::Scorbot(const char* dev) {
@@ -236,13 +239,14 @@ static void poll_tty_rx(int fd, bool* direct_mode,
           if (telemetry_len > 0) sink->sendTelemetry(
               std::string_view(telemetry, telemetry_len));
         }
-        long shoulder, elbow, wrist_pitch, wrist_roll;
-        if (sink && sscanf(buffer, " %*d:%ld %*d:%ld %*d:%ld %*d:%ld",
-                           &shoulder, &elbow, &wrist_pitch, &wrist_roll) == 4) {
-          char telemetry[96];
+        long base, shoulder, elbow, wrist_pitch, wrist_roll;
+        if (sink && sscanf(buffer, " %*d:%ld %*d:%ld %*d:%ld %*d:%ld %*d:%ld",
+                           &base, &shoulder, &elbow, &wrist_pitch,
+                           &wrist_roll) == 5) {
+          char telemetry[112];
           int telemetry_len = snprintf(telemetry, sizeof(telemetry),
-              "\nTELP %ld %ld %ld %ld\n", shoulder, elbow, wrist_pitch,
-              wrist_roll);
+              "\nTELP %ld %ld %ld %ld %ld\n", base, shoulder, elbow,
+              wrist_pitch, wrist_roll);
           if (telemetry_len > 0)
             sink->sendTelemetry(std::string_view(telemetry, telemetry_len));
         }

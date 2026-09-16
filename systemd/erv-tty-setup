@@ -1,0 +1,53 @@
+#!/usr/bin/env python3
+"""Prepare the ER-V USB serial adapter before Operator starts at boot."""
+
+import array
+import fcntl
+import os
+import termios
+
+
+DEVICE = "/dev/ttyUSB0"
+
+
+def main() -> None:
+    fd = os.open(DEVICE, os.O_RDWR | os.O_NOCTTY | os.O_NONBLOCK)
+    try:
+        settings = termios.tcgetattr(fd)
+        # Python exposes the input/output speeds as elements 4/5 of the
+        # tcgetattr result (unlike the C cfset*speed helpers).
+        settings[4] = termios.B9600
+        settings[5] = termios.B9600
+        settings[0] &= ~(
+            termios.IGNBRK
+            | termios.BRKINT
+            | termios.IGNPAR
+            | termios.PARMRK
+            | termios.INPCK
+            | termios.ISTRIP
+            | termios.INLCR
+            | termios.IGNCR
+            | termios.ICRNL
+            | termios.IXANY
+        )
+        settings[0] |= termios.IXON | termios.IXOFF
+        settings[1] = 0
+        settings[2] |= termios.CS8 | termios.CLOCAL | termios.CREAD
+        settings[2] &= ~(termios.PARENB | termios.CSTOPB | termios.HUPCL)
+        if hasattr(termios, "CRTSCTS"):
+            settings[2] &= ~termios.CRTSCTS
+        settings[3] = 0
+        settings[6][termios.VMIN] = 1
+        settings[6][termios.VTIME] = 0
+        termios.tcsetattr(fd, termios.TCSANOW, settings)
+        modem_bits = array.array("i", [0])
+        fcntl.ioctl(fd, termios.TIOCMGET, modem_bits, True)
+        modem_bits[0] |= termios.TIOCM_DTR | termios.TIOCM_RTS
+        fcntl.ioctl(fd, termios.TIOCMSET, modem_bits)
+        termios.tcflush(fd, termios.TCIOFLUSH)
+    finally:
+        os.close(fd)
+
+
+if __name__ == "__main__":
+    main()
