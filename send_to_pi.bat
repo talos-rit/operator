@@ -1,4 +1,6 @@
 @echo off
+cd /d "%~dp0"
+
 setlocal
 rem Deploy and start the ER-V development Operator from /home/pi/test.
 rem WARNING: starting erv queues HOME and can physically move Bingo.
