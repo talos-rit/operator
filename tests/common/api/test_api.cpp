@@ -239,3 +239,34 @@ TEST(APITest, ValidateCommand_RejectsMalformedJointJog)
     message.jog.direction = 1;
     CHECK_EQUAL(-1, API::validate_command(reinterpret_cast<uint8_t*>(&message), sizeof(message)));
 }
+
+TEST(APITest, ValidateCommand_EnableControlAndSpeedPercent)
+{
+    struct EnableControlMessage {
+        API::DataHeader header;
+        API::HardwareOperation operation;
+    } enable = {
+        .header = {.msg_id = htobe32(1), .reserved_1 = 0,
+                   .cmd_id = htobe16(static_cast<uint16_t>(API::CommandID::ExecuteHardwareOperation)),
+                   .len = htobe16(sizeof(API::HardwareOperation))},
+        .operation = {.subcommand = static_cast<uint8_t>(API::HardwareOperationID::EnableControl), .reserved = 0},
+    };
+    CHECK_EQUAL(0, API::validate_command(reinterpret_cast<uint8_t*>(&enable), sizeof(enable)));
+
+    struct SpeedMessage {
+        API::DataHeader header;
+        API::HardwareOperation operation;
+        API::SpeedPercent speed;
+    } message = {
+        .header = {.msg_id = htobe32(1), .reserved_1 = 0,
+                   .cmd_id = htobe16(static_cast<uint16_t>(API::CommandID::ExecuteHardwareOperation)),
+                   .len = htobe16(sizeof(API::HardwareOperation) + sizeof(API::SpeedPercent))},
+        .operation = {.subcommand = static_cast<uint8_t>(API::HardwareOperationID::SetSpeedPercent), .reserved = 0},
+        .speed = {.percent = 20},
+    };
+    CHECK_EQUAL(0, API::validate_command(reinterpret_cast<uint8_t*>(&message), sizeof(message)));
+
+    message.speed.percent = 0;
+    message.header.len = htobe16(sizeof(API::HardwareOperation) + sizeof(API::SpeedPercent));
+    CHECK_EQUAL(-1, API::validate_command(reinterpret_cast<uint8_t*>(&message), sizeof(message)));
+}

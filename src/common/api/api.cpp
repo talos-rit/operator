@@ -87,6 +87,17 @@ int validate_command(const uint8_t* buf, uint16_t len) {
             move->wrist_pitch = be32toh(move->wrist_pitch);
           }
           break;
+        case API::HardwareOperationID::EnableControl:
+          if (cmd->header.len != sizeof(API::HardwareOperation)) return -1;
+          break;
+        case API::HardwareOperationID::SetSpeedPercent: {
+          if (cmd->header.len !=
+              sizeof(API::HardwareOperation) + sizeof(API::SpeedPercent))
+            return -1;
+          auto* speed = reinterpret_cast<API::SpeedPercent*>(operation + 1);
+          if (speed->percent < 1 || speed->percent > 100) return -1;
+          break;
+        }
         default:
           return -1;
       }

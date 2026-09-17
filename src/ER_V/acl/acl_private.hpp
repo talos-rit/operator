@@ -36,6 +36,8 @@
 #define ACL_MOVE_MANUAL_FMT "%c"
 #define ACL_CLRBUF_FMT \
   "clrbuf\r"  // Clears the movement buffer, and halts all motor movement
+#define ACL_ENABLE_CONTROL_FMT "CON\r"
+#define ACL_SPEED_FMT "SPEED %u\r"
 
 /** Scorbot axes representation in ACL */
 typedef enum _acl_axis {

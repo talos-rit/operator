@@ -445,6 +445,23 @@ int Scorbot::executeHardwareOperation(API::HardwareOperation* operation) {
       writeCommandQueue(&commands);
       return 0;
     }
+    case API::HardwareOperationID::EnableControl: {
+      S_List commands;
+      DATA_S_List_init(&commands);
+      // CON re-enables controller servo/control; it does not clear an arbitrary fault.
+      ACL_enqueue_enable_control_cmd(&commands);
+      writeCommandQueue(&commands);
+      return 0;
+    }
+    case API::HardwareOperationID::SetSpeedPercent: {
+      auto* speed = reinterpret_cast<API::SpeedPercent*>(operation + 1);
+      if (speed->percent < 1 || speed->percent > 100) STD_FAIL;
+      S_List commands;
+      DATA_S_List_init(&commands);
+      ACL_enqueue_speed_percent_cmd(&commands, speed->percent);
+      writeCommandQueue(&commands);
+      return 0;
+    }
     default:
       STD_FAIL;
   }

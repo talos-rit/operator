@@ -208,6 +208,25 @@ int ACL_enqueue_move_cmd(S_List* cmd_queue) {
   return 0;
 }
 
+int ACL_enqueue_enable_control_cmd(S_List* cmd_queue) {
+  ACL_Command* cmd = get_cmd(cmd_queue);
+  if (!cmd) STD_FAIL;
+  cmd->len = sprintf(&cmd->payload[0], ACL_ENABLE_CONTROL_FMT);
+  cmd->type = ACL_CMD_CONTROL_ENABLE;
+  DATA_S_List_append(cmd_queue, &cmd->node);
+  return 0;
+}
+
+int ACL_enqueue_speed_percent_cmd(S_List* cmd_queue, uint8_t percent) {
+  if (percent < 1 || percent > 100) STD_FAIL;
+  ACL_Command* cmd = get_cmd(cmd_queue);
+  if (!cmd) STD_FAIL;
+  cmd->len = sprintf(&cmd->payload[0], ACL_SPEED_FMT, percent);
+  cmd->type = ACL_CMD_SPEED;
+  DATA_S_List_append(cmd_queue, &cmd->node);
+  return 0;
+}
+
 int ACL_generate_enqueue_moved_cmd(S_List* cmd_queue) {
   ACL_Command* cmd = get_cmd(cmd_queue);
   if (!cmd) STD_FAIL;

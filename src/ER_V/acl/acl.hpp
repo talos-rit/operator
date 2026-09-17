@@ -37,6 +37,8 @@ typedef enum _acl_command_type {
   ACL_CMD_MANUAL,
   ACL_CMD_HOME,
   ACL_CMD_MOVE,
+  ACL_CMD_CONTROL_ENABLE,
+  ACL_CMD_SPEED,
 } ACL_Command_Type;
 
 /** ACL Command Map for the command string, length, and node */
@@ -59,6 +61,8 @@ int ACL_init();
 int ACL_enqueue_shift_counts_cmd(S_List* cmd_queue, uint8_t axis, int32_t encoder_count);
 int ACL_enqueue_clrbuf_cmd(S_List* cmd_queue);
 int ACL_enqueue_move_cmd(S_List* cmd_queue);
+int ACL_enqueue_enable_control_cmd(S_List* cmd_queue);
+int ACL_enqueue_speed_percent_cmd(S_List* cmd_queue, uint8_t percent);
 int ACL_generate_enqueue_moved_cmd(S_List* cmd_queue);
 
 /**
