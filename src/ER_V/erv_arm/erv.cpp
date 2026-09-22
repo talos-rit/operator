@@ -432,7 +432,6 @@ int Scorbot::executeHardwareOperation(API::HardwareOperation* operation) {
       auto* move = reinterpret_cast<API::JointMoveRelative*>(operation + 1);
       LOG_INFO("Joint target counts: shoulder=%d elbow=%d pitch=%d",
                move->shoulder, move->elbow, move->wrist_pitch);
-      if (abs(move->shoulder) > 500 || abs(move->elbow) > 500 || abs(move->wrist_pitch) > 500) STD_FAIL;
       S_List commands;
       DATA_S_List_init(&commands);
       ACL_enqueue_here_cmd(&commands);
