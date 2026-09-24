@@ -250,6 +250,21 @@ static void poll_tty_rx(int fd, bool* direct_mode,
           if (telemetry_len > 0)
             sink->sendTelemetry(std::string_view(telemetry, telemetry_len));
         }
+        if (sink && len > 0 &&
+            (strstr(buffer, "IMPACT") != nullptr ||
+             strstr(buffer, "CONTROL DISABLED") != nullptr ||
+             strstr(buffer, "FAULT") != nullptr ||
+             strstr(buffer, "ACL - unrecognized request") != nullptr)) {
+          char fault[ERV_TTY_BUFFER_LEN + 16];
+          int fault_len = snprintf(fault, sizeof(fault), "\nFAULT %.*s\n",
+                                   static_cast<int>(len), buffer);
+          if (fault_len > 0) {
+            size_t safe_len = static_cast<size_t>(fault_len) < sizeof(fault)
+                                  ? static_cast<size_t>(fault_len)
+                                  : sizeof(fault) - 1;
+            sink->sendTelemetry(std::string_view(fault, safe_len));
+          }
+        }
         flush_buffer(buffer, len);
         memset(buffer, 0, sizeof(buffer));
         len = 0;
@@ -257,7 +272,14 @@ static void poll_tty_rx(int fd, bool* direct_mode,
         continue;
       }
 
-      buffer[len++] = inbox[iter];
+      if (len < ERV_TTY_BUFFER_LEN - 1) {
+        buffer[len++] = inbox[iter];
+      } else {
+        LOG_WARN("Discarding overlong ACL RX line");
+        flush_buffer(buffer, len);
+        memset(buffer, 0, sizeof(buffer));
+        len = 0;
+      }
     }
   }
 
@@ -407,6 +429,10 @@ int Scorbot::polarPanStop() {
 
   S_List cmd_list;
   DATA_S_List_init(&cmd_list);
+  ACL_generate_enqueue_defp_cmd(&cmd_list);
+  // Preserve the controller's proven post-manual serial quiet period.  Telemetry
+  // and all recovery commands share this queue; they must never be injected from
+  // poll_tty_rx while stop/reference work is still in flight.
   ACL_enqueue_delay(&cmd_list, 500);
   ACL_enqueue_here_cmd(&cmd_list);
   writeCommandQueue(&cmd_list);

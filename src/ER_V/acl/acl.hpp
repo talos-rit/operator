@@ -145,6 +145,13 @@ int ACL_enqueue_manual_mode_toggle_cmd(S_List* cmd_queue);
 int ACL_enqueue_here_cmd(S_List* cmd_queue);
 
 /**
+ * @brief Enqueues the ACL command that defines the DELTA position variable.
+ * @param cmd_queue Command queue to append to
+ * @returns 0 on success, -1 on failure
+ */
+int ACL_generate_enqueue_defp_cmd(S_List* cmd_queue);
+
+/**
  * @brief Inserts a delay into the cmd_queue sequence
  * @param cmd_queue S_List to append to
  * @param delay_ms Number of milliseconds to delay
