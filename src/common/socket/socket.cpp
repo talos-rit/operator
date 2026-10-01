@@ -105,7 +105,17 @@ void Socket::poll() {
         continue;
       }
       LOG_ERROR("Socket recv failed: (%d) %s", errno, strerror(errno));
-      break;
+      // A peer reset must not end the server's accept loop.  Previously this
+      // left the listener open with no thread accepting new tracker clients,
+      // eventually filling its tiny kernel backlog with reconnect attempts.
+      ::shutdown(props_.connfd, SHUT_RDWR);
+      props_.connfd.reset();
+      buf_iter = 0;
+      if (!waitForConnection()) {
+        LOG_ERROR("Reconnection failed after socket error.");
+        break;
+      }
+      continue;
     }
 
     if (ret == 0) {
