@@ -1,6 +1,6 @@
 @echo off
 setlocal
-powershell.exe -NoProfile -ExecutionPolicy Bypass -File "%~dp0Deploy-ERV.ps1" -DeployDirectory "/home/pi/test"
+powershell.exe -NoProfile -ExecutionPolicy Bypass -File "%~dp0Deploy-ERV.ps1"
 set "exit_code=%ERRORLEVEL%"
 if not "%exit_code%"=="0" (
   echo.

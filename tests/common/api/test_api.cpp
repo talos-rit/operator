@@ -192,6 +192,27 @@ TEST(APITest, ValidateCommand_InvalidCommandID)
     CHECK_EQUAL(-1, result);
 }
 
+TEST(APITest, ValidateTrackingJogRateAndRejectInvalidRate)
+{
+    struct Message {
+        API::DataHeader header;
+        API::HardwareOperation operation;
+        API::TrackingJog jog;
+    } message{};
+    auto validate = [&](int interval) {
+        message.header = {.msg_id = htobe32(1), .reserved_1 = 0,
+                          .cmd_id = htobe16(static_cast<uint16_t>(API::CommandID::ExecuteHardwareOperation)),
+                          .len = htobe16(sizeof(API::HardwareOperation) + sizeof(API::TrackingJog))};
+        message.operation = {.subcommand = static_cast<uint8_t>(API::HardwareOperationID::TrackingJog), .reserved = 0};
+        message.jog = {.azimuth = 0, .altitude = 1, .interval_ms = static_cast<uint8_t>(interval)};
+        return API::validate_command(reinterpret_cast<uint8_t*>(&message), sizeof(message));
+    };
+    CHECK_EQUAL(0, validate(40));
+    CHECK_EQUAL(0, validate(200));
+    CHECK_EQUAL(-1, validate(0));
+    CHECK_EQUAL(-1, validate(201));
+}
+
 TEST(APITest, ValidateCommand_JointJogStartAndStop)
 {
     struct JointJogMessage {

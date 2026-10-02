@@ -2,6 +2,7 @@
 add_executable(test_erv_exe
     all_tests.cpp
     erv_arm/test_erv_arm.cpp
+    erv_arm/test_command_queue.cpp
     erv_conf/test_erv_config.cpp
 )
 

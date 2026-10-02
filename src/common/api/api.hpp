@@ -24,6 +24,7 @@ enum class HardwareOperationID : uint8_t {
   JointMoveRelative = 0x03,
   EnableControl = 0x04,
   SetSpeedPercent = 0x05,
+  TrackingJog = 0x06,
 };
 
 #pragma pack(push, 1)
@@ -68,6 +69,7 @@ struct JointJogStart {
 };
 struct JointMoveRelative { int32_t shoulder; int32_t elbow; int32_t wrist_pitch; };
 struct SpeedPercent { uint8_t percent; };
+struct TrackingJog { int8_t azimuth; int8_t altitude; uint8_t interval_ms; };
 
 #pragma pack(pop)
 

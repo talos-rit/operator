@@ -153,8 +153,9 @@ static bool poll_polar_pan(int fd, char* polar_pan_cont,
                            struct timeval* last_start, bool* manual_mode,
                            bool* direct_mode, bool* telemetry_request_pending,
                            struct timeval* telemetry_not_before,
-                           uint16_t* telemetry_delay_ms) {
+                           uint16_t* telemetry_delay_ms, uint16_t jog_interval_ms) {
   static char last_pan_cont;
+  static struct timeval last_jog_byte;
   bool timed_out = false;
 
   struct timeval now;
@@ -172,16 +173,18 @@ static bool poll_polar_pan(int fd, char* polar_pan_cont,
     *direct_mode = false;
     return timed_out;
   }
-  if (*polar_pan_cont && !*direct_mode) return timed_out;
+  if (*polar_pan_cont && !*direct_mode && !*manual_mode) return timed_out;
 
-  if (last_pan_cont != *polar_pan_cont) {
+  bool direction_changed = last_pan_cont != *polar_pan_cont;
+  if (direction_changed) {
     // flush write buffer
     tcflush(fd, TCOFLUSH);
     if (!last_pan_cont || !*polar_pan_cont) {
       // Manual mode is toggling
       write(fd, "~", 1);
       *manual_mode = !(*manual_mode);
-      *direct_mode = !(*manual_mode);
+      // Wait for the controller's prompt after leaving manual mode.
+      *direct_mode = false;
       if (!*manual_mode) {
         gettimeofday(telemetry_not_before, NULL);
         *telemetry_delay_ms = 1000;
@@ -190,9 +193,10 @@ static bool poll_polar_pan(int fd, char* polar_pan_cont,
   }
 
   char manual[ACL_MANUAL_MOVE_SIZE];
-  if (*polar_pan_cont) {
+  if (*polar_pan_cont && (direction_changed || tval_diff_ms(&now, &last_jog_byte) >= jog_interval_ms)) {
     memset(&manual[0], *polar_pan_cont, sizeof(manual));
     write(fd, &manual, sizeof(manual));
+    last_jog_byte = now;
   }
 
   last_pan_cont = *polar_pan_cont;
@@ -307,12 +311,12 @@ static void execute_acl_cmd(int fd, ACL_Command* command) {
  * @param fd File descriptor to write commands to
  * @param cmd_buffer List of commands to execute
  */
-static void poll_cmd_buffer(int fd, S_List* cmd_buffer) {
+bool poll_cmd_buffer(int fd, S_List* cmd_buffer) {
   static bool init = false;
   static uint16_t last_delay_ms = 0;
   static struct timeval last_cmd_ts;
 
-  if (0 == cmd_buffer->len) return;
+  if (0 == cmd_buffer->len) return false;
   if (!init) {
     gettimeofday(&last_cmd_ts, NULL);
     init = true;
@@ -326,32 +330,39 @@ static void poll_cmd_buffer(int fd, S_List* cmd_buffer) {
   if (elapsed_ms < last_delay_ms) {
     // Wait longer
     LOG_VERBOSE(6, "elapsed_ms: %u", elapsed_ms);
-    return;
+    return false;
   }
 
   // Execute next command
   S_List_Node* node = DATA_S_List_pop(cmd_buffer);
-  if (!node) STD_FAIL_VOID;
+  if (!node) return false;
 
   ACL_Command* cmd = DATA_LIST_GET_OBJ(node, ACL_Command, node);
+  bool transmitted = cmd->len > 0;
   last_delay_ms = cmd->delay_ms;
   gettimeofday(&last_cmd_ts, NULL);
   execute_acl_cmd(fd, cmd);
 
-  return;
+  return transmitted;
 }
 
 void Scorbot::poll() {
   if (-1 == fd) return;
 
-  if (poll_polar_pan(fd, &polar_pan_cont, &last_start, &manual_mode,
+  if ((cmd_buffer.len == 0 || !polar_pan_cont) &&
+      poll_polar_pan(fd, &polar_pan_cont, &last_start, &manual_mode,
                      &direct_mode, &telemetry_request_pending,
-                     &telemetry_not_before, &telemetry_delay_ms)) {
+                     &telemetry_not_before, &telemetry_delay_ms, jog_interval_ms)) {
     polarPanStop();
   }
   poll_tty_rx(fd, &direct_mode, &telemetry_request_pending, telemetrySink());
   bool command_queue_was_active = cmd_buffer.len > 0;
-  poll_cmd_buffer(fd, &cmd_buffer);
+  // A queued command must not interrupt a LISTPV reply or manual-mode exit.
+  // Every transmitted ACL command consumes the current prompt; its response
+  // supplies the next prompt before another command can use the serial bus.
+  if (direct_mode && !telemetry_request_pending && !manual_mode) {
+    if (poll_cmd_buffer(fd, &cmd_buffer)) direct_mode = false;
+  }
   struct timeval now;
   gettimeofday(&now, NULL);
   if (command_queue_was_active) {
@@ -409,6 +420,8 @@ int Scorbot::polarPan(API::PolarPan* pan) {
 }
 
 int Scorbot::polarPanStart(API::PolarPanStart* pan) {
+  tracking_jog = false;
+  jog_interval_ms = 10;
   uint8_t iter = 0;
   char text[255];
 
@@ -426,6 +439,9 @@ int Scorbot::polarPanStart(API::PolarPanStart* pan) {
 
 int Scorbot::polarPanStop() {
   polar_pan_cont = '\0';
+  // Visual following never uses DELTA. Exit manual mode immediately in poll();
+  // avoid making the next correction wait for an unrelated reference update.
+  if (tracking_jog) return 0;
 
   S_List cmd_list;
   DATA_S_List_init(&cmd_list);
@@ -444,7 +460,18 @@ int Scorbot::executeHardwareOperation(API::HardwareOperation* operation) {
   if (!operation) STD_FAIL;
 
   switch (static_cast<API::HardwareOperationID>(operation->subcommand)) {
+    case API::HardwareOperationID::TrackingJog: {
+      tracking_jog = true;
+      auto* jog = reinterpret_cast<API::TrackingJog*>(operation + 1);
+      API::PolarPanStart pan{jog->azimuth, jog->altitude};
+      polar_pan_cont = ACL_get_polar_pan_continuous_vector(&pan);
+      jog_interval_ms = jog->interval_ms;
+      gettimeofday(&last_start, NULL);
+      return 0;
+    }
     case API::HardwareOperationID::JointJogStart: {
+      tracking_jog = false;
+      jog_interval_ms = 10;
       auto* jog = reinterpret_cast<API::JointJogStart*>(operation + 1);
       char vector = ACL_get_joint_jog_vector(jog->axis, jog->direction);
       if ('\0' == vector) STD_FAIL;

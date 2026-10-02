@@ -2,7 +2,7 @@
 param(
     [string]$PiHost = "bluey.local",
     [string]$PiUser = "pi",
-    [string]$DeployDirectory = "/home/pi/test"
+    [string]$DeployDirectory = "/home/pi/operator-dev"
 )
 
 $ErrorActionPreference = "Stop"
@@ -10,6 +10,12 @@ Set-StrictMode -Version Latest
 
 $operatorRoot = (Resolve-Path (Join-Path $PSScriptRoot "..")).Path
 $target = "$PiUser@$PiHost"
+if ($DeployDirectory -notmatch '^/home/pi/operator-dev(?:[-/][A-Za-z0-9._-]+)*$') {
+    throw "DeployDirectory must be a development Operator directory under /home/pi/operator-dev."
+}
+$sourceCommit = (& git -C $operatorRoot rev-parse HEAD).Trim()
+if ($LASTEXITCODE -ne 0) { throw "Cannot identify Operator source commit." }
+$sourceDirty = [bool](& git -C $operatorRoot status --porcelain)
 
 $stamp = Get-Date -Format "yyyyMMdd-HHmmss"
 $archive = Join-Path ([System.IO.Path]::GetTempPath()) "talos-operator-$stamp.tgz"
@@ -128,6 +134,12 @@ install \
     '$stageDirectory/build/bin/erv' \
     '$DeployDirectory/build/bin/erv'
 
+cat > '$DeployDirectory/.talos-erv-deploy-manifest' <<'MANIFEST'
+source_commit=$sourceCommit
+source_dirty=$sourceDirty
+deployed_at=$stamp
+MANIFEST
+
 # Install/update tty helper/service.
 sudo -n install \
     -m 0755 \
@@ -155,6 +167,8 @@ stty \
     raw -echo ixon ixoff
 
 mkdir -p '$DeployDirectory/logs'
+
+cd '$DeployDirectory'
 
 nohup '$DeployDirectory/build/bin/erv' \
     >> '$DeployDirectory/logs/erv-$stamp.log' \
