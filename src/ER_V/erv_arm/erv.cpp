@@ -1,6 +1,7 @@
 #include "erv_arm/erv.hpp"
 
 #include <err.h>
+#include <errno.h>
 #include <fcntl.h>
 #include <signal.h>
 #include <stddef.h>
@@ -23,6 +24,37 @@
 #define ERV_TTY_BUFFER_LEN 127
 
 #define ERV_CLOCK CLOCK_REALTIME
+
+// The controller fd is intentionally nonblocking so the main loop can keep
+// servicing TCP and serial input.  A successful write() may therefore send
+// only part of an ACL command.  Keep every command contiguous on the wire and
+// retry short/EAGAIN writes for a bounded interval instead of silently
+// truncating them.
+static bool write_serial_all(int fd, const void* data, size_t len) {
+  const char* cursor = static_cast<const char*>(data);
+  size_t remaining = len;
+  unsigned int retries = 0;
+  while (remaining > 0) {
+    ssize_t written = write(fd, cursor, remaining);
+    if (written > 0) {
+      cursor += written;
+      remaining -= static_cast<size_t>(written);
+      retries = 0;
+      continue;
+    }
+    if (written < 0 && errno == EINTR) continue;
+    if ((written == 0 || errno == EAGAIN || errno == EWOULDBLOCK) &&
+        retries++ < 100) {
+      usleep(1000);
+      continue;
+    }
+    LOG_ERROR("Scorbot serial write failed after %zu/%zu bytes: %s",
+              len - remaining, len,
+              written < 0 ? strerror(errno) : "write returned zero");
+    return false;
+  }
+  return true;
+}
 
 static int configure_tty(int fd) {
   struct termios settings;
@@ -81,7 +113,7 @@ Scorbot::Scorbot(const char* dev) {
   ACL_home_sequence(&home_commands);
   writeCommandQueue(&home_commands);
   gettimeofday(&telemetry_not_before, NULL);
-  write(fd, "\r", 1);
+  write_serial_all(fd, "\r", 1);
 }
 
 Scorbot::~Scorbot() {
@@ -168,7 +200,7 @@ static bool poll_polar_pan(int fd, char* polar_pan_cont,
   }
 
   if (*polar_pan_cont && *telemetry_request_pending) {
-    write(fd, "\003", 1);
+    if (!write_serial_all(fd, "\003", 1)) return timed_out;
     *telemetry_request_pending = false;
     *direct_mode = false;
     return timed_out;
@@ -181,7 +213,7 @@ static bool poll_polar_pan(int fd, char* polar_pan_cont,
     tcflush(fd, TCOFLUSH);
     if (!last_pan_cont || !*polar_pan_cont) {
       // Manual mode is toggling
-      write(fd, "~", 1);
+      if (!write_serial_all(fd, "~", 1)) return timed_out;
       *manual_mode = !(*manual_mode);
       // Wait for the controller's prompt after leaving manual mode.
       *direct_mode = false;
@@ -195,8 +227,7 @@ static bool poll_polar_pan(int fd, char* polar_pan_cont,
   char manual[ACL_MANUAL_MOVE_SIZE];
   if (*polar_pan_cont && (direction_changed || tval_diff_ms(&now, &last_jog_byte) >= jog_interval_ms)) {
     memset(&manual[0], *polar_pan_cont, sizeof(manual));
-    write(fd, &manual, sizeof(manual));
-    last_jog_byte = now;
+    if (write_serial_all(fd, &manual, sizeof(manual))) last_jog_byte = now;
   }
 
   last_pan_cont = *polar_pan_cont;
@@ -298,12 +329,13 @@ static void poll_tty_rx(int fd, bool* direct_mode,
   }
 }
 
-static void execute_acl_cmd(int fd, ACL_Command* command) {
+static bool execute_acl_cmd(int fd, ACL_Command* command) {
   LOG_INFO("ACL TX: %.*s", command->len, &command->payload[0]);
-  write(fd, &command->payload[0], command->len);
+  bool sent = write_serial_all(fd, &command->payload[0], command->len);
   LOG_VERBOSE(4, "Sending Command: %s", &command->payload[0]);
   LOG_VERBOSE(4, "Delay_ms: %u", command->delay_ms);
   ACL_Command_init(command);
+  return sent;
 }
 
 /**
@@ -341,9 +373,9 @@ bool poll_cmd_buffer(int fd, S_List* cmd_buffer) {
   bool transmitted = cmd->len > 0;
   last_delay_ms = cmd->delay_ms;
   gettimeofday(&last_cmd_ts, NULL);
-  execute_acl_cmd(fd, cmd);
+  bool sent = execute_acl_cmd(fd, cmd);
 
-  return transmitted;
+  return transmitted && sent;
 }
 
 void Scorbot::poll() {
@@ -374,10 +406,11 @@ void Scorbot::poll() {
   if (direct_mode && !telemetry_request_pending && !manual_mode &&
       !polar_pan_cont && cmd_buffer.len == 0 &&
       tval_diff_ms(&now, &telemetry_not_before) >= telemetry_delay_ms) {
-    write(fd, "LISTPV POSITION\r", 16);
-    telemetry_request_pending = true;
-    gettimeofday(&telemetry_not_before, NULL);
-    telemetry_delay_ms = ERV_TELEMETRY_INTERVAL_MS;
+    if (write_serial_all(fd, "LISTPV POSITION\r", 16)) {
+      telemetry_request_pending = true;
+      gettimeofday(&telemetry_not_before, NULL);
+      telemetry_delay_ms = ERV_TELEMETRY_INTERVAL_MS;
+    }
   }
 }
 

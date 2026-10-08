@@ -254,8 +254,14 @@ int8_t LOG_init(const char* log_loc) {
 }
 
 int8_t LOG_start() {
-  pthread_create(&the_log.ptid, NULL, LOG_run, NULL);
+  // The worker checks config.en before waiting for work. Enable logging before
+  // creating it so the new thread cannot observe an empty queue and exit.
   the_log.config.en = true;
+  int ret = pthread_create(&the_log.ptid, NULL, LOG_run, NULL);
+  if (ret != 0) {
+    the_log.config.en = false;
+    return -1;
+  }
   LOG_INFO("Log Module Running...");
   return 0;
 }
