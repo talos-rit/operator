@@ -9,9 +9,9 @@ case "$mode" in
 esac
 test "$(hostname)" = bingo || { echo 'This deployment is for Bingo, not this host.' >&2; exit 1; }
 base=/home/pi/talos-containers/two-pi-20261104
-image=talos-arms:jog-stop-20261104
-expected=sha256:a5fec19ceb83e269dce5093c6e61c7a7f9a2ada0bd4f4fa287dcb77b61e8396e
-expected_binary=8b153149acba26d61eb167e4f0b7475a0ccf61a62953864c9b2c7671b04d4782
+image=talos-arms:continuous-jog-20261104
+expected=sha256:33b61baf436c3a7d339f264bc8be2f0ee00834ecbd45194afe36517420156afd
+expected_binary=94779d923b098efc0153a9a7999ecb26d984475af7c2ee06fe34eacec121cf8c
 docker() { sudo -n /opt/talos-docker/29.8.2/docker -H unix:///run/talos-docker.sock "$@"; }
 test -f "$base/stack.sh"
 test -S /run/talos-docker.sock

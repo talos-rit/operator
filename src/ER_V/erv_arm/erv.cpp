@@ -454,6 +454,16 @@ int Scorbot::polarPan(API::PolarPan* pan) {
   S_List cmd_list;
   DATA_S_List_init(&cmd_list);
 
+  // Only position-based commands use DELTA. Refresh it here after manual
+  // jogging, with the same prompt arbitration and quiet period as before.
+  // A stop/re-press of a manual jog must not wait for this reference work.
+  if (manual_reference_dirty) {
+    ACL_generate_enqueue_defp_cmd(&cmd_list);
+    ACL_enqueue_delay(&cmd_list, 500);
+    // The polar conversion below already prepends HERE DELTA.
+    manual_reference_dirty = false;
+  }
+
   switch (oversteer) {
     case OversteerConfig::None:
       ACL_convert_polar_pan_direct(&cmd_list, pan);
@@ -512,25 +522,8 @@ int Scorbot::polarPanStop() {
     ACL_enqueue_clrbuf_cmd(&commands);
     return writeCommandQueue(&commands);
   }
-  // Visual following never uses DELTA. Exit manual mode immediately in poll();
-  // avoid making the next correction wait for an unrelated reference update.
-  if (tracking_jog) return 0;
-  // Idle/repeated Stop packets must still leave motion stopped, but must not
-  // append another delayed DEFP/HERE sequence and starve the next manual jog.
-  // This flag survives watchdog expiry, which clears polar_pan_cont first.
-  if (!manual_reference_dirty) return 0;
-  manual_reference_dirty = false;
-
-  S_List cmd_list;
-  DATA_S_List_init(&cmd_list);
-  ACL_generate_enqueue_defp_cmd(&cmd_list);
-  // Preserve the controller's proven post-manual serial quiet period.  Telemetry
-  // and all recovery commands share this queue; they must never be injected from
-  // poll_tty_rx while stop/reference work is still in flight.
-  ACL_enqueue_delay(&cmd_list, 500);
-  ACL_enqueue_here_cmd(&cmd_list);
-  writeCommandQueue(&cmd_list);
-
+  // poll() exits manual mode immediately. Leave DELTA dirty until an explicit
+  // position command needs it; reference updates must not delay the next hold.
   return 0;
 }
 

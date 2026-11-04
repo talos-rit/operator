@@ -16,8 +16,23 @@ if (!$ConfirmHome) {
 }
 Write-Host 'Native Operator startup will HOME Bingo. Release all held controls and keep the workspace clear.'
 # Prevent desktop-held jog refreshes from surviving the Operator restart.
-Invoke-RestMethod -Method Post -Uri 'http://127.0.0.1:8000/api/control/auto-track' -ContentType 'application/json' -Body '{"host":"bingo","enabled":false}' | Out-Null
+foreach ($robot in @('bluey', 'bingo')) {
+    $body = @{ host = $robot; enabled = $false } | ConvertTo-Json -Compress
+    Invoke-RestMethod -Method Post -Uri 'http://127.0.0.1:8000/api/control/auto-track' -ContentType 'application/json' -Body $body | Out-Null
+}
 Invoke-RestMethod -Method Post -Uri 'http://127.0.0.1:8000/api/cameras/select' -ContentType 'application/json' -Body '{"host":"bingo"}' | Out-Null
 Invoke-RestMethod -Method Post -Uri 'http://127.0.0.1:8000/api/control/stop' -ContentType 'application/json' -Body '{}' | Out-Null
 & ssh @sshOptions "pi@$PiHost" "sh $remoteScript --confirm-home"
 if ($LASTEXITCODE -ne 0) { throw 'Deployment did not finish. Inspect the output before attempting any further restart.' }
+$workspace = Split-Path (Split-Path $PSScriptRoot -Parent) -Parent
+$commanderDir = Join-Path $workspace 'commander'
+$entrypoint = Join-Path $commanderDir '.venv/Scripts/commander-web.exe'
+if (!(Test-Path -LiteralPath $entrypoint)) { throw "Commander entry point not found: $entrypoint" }
+$listener = Get-NetTCPConnection -LocalPort 8000 -State Listen -ErrorAction SilentlyContinue | Select-Object -First 1
+if ($listener) {
+    $server = Get-CimInstance Win32_Process -Filter "ProcessId=$($listener.OwningProcess)"
+    if ($server.CommandLine -notmatch 'commander-web') { throw 'Port 8000 belongs to another application; refusing to stop it.' }
+    Stop-Process -Id $listener.OwningProcess
+}
+Start-Process -FilePath $entrypoint -WorkingDirectory $commanderDir -WindowStyle Hidden
+Write-Host 'Commander restarted with browser-held jog refreshes. Refresh the page; tracking remains OFF.'

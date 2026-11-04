@@ -86,17 +86,25 @@ TEST(NativeStop, RepeatedIdleStopsDoNotQueueReferenceWorkAndWatchdogStillStops) 
     std::string first_jog = pump(100);
     CHECK(first_jog.find('w') != std::string::npos);
     for (int n = 0; n < 10; ++n) CHECK(send(API::CommandID::PolarPanStop, nullptr, 0));
-    std::string stopped = pump(1800);
+    std::string stopped = pump(100);
     CHECK(stopped.find('~') != std::string::npos);
-    CHECK_EQUAL(1, occurrences(stopped, "DEFP DELTA"));
-    CHECK_EQUAL(1, occurrences(stopped, "HERE DELTA"));
+    CHECK_EQUAL(0, occurrences(stopped, "DEFP DELTA"));
+    CHECK_EQUAL(0, occurrences(stopped, "HERE DELTA"));
 
     CHECK(send(API::CommandID::ExecuteHardwareOperation, &joint, sizeof(joint)));
     CHECK(pump(100).find('w') != std::string::npos);
-    std::string expired = pump(1800);
+    std::string expired = pump(650);
     CHECK(expired.find('~') != std::string::npos);
-    CHECK_EQUAL(1, occurrences(expired, "HERE DELTA"));
+    CHECK_EQUAL(0, occurrences(expired, "HERE DELTA"));
     CHECK(pump(100).find('w') == std::string::npos);
+
+    API::PolarPan position{static_cast<int32_t>(htobe32(10)), 0, 0, htobe32(500)};
+    CHECK(send(API::CommandID::PolarPan, &position, sizeof(position)));
+    std::string positioned = pump(2600);
+    CHECK_EQUAL(1, occurrences(positioned, "DEFP DELTA"));
+    CHECK_EQUAL(1, occurrences(positioned, "HERE DELTA"));
+    CHECK(positioned.find("HERE DELTA") < positioned.find("SHIFT"));
+    CHECK(positioned.find("SHIFT") != std::string::npos);
   }
   subscriber.stop();
   close(master);
