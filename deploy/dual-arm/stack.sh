@@ -17,6 +17,6 @@ case " $* " in
 esac
 if [ -S /run/talos-docker.sock ]; then
     export DOCKER_HOST=unix:///run/talos-docker.sock
-    exec sudo -n env DOCKER_HOST="$DOCKER_HOST" /opt/talos-docker/29.8.2/docker-compose "$@"
+    exec sudo -n env DOCKER_HOST="$DOCKER_HOST" TALOS_INFERENCE_FPS="${TALOS_INFERENCE_FPS:-2}" /opt/talos-docker/29.8.2/docker-compose "$@"
 fi
-exec sudo docker compose "$@"
+exec sudo env TALOS_INFERENCE_FPS="${TALOS_INFERENCE_FPS:-2}" docker compose "$@"

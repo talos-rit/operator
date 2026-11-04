@@ -122,7 +122,7 @@ services:
     - '61616'
     - --edge-control
     - --inference-fps
-    - '2'
+    - '${TALOS_INFERENCE_FPS:-2}'
     - --processing-width
     - '640'
     cpus: 2.5
@@ -237,7 +237,7 @@ services:
     - '61617'
     - --edge-control
     - --inference-fps
-    - '2'
+    - '${TALOS_INFERENCE_FPS:-2}'
     - --processing-width
     - '640'
     cpus: 2.5

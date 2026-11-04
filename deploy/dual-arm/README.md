@@ -1,4 +1,51 @@
-# Two arms, one Pi
+# Arm containers: one or two Pis
+
+## One arm per Pi (current lab setup)
+
+The same image and Compose file also run on two Pis. Start only the matching
+profile on each host: three containers per Pi, not six on either host.
+
+| Pi | Wired address observed | USB devices | Profile | Commander gateway | Camera |
+|---|---|---|---|---|---|
+| `bluey.local` | `192.168.0.52` | CP2102 ESP + N930AF | `bluey` | `http://bluey.local:5051` | `rtsp://bluey.local:8554/camera` |
+| `bingo.local` | `192.168.0.3` (also `.2`) | PL2303 native + N60 | `bingo` | `http://bingo.local:5052` | `rtsp://bingo.local:8554/bingo` |
+
+Addresses depend on router configuration; prefer the hostnames. The desktop and
+Pis must share the router's subnet, or use working IPv6/mDNS connectivity. A
+169.254.x.x desktop address does not provide IPv4 access to 192.168.0.x hosts.
+
+On **each Pi**, follow the build prerequisites below, run `sh prepare.sh`, and
+install the USB aliases. Both hosts need the stable kernel/firmware, 256 MiB CMA,
+Docker/Compose and MediaMTX. Stop and disable legacy host camera/PiVision units
+before the handoff so they cannot reclaim the camera after reboot. Keep their
+files and old Operator releases for rollback. Do not start the other arm's profile.
+
+```sh
+# After each reboot, on the lab Pis using the isolated runtime:
+sudo systemctl start talos-docker.service
+cd /home/pi/talos-containers/two-pi-20261104
+# On Bluey's Pi only:
+sh start-arm.sh bluey
+# On Bingo's Pi only, after clearing the workspace:
+sh start-arm.sh bingo --confirm-home
+```
+
+For a fresh checkout, run these helpers from `operator/deploy/dual-arm` instead
+of the lab's dated deployment directory. `sh stack.sh stop` stops the local stack;
+services intentionally do not start automatically at boot. Tracking also starts
+off. Native startup still HOMEs, including a recreation after an image update.
+
+In desktop Commander Settings, change **Bluey's Operator host and camera/PiVision
+URLs to bluey.local**; Bingo keeps its existing ports and bingo.local URLs. Use
+Commander's `docs/examples/two-pi-robots.yaml` as the reference. Logical robot names,
+controller profiles, calibrations and tracking switches are unchanged by the move.
+
+The `start-arm.sh` helper defaults to **4 inference FPS** for one arm per Pi.
+Override with `TALOS_INFERENCE_FPS=3 sh start-arm.sh bluey` if needed. The shared-Pi
+Compose default stays at 2 FPS. Camera publication stays at 720p/10 FPS in either
+arrangement; inference rate is independent of video rate.
+
+## Single-Pi alternative
 
 This stack runs three services per arm: Operator, USB-camera streaming, and
 PiVision. Commander remains the shared desktop UI. The default is **hardware
