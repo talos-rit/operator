@@ -497,6 +497,7 @@ int Scorbot::polarPanStart(API::PolarPanStart* pan) {
   LOG_VERBOSE(4, "%s", text);
 
   polar_pan_cont = ACL_get_polar_pan_continuous_vector(pan);
+  if (!isEsp() && polar_pan_cont) manual_reference_dirty = true;
   gettimeofday(&last_start, NULL);
 
   if ('\0' == polar_pan_cont) polarPanStop();
@@ -514,6 +515,11 @@ int Scorbot::polarPanStop() {
   // Visual following never uses DELTA. Exit manual mode immediately in poll();
   // avoid making the next correction wait for an unrelated reference update.
   if (tracking_jog) return 0;
+  // Idle/repeated Stop packets must still leave motion stopped, but must not
+  // append another delayed DEFP/HERE sequence and starve the next manual jog.
+  // This flag survives watchdog expiry, which clears polar_pan_cont first.
+  if (!manual_reference_dirty) return 0;
+  manual_reference_dirty = false;
 
   S_List cmd_list;
   DATA_S_List_init(&cmd_list);
@@ -562,6 +568,8 @@ int Scorbot::executeHardwareOperation(API::HardwareOperation* operation) {
       auto* jog = reinterpret_cast<API::JointJogStart*>(operation + 1);
       char vector = ACL_get_joint_jog_vector(jog->axis, jog->direction);
       if ('\0' == vector) STD_FAIL;
+      if (polar_pan_cont != vector) LOG_INFO("Joint jog start: axis=%u direction=%d prompt_ready=%d queued=%u", jog->axis, jog->direction, direct_mode, cmd_buffer.len);
+      manual_reference_dirty = true;
       polar_pan_cont = vector;
       gettimeofday(&last_start, NULL);
       return 0;

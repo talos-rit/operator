@@ -27,6 +27,7 @@ class Scorbot : public Arm {
   uint16_t telemetry_delay_ms;
   uint16_t jog_interval_ms = 10;
   bool tracking_jog = false;
+  bool manual_reference_dirty = false;
   OversteerConfig oversteer;
   S_List cmd_buffer;
   struct timeval last_start;

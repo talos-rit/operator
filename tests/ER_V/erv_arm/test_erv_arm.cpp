@@ -31,10 +31,11 @@ TEST_GROUP(ACLTest) {};
 
 TEST(ACLTest, JointJogMapsShoulderAndElbowToManualCharacters)
 {
-    CHECK_EQUAL('w', ACL_get_joint_jog_vector(2, -1));
-    CHECK_EQUAL('2', ACL_get_joint_jog_vector(2, 1));
-    CHECK_EQUAL('e', ACL_get_joint_jog_vector(3, -1));
-    CHECK_EQUAL('3', ACL_get_joint_jog_vector(3, 1));
+    // Preserve the deployed signed-jog mapping (opposite controller key signs).
+    CHECK_EQUAL('2', ACL_get_joint_jog_vector(2, -1));
+    CHECK_EQUAL('w', ACL_get_joint_jog_vector(2, 1));
+    CHECK_EQUAL('3', ACL_get_joint_jog_vector(3, -1));
+    CHECK_EQUAL('e', ACL_get_joint_jog_vector(3, 1));
     CHECK_EQUAL('\0', ACL_get_joint_jog_vector(1, 1));
     CHECK_EQUAL('\0', ACL_get_joint_jog_vector(2, 0));
 }
