@@ -11,10 +11,13 @@
 
 class Scorbot : public Arm {
  public:
-  Scorbot(const char* dev);
+  enum class ControllerProfile { Native, EspOneAxis };
+  Scorbot(const char* dev, ControllerProfile profile = ControllerProfile::Native);
   ~Scorbot();
 
  private:
+  const ControllerProfile profile;
+  bool isEsp() const { return profile == ControllerProfile::EspOneAxis; }
   char dev[32];
   int fd;
   char polar_pan_cont;
@@ -28,6 +31,7 @@ class Scorbot : public Arm {
   S_List cmd_buffer;
   struct timeval last_start;
   struct timeval telemetry_not_before;
+  struct timeval profile_report_at{};
 
   int handShake();
   int polarPan(API::PolarPan* pan);

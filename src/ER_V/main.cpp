@@ -3,6 +3,7 @@
 #include <csignal>
 #include <cstdio>
 #include <cstdlib>
+#include <cstring>
 #include <iostream>
 #include <memory>
 #include <mutex>
@@ -66,6 +67,17 @@ static void dummy_msg(Subscriber* hermes) {
 }  // namespace
 
 int main(int argc, char* argv[]) {
+  // Select explicitly: the hostname and serial-device name do not identify
+  // which physical controller the borrowed Pi is attached to.
+  auto profile = Scorbot::ControllerProfile::Native;
+  const char* profile_name = std::getenv("ERV_CONTROLLER_PROFILE");
+  if (profile_name && std::strcmp(profile_name, "native") != 0) {
+    if (std::strcmp(profile_name, "esp-one-axis") != 0) {
+      std::fprintf(stderr, "Invalid ERV_CONTROLLER_PROFILE: use native or esp-one-axis\n");
+      return EXIT_FAILURE;
+    }
+    profile = Scorbot::ControllerProfile::EspOneAxis;
+  }
   LOG_prep();
   register_signals();
 
@@ -91,8 +103,8 @@ int main(int argc, char* argv[]) {
 
   // Init Modules
   Subscriber hermes;
-  auto inbox = std::make_unique<Socket>();
-  auto bot = std::make_unique<Scorbot>(conf.GetScorbotDevicePath());
+  auto inbox = std::make_unique<Socket>(conf.GetPort(), conf.GetBindingAddress());
+  auto bot = std::make_unique<Scorbot>(conf.GetScorbotDevicePath(), profile);
 
   inbox->registerSubscriber(&hermes);
   bot->registerSubscriber(&hermes);

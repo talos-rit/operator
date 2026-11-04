@@ -14,7 +14,9 @@
 #define LOG_CONSOLE_THRESHOLD_THIS LOG_THRESHOLD_DEFAULT
 #define LOG_FILE_THRESHOLD_THIS LOG_THRESHOLD_MAX
 
-Socket::Socket() {
+Socket::Socket(uint16_t port, uint32_t bind_address) {
+  props_.port = port;
+  props_.bind_address = bind_address;
   if (!init()) {
     LOG_ERROR("Socket initialization failed.");
   }
@@ -37,7 +39,7 @@ bool Socket::init() {
 
   props_.server = {};
   props_.server.sin_family = AF_INET;
-  props_.server.sin_addr.s_addr = INADDR_ANY;
+  props_.server.sin_addr.s_addr = props_.bind_address;
   props_.server.sin_port = ::htons(props_.port);
 
   if (::bind(props_.sockfd, reinterpret_cast<struct sockaddr*>(&props_.server),

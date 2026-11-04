@@ -21,7 +21,7 @@ constexpr auto SOCKET_POLL_PERIOD = std::chrono::milliseconds(25);
 
 class Socket : public Inbox, public TelemetrySink {
  public:
-  Socket();
+  Socket(uint16_t port = 61616, uint32_t bind_address = INADDR_ANY);
   ~Socket();
 
   bool start() override;
@@ -42,6 +42,7 @@ class Socket : public Inbox, public TelemetrySink {
     sockaddr_in server{};
     sockaddr_in client{};
     int port{61616};
+    uint32_t bind_address{INADDR_ANY};
     Subscriber *sub{nullptr};
     std::atomic<bool> running{false};
   } props_;

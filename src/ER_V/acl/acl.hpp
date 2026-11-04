@@ -166,6 +166,8 @@ int ACL_enqueue_delay(S_List* cmd_queue, uint16_t delay_ms);
  * @returns 0 on success, -1 on failure
  */
 int ACL_home_sequence(S_List* cmd_queue);
+// HOME alone for controllers without native position-variable commands.
+int ACL_generate_enqueue_home_cmd(S_List* cmd_queue);
 
 /**
  * @brief Returns the ACL character corresponding to the desired angular vector,
