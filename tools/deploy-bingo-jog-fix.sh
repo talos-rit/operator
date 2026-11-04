@@ -37,18 +37,23 @@ echo 'Deploying now. Native Operator startup will HOME Bingo. Tracking will rema
 # Stop autonomous control before touching the serial owner. Never send CON or
 # a recovery jog; controller faults remain latched for explicit inspection.
 python3 - <<'PY'
-import json, urllib.request
+import json, urllib.request, urllib.error
 url = 'http://127.0.0.1:5052/api/v1/control/'
 state = json.load(urllib.request.urlopen(url + 'status', timeout=3))
 owner = state.get('owner') or 'manual-jog-fix-deployment'
+STOP_COMMAND = 4  # ICD PolarPanStop; command 2 is HOME and requires a payload.
 for path, method, body in (
     ('lease', 'PUT', {'owner': owner, 'enabled': False}),
-    ('commands', 'POST', {'command': 2, 'payload_hex': ''}),
+    ('commands', 'POST', {'command': STOP_COMMAND, 'payload_hex': ''}),
 ):
     request = urllib.request.Request(url + path, data=json.dumps(body).encode(),
         method=method, headers={'Content-Type': 'application/json'})
-    with urllib.request.urlopen(request, timeout=3) as response:
-        response.read()
+    try:
+        with urllib.request.urlopen(request, timeout=3) as response:
+            response.read()
+    except urllib.error.HTTPError as error:
+        detail = error.read().decode(errors='replace')
+        raise SystemExit(f'{method} {path} failed ({error.code}): {detail}. Operator was not restarted.')
 PY
 docker tag "$old" talos-arms:before-jog-stop-20261104
 printf '%s\n' "$old" > "$base/jog-fix-previous-image.txt"
