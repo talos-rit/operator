@@ -1,6 +1,15 @@
 # Operator
 [![Ask DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/talos-rit/operator)
 
+## Two arms on one Pi
+
+On branch `feat/dual-arm-containers`, use the
+[dual-arm setup guide](deploy/dual-arm/README.md) for Bingo's native controller,
+Bluey's ESP demo profile, cameras, PiVision, and the Commander desktop UI.
+It includes build prerequisites, USB assignments, startup/shutdown, and recovery.
+Native Operator startup physically HOMEs Bingo; image preparation does not start
+either robot.
+
 ## Initial Setup
 1. Clone the repo
 ```bash

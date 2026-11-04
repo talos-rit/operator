@@ -6,10 +6,10 @@ H.264 at 1280x720/10 video FPS**, with PiVision working frames reduced independe
 to 640 pixels wide, model input 192x192, and inference capped at 2 FPS per arm.
 
 **Host prerequisite:** the tested stable Pi kernel/firmware and at least 256 MiB
-CMA. See [stable-pi-upgrade.md](../../docs/stable-pi-upgrade.md). The old custom RT
+CMA. See [stable-pi-upgrade.md](../../../docs/stable-pi-upgrade.md). The old custom RT
 kernel/64 MiB CMA combination faulted. `check-host.sh` blocks that configuration.
 The tested `compose.software.yaml` fallback is 640x480/10 FPS libx264 and needs
-no hardware-codec device. See [incident details](../../docs/dual-camera-incident.md).
+no hardware-codec device. See [incident details](../../../docs/dual-camera-incident.md).
 
 | Robot | Profile | Serial alias | Camera alias | Operator | PiVision | RTSP path |
 |---|---|---|---|---:|---:|---|
@@ -23,9 +23,10 @@ serial device.
 ## Pull and build
 
 Both repositories use branch `feat/dual-arm-containers`. This directory's
-`commander.ref` pins the compatible Commander commit. `prepare.sh` can clone that
-branch into its private cache, or take a matching existing checkout as argument.
-It does not change an existing checkout's branch or files.
+`commander.ref` pins the compatible Commander commit. `prepare.sh` clones into its
+private cache and fetches/checks out that exact commit, or accepts a matching
+existing checkout as argument. Only the managed cache is updated; explicitly
+supplied checkouts are validated without changing their branch/files.
 
 On the Pi, use **64-bit Debian Bookworm and Python 3.11**, working Docker Engine
 with Compose, and the existing MediaMTX service on port 8554 with publisher paths
@@ -37,6 +38,25 @@ git clone -b feat/dual-arm-containers https://github.com/talos-rit/operator.git
 cd operator/deploy/dual-arm
 sh prepare.sh
 ```
+
+MediaMTX must listen on RTSP port 8554 and permit both publisher paths. Merge
+these entries into its existing configuration if they are not already covered by
+an `all_others` publisher path; preserve existing settings:
+
+```yaml
+paths:
+  camera:
+    source: publisher
+  bingo:
+    source: publisher
+```
+
+Docker/Compose and MediaMTX are host prerequisites, not installed by `prepare.sh`.
+On the demo Pi, start its custom daemon after reboot with
+`sudo systemctl start talos-docker.service`. The old host camera/PiVision units
+may also start at boot: stop `camera-streamer.service` and
+`pivision-integration.service` before handing their devices/ports to containers.
+Confirm no host Operator owns either serial adapter.
 
 `prepare.sh` builds/tests Operator, installs pinned inference dependencies into a
 private venv, and builds the image. It includes the exported 192px pose model from

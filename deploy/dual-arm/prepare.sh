@@ -8,9 +8,16 @@ for command in git cmake python3 pkg-config; do command -v "$command" >/dev/null
 pkg-config --exists cpputest || { echo 'Install libcpputest-dev first (see README).' >&2; exit 1; }
 commander=${1:-"$here/.cache/commander"}
 ref=$(cat "$here/commander.ref")
-if [ ! -d "$commander/.git" ]; then
+if [ "$#" -eq 0 ]; then
     mkdir -p "$(dirname "$commander")"
-    git clone --branch feat/dual-arm-containers --depth 1 https://github.com/talos-rit/commander.git "$commander"
+    if [ ! -d "$commander/.git" ]; then
+        git clone --branch feat/dual-arm-containers --depth 1 https://github.com/talos-rit/commander.git "$commander"
+    fi
+    test -z "$(git -C "$commander" status --porcelain)" || {
+        echo 'Managed Commander cache has local changes; preserve them before preparing again.' >&2; exit 1;
+    }
+    git -C "$commander" fetch origin "$ref" --depth 1
+    git -C "$commander" checkout --detach "$ref"
 fi
 test "$(git -C "$commander" rev-parse HEAD)" = "$ref" || {
     echo "Commander must be at $ref. Update that checkout explicitly, or use a fresh managed cache." >&2; exit 1;
