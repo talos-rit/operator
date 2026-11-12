@@ -14,7 +14,9 @@
 #define LOG_CONSOLE_THRESHOLD_THIS LOG_THRESHOLD_DEFAULT
 #define LOG_FILE_THRESHOLD_THIS LOG_THRESHOLD_MAX
 
-Socket::Socket() {
+Socket::Socket(uint16_t port, uint32_t bind_address) {
+  props_.port = port;
+  props_.bind_address = bind_address;
   if (!init()) {
     LOG_ERROR("Socket initialization failed.");
   }
@@ -37,7 +39,7 @@ bool Socket::init() {
 
   props_.server = {};
   props_.server.sin_family = AF_INET;
-  props_.server.sin_addr.s_addr = INADDR_ANY;
+  props_.server.sin_addr.s_addr = props_.bind_address;
   props_.server.sin_port = ::htons(props_.port);
 
   if (::bind(props_.sockfd, reinterpret_cast<struct sockaddr*>(&props_.server),
@@ -74,6 +76,7 @@ bool Socket::waitForConnection() {
 }
 
 bool Socket::sendResponse(std::span<const char> msg) {
+  std::lock_guard<std::mutex> lock(send_mutex_);
   int sent = ::send(props_.connfd, msg.data(), msg.size(), 0);
   if (sent < 0) {
     LOG_ERROR("Failed to send response: (%d) %s", errno, strerror(errno));
@@ -82,6 +85,11 @@ bool Socket::sendResponse(std::span<const char> msg) {
   LOG_INFO("Response sent (%d bytes)", sent);
   return true;
 };
+
+void Socket::sendTelemetry(std::string_view message) {
+  if (props_.connfd.valid())
+    sendResponse(std::span<const char>(message.data(), message.size()));
+}
 
 void Socket::poll() {
   std::array<char, SOCKET_BUF_LEN> buffer;
@@ -99,7 +107,17 @@ void Socket::poll() {
         continue;
       }
       LOG_ERROR("Socket recv failed: (%d) %s", errno, strerror(errno));
-      break;
+      // A peer reset must not end the server's accept loop.  Previously this
+      // left the listener open with no thread accepting new tracker clients,
+      // eventually filling its tiny kernel backlog with reconnect attempts.
+      ::shutdown(props_.connfd, SHUT_RDWR);
+      props_.connfd.reset();
+      buf_iter = 0;
+      if (!waitForConnection()) {
+        LOG_ERROR("Reconnection failed after socket error.");
+        break;
+      }
+      continue;
     }
 
     if (ret == 0) {
@@ -137,7 +155,7 @@ void Socket::poll() {
       buf_iter -= total_len;
       std::memmove(buffer.data(), buffer.data() + total_len, buf_iter);
 
-      static const char resp[] = "ACK";
+      static const char resp[] = "ACK\n";
       sendResponse(resp);
     }
   }

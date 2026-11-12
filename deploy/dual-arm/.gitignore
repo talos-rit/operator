@@ -1,0 +1,7 @@
+.cache/
+context/
+runtime/
+logs/
+backups/
+prepared-*.yaml
+previous-boot-*.log
