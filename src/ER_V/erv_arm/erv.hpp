@@ -3,11 +3,11 @@
 #include "api/api.hpp"
 #include "arm/arm.hpp"
 #include "data/s_list.h"
+#include "erv_arm/telemetry_schedule.hpp"
 
 #define ERV_RX_TIMEOUT_MS 500
 #define ERV_CONT_POLAR_PAN_TIMEOUT_MS 500
 #define ERV_HOME_SETTLE_MS 10000
-#define ERV_TELEMETRY_INTERVAL_MS 100
 
 class Scorbot : public Arm {
  public:
@@ -24,7 +24,9 @@ class Scorbot : public Arm {
   bool manual_mode;
   bool direct_mode;
   bool telemetry_request_pending;
+  // Protocol holdoff (startup homing, queued commands); not the cadence.
   uint16_t telemetry_delay_ms;
+  TelemetrySchedule telemetry_schedule;
   uint16_t jog_interval_ms = 10;
   bool tracking_jog = false;
   bool manual_reference_dirty = false;

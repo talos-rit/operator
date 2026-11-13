@@ -192,8 +192,7 @@ static uint16_t tval_diff_ms(struct timeval* end, struct timeval* start) {
 static bool poll_polar_pan(int fd, char* polar_pan_cont,
                            struct timeval* last_start, bool* manual_mode,
                            bool* direct_mode, bool* telemetry_request_pending,
-                           struct timeval* telemetry_not_before,
-                           uint16_t* telemetry_delay_ms, uint16_t jog_interval_ms,
+                           uint16_t jog_interval_ms,
                            bool require_prompt = true) {
   static char last_pan_cont;
   static struct timeval last_jog_byte;
@@ -226,10 +225,6 @@ static bool poll_polar_pan(int fd, char* polar_pan_cont,
       *manual_mode = !(*manual_mode);
       // Wait for the controller's prompt after leaving manual mode.
       *direct_mode = false;
-      if (!*manual_mode) {
-        gettimeofday(telemetry_not_before, NULL);
-        *telemetry_delay_ms = 1000;
-      }
     }
   }
 
@@ -396,10 +391,10 @@ void Scorbot::poll() {
     profile_report_at = profile_now;
   }
 
+  bool was_manual = manual_mode;
   if ((cmd_buffer.len == 0 || !polar_pan_cont) &&
       poll_polar_pan(fd, &polar_pan_cont, &last_start, &manual_mode,
-                     &direct_mode, &telemetry_request_pending,
-                     &telemetry_not_before, &telemetry_delay_ms, jog_interval_ms,
+                     &direct_mode, &telemetry_request_pending, jog_interval_ms,
                      !isEsp())) {
     polarPanStop();
   }
@@ -420,19 +415,27 @@ void Scorbot::poll() {
   }
   struct timeval now;
   gettimeofday(&now, NULL);
+  auto to_ms = [](const struct timeval& t) {
+    return static_cast<uint64_t>(t.tv_sec) * 1000 + t.tv_usec / 1000;
+  };
+  uint64_t now_ms = to_ms(now);
+  if (was_manual && !manual_mode) telemetry_schedule.motionEnded(now_ms, tracking_jog);
   if (command_queue_was_active) {
     // The controller has no command framing beyond its prompt.  Do not append
     // a telemetry query to the final MOVE command while it is still executing.
     telemetry_not_before = now;
     telemetry_delay_ms = 500;
+    telemetry_schedule.motionEnded(now_ms, false);
   }
+  // Never poll during motion: a LISTPV reply cannot be interrupted, so it
+  // would delay the next jog. The schedule decides when an idle bus is used.
   if (direct_mode && !telemetry_request_pending && !manual_mode &&
       !polar_pan_cont && cmd_buffer.len == 0 &&
-      tval_diff_ms(&now, &telemetry_not_before) >= telemetry_delay_ms) {
+      now_ms - to_ms(telemetry_not_before) >= telemetry_delay_ms &&
+      telemetry_schedule.due(now_ms)) {
     if (write_serial_all(fd, "LISTPV POSITION\r", 16)) {
       telemetry_request_pending = true;
-      gettimeofday(&telemetry_not_before, NULL);
-      telemetry_delay_ms = ERV_TELEMETRY_INTERVAL_MS;
+      telemetry_schedule.requested(now_ms);
     }
   }
 }
