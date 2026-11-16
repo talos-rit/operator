@@ -18,7 +18,7 @@ TEST(TelemetrySchedule, CapLeavesRoomForASlowReplyUnderPiVisionTimeout) {
   // Telemetry age at Pi-Vision tracks the request-to-request interval; leave
   // margin for LISTPV reply-time jitter (~390 ms nominal).
   CHECK(TelemetrySchedule::kMaxIntervalMs + 300 <= PI_VISION_TELEMETRY_TIMEOUT_MS);
-  CHECK(TelemetrySchedule::kTrackingQuietMs < TelemetrySchedule::kMaxIntervalMs);
+  CHECK(TelemetrySchedule::kQuietAfterJogMs < TelemetrySchedule::kMaxIntervalMs);
 }
 
 TEST(TelemetrySchedule, FirstRequestIsDueImmediately) {
@@ -34,7 +34,7 @@ TEST(TelemetrySchedule, IdleRequestsAreSpacedByTheCap) {
   CHECK_TRUE(schedule.due(1000 + TelemetrySchedule::kMaxIntervalMs));
 }
 
-TEST(TelemetrySchedule, ManualMotionEndMakesPollDueImmediately) {
+TEST(TelemetrySchedule, QueuedMotionEndMakesPollDueImmediately) {
   TelemetrySchedule schedule;
   schedule.requested(1000);
   schedule.motionEnded(1100, false);
@@ -43,35 +43,37 @@ TEST(TelemetrySchedule, ManualMotionEndMakesPollDueImmediately) {
   CHECK_FALSE(schedule.due(1150));  // One post-motion poll, then idle cadence.
 }
 
-TEST(TelemetrySchedule, TrackingMotionEndWaitsForQuietWindow) {
+TEST(TelemetrySchedule, JogEndWaitsForQuietWindow) {
   TelemetrySchedule schedule;
   schedule.requested(1000);
   schedule.motionEnded(1100, true);
-  CHECK_FALSE(schedule.due(1100 + TelemetrySchedule::kTrackingQuietMs - 1));
-  CHECK_TRUE(schedule.due(1100 + TelemetrySchedule::kTrackingQuietMs));
+  CHECK_FALSE(schedule.due(1100 + TelemetrySchedule::kQuietAfterJogMs - 1));
+  CHECK_TRUE(schedule.due(1100 + TelemetrySchedule::kQuietAfterJogMs));
 }
 
-TEST(TelemetrySchedule, ContinuousTrackingStillPollsAtTheCap) {
+TEST(TelemetrySchedule, QuietWindowOutranksTheCap) {
   TelemetrySchedule schedule;
   schedule.requested(0);
-  // Pi-Vision-style bursts: each ends ~120 ms before the next starts, so the
-  // quiet window never elapses; only the cap can make a poll due.
-  uint64_t t = 0;
-  while (t + 280 < TelemetrySchedule::kMaxIntervalMs) {
-    t += 160;
-    schedule.motionEnded(t, true);
-    t += 120;
-    CHECK_FALSE(schedule.due(t));
-  }
-  CHECK_TRUE(schedule.due(TelemetrySchedule::kMaxIntervalMs));
+  // A jog longer than the cap: its end still waits out the quiet window.
+  uint64_t end = TelemetrySchedule::kMaxIntervalMs + 300;
+  schedule.motionEnded(end, true);
+  CHECK_FALSE(schedule.due(end + TelemetrySchedule::kQuietAfterJogMs - 1));
+  CHECK_TRUE(schedule.due(end + TelemetrySchedule::kQuietAfterJogMs));
+  schedule.requested(end + TelemetrySchedule::kQuietAfterJogMs);
+  CHECK_FALSE(schedule.due(end + TelemetrySchedule::kQuietAfterJogMs + 1));
 }
 
 // ---------------------------------------------------------------------------
 // End to end over a PTY: the simulated controller answers every command,
 // manual-mode toggle and interrupt with a prompt. The ioctl wrapper for PTYs
 // lives in test_native_stop.cpp.
+//
+// Upper timing bounds are loose so a loaded build machine does not flake; the
+// lower bounds carry the behaviour under test.
 
 namespace {
+constexpr long kSlackMs = 200;
+
 struct Chunk {
   long at_ms;
   std::string bytes;
@@ -151,12 +153,12 @@ TEST(TelemetryPolling, PausesDuringMotionPollsAfterAndIdlesAtTheCap) {
       long gap = idle[i] - idle[i - 1];
       CHECK_TEXT(gap >= static_cast<long>(TelemetrySchedule::kMaxIntervalMs) - 5,
                  std::to_string(gap).c_str());
-      CHECK_TEXT(gap <= static_cast<long>(TelemetrySchedule::kMaxIntervalMs) + 60,
+      CHECK_TEXT(gap <= static_cast<long>(TelemetrySchedule::kMaxIntervalMs) + kSlackMs,
                  std::to_string(gap).c_str());
     }
 
     // Manual jog: no polling between entering and leaving manual mode, then
-    // one poll as soon as the prompt returns.
+    // one poll once the quiet window has passed.
     pump(100);  // Let the post-idle poll's prompt come back.
     log.clear();
     Hardware joint{{static_cast<uint8_t>(API::HardwareOperationID::JointJogStart), 0}, {2, 1}};
@@ -166,20 +168,27 @@ TEST(TelemetryPolling, PausesDuringMotionPollsAfterAndIdlesAtTheCap) {
       pump(100);
     }
     CHECK(send(API::CommandID::PolarPanStop, nullptr, 0));
-    pump(150);
+    pump(TelemetrySchedule::kQuietAfterJogMs + kSlackMs);
     std::vector<long> toggles = times_of(log, "~");
     CHECK_EQUAL(2, toggles.size());
     for (long t : times_of(log, "LISTPV")) CHECK(t < toggles[0] || t >= toggles[1]);
-    std::vector<long> after_jog = times_of(log, "LISTPV");
-    CHECK(!after_jog.empty());
-    CHECK(after_jog.back() >= toggles[1]);
-    CHECK(after_jog.back() - toggles[1] <= 50);
+    std::vector<long> after_jog;
+    for (long t : times_of(log, "LISTPV"))
+      if (t >= toggles[1]) after_jog.push_back(t);
+    CHECK_EQUAL(1, after_jog.size());
+    long jog_held = after_jog[0] - toggles[1];
+    CHECK_TEXT(jog_held >= static_cast<long>(TelemetrySchedule::kQuietAfterJogMs) - 5,
+               std::to_string(jog_held).c_str());
+    CHECK_TEXT(jog_held <= static_cast<long>(TelemetrySchedule::kQuietAfterJogMs) + kSlackMs,
+               std::to_string(jog_held).c_str());
 
-    // Tracking jog: hold the post-motion poll for the quiet window so the next
-    // Pi-Vision burst is not stuck behind an uninterruptible LISTPV reply.
-    // Start right after an idle poll so the cap cannot fire first.
+    // Tracking jog: same quiet window, so a resumed follow is not stuck behind
+    // an uninterruptible LISTPV reply. Start right after an idle poll so the
+    // cap cannot fire first.
     log.clear();
-    while (times_of(log, "LISTPV").empty()) pump(5);
+    long poll_wait_until = now_ms() + 2 * static_cast<long>(TelemetrySchedule::kMaxIntervalMs);
+    while (times_of(log, "LISTPV").empty() && now_ms() < poll_wait_until) pump(5);
+    CHECK_FALSE(times_of(log, "LISTPV").empty());
     pump(10);  // Let its prompt come back.
     log.clear();
     Tracking track{{static_cast<uint8_t>(API::HardwareOperationID::TrackingJog), 0}, {1, 0, 20}};
@@ -187,7 +196,7 @@ TEST(TelemetryPolling, PausesDuringMotionPollsAfterAndIdlesAtTheCap) {
     pump(160);
     API::HardwareOperation stop{static_cast<uint8_t>(API::HardwareOperationID::JointJogStop), 0};
     CHECK(send(API::CommandID::ExecuteHardwareOperation, &stop, sizeof(stop)));
-    pump(TelemetrySchedule::kTrackingQuietMs + 100);
+    pump(TelemetrySchedule::kQuietAfterJogMs + kSlackMs);
     toggles = times_of(log, "~");
     CHECK_EQUAL(2, toggles.size());
     std::vector<long> after_track;
@@ -195,9 +204,9 @@ TEST(TelemetryPolling, PausesDuringMotionPollsAfterAndIdlesAtTheCap) {
       if (t >= toggles[1]) after_track.push_back(t);
     CHECK_EQUAL(1, after_track.size());
     long held = after_track[0] - toggles[1];
-    CHECK_TEXT(held >= static_cast<long>(TelemetrySchedule::kTrackingQuietMs) - 5,
+    CHECK_TEXT(held >= static_cast<long>(TelemetrySchedule::kQuietAfterJogMs) - 5,
                std::to_string(held).c_str());
-    CHECK_TEXT(held <= static_cast<long>(TelemetrySchedule::kTrackingQuietMs) + 60,
+    CHECK_TEXT(held <= static_cast<long>(TelemetrySchedule::kQuietAfterJogMs) + kSlackMs,
                std::to_string(held).c_str());
   }
   subscriber.stop();

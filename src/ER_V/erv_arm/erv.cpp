@@ -392,6 +392,7 @@ void Scorbot::poll() {
   }
 
   bool was_manual = manual_mode;
+  bool request_was_pending = telemetry_request_pending;
   if ((cmd_buffer.len == 0 || !polar_pan_cont) &&
       poll_polar_pan(fd, &polar_pan_cont, &last_start, &manual_mode,
                      &direct_mode, &telemetry_request_pending, jog_interval_ms,
@@ -419,7 +420,11 @@ void Scorbot::poll() {
     return static_cast<uint64_t>(t.tv_sec) * 1000 + t.tv_usec / 1000;
   };
   uint64_t now_ms = to_ms(now);
-  if (was_manual && !manual_mode) telemetry_schedule.motionEnded(now_ms, tracking_jog);
+  if (was_manual && !manual_mode) telemetry_schedule.motionEnded(now_ms, true);
+  // A jog interrupted an in-flight LISTPV (Ctrl-C). If the jog ends before
+  // manual mode is entered, nothing else would re-request that reading.
+  if (request_was_pending && !telemetry_request_pending && polar_pan_cont)
+    telemetry_schedule.motionEnded(now_ms, true);
   if (command_queue_was_active) {
     // The controller has no command framing beyond its prompt.  Do not append
     // a telemetry query to the final MOVE command while it is still executing.
@@ -427,8 +432,9 @@ void Scorbot::poll() {
     telemetry_delay_ms = 500;
     telemetry_schedule.motionEnded(now_ms, false);
   }
-  // Never poll during motion: a LISTPV reply cannot be interrupted, so it
-  // would delay the next jog. The schedule decides when an idle bus is used.
+  // Never poll during a jog: a LISTPV reply cannot be interrupted, so it
+  // would delay the next keystrokes. Queued MOVEs are polled after the
+  // holdoff above. The schedule decides when an idle bus is used.
   if (direct_mode && !telemetry_request_pending && !manual_mode &&
       !polar_pan_cont && cmd_buffer.len == 0 &&
       now_ms - to_ms(telemetry_not_before) >= telemetry_delay_ms &&

@@ -11,20 +11,24 @@
 // stays sparse while idle, and happens right after motion ends so the next
 // move's limit checks see the new pose.
 //
-// Pi-Vision stops enforcing joint limits once telemetry is older than 1.25 s,
-// so consecutive requests are never spaced more than kMaxIntervalMs apart
-// whenever the bus is free. That cap is also the idle cadence.
+// Pi-Vision treats telemetry older than 1.25 s as stale, so while the bus is
+// idle consecutive requests are never spaced more than kMaxIntervalMs apart.
+// That cap is also the idle cadence.
 class TelemetrySchedule {
  public:
   static constexpr uint32_t kMaxIntervalMs = 900;
-  // Pi-Vision re-plans ~120 ms after each tracking burst. Waiting slightly
-  // longer than that keeps a post-burst poll from landing in front of the next
-  // burst; continuous tracking still gets polled once kMaxIntervalMs is hit.
-  static constexpr uint32_t kTrackingQuietMs = 250;
+  // After a jog ends, wait this long before the post-motion poll so a quick
+  // re-press (or Pi-Vision resuming a follow) does not queue behind a LISTPV
+  // reply. On Bingo (2026-11-16, 72 auto-track stops) Pi-Vision restarted
+  // inside the poll's ~0.45 s bus window after 14 stops at 250 ms and 4 at
+  // 650 ms; restarts cluster under 0.25 s and again from ~0.5 s.
+  static constexpr uint32_t kQuietAfterJogMs = 650;
 
-  void motionEnded(uint64_t now_ms, bool tracking) {
+  // `quiet` delays the post-motion poll by kQuietAfterJogMs (jogs); queued
+  // commands and aborted requests poll as soon as the bus is free.
+  void motionEnded(uint64_t now_ms, bool quiet) {
     post_motion = true;
-    post_motion_tracking = tracking;
+    post_motion_quiet = quiet;
     motion_end_ms = now_ms;
   }
 
@@ -36,15 +40,18 @@ class TelemetrySchedule {
 
   bool due(uint64_t now_ms) const {
     if (!have_requested) return true;
-    if (now_ms - last_request_ms >= kMaxIntervalMs) return true;
-    if (!post_motion) return false;
-    return !post_motion_tracking || now_ms - motion_end_ms >= kTrackingQuietMs;
+    // The quiet window outranks the cap: telemetry is already stale after a
+    // long jog, and a re-press inside the window must not wait for a reply.
+    // Pi-Vision bounds the pose from its own commands meanwhile.
+    if (post_motion && post_motion_quiet) return now_ms - motion_end_ms >= kQuietAfterJogMs;
+    if (post_motion) return true;
+    return now_ms - last_request_ms >= kMaxIntervalMs;
   }
 
  private:
   bool have_requested = false;
   uint64_t last_request_ms = 0;
   bool post_motion = false;
-  bool post_motion_tracking = false;
+  bool post_motion_quiet = false;
   uint64_t motion_end_ms = 0;
 };
