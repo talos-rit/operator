@@ -74,6 +74,11 @@ bool Arm::processCommand() {
       LOG_INFO("Polar Pan Stop Received");
       if (polarPanStop()) status = -1;
       break;
+    case API::CommandID::ExecuteHardwareOperation:
+      LOG_INFO("Hardware Operation Received");
+      if (executeHardwareOperation((API::HardwareOperation*)&cmd->payload_head))
+        status = -1;
+      break;
     default:
       LOG_IEC();
       status = -1;

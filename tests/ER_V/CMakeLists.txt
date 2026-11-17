@@ -2,8 +2,15 @@
 add_executable(test_erv_exe
     all_tests.cpp
     erv_arm/test_erv_arm.cpp
+    erv_arm/test_command_queue.cpp
+    erv_arm/test_esp_profile.cpp
+    erv_arm/test_native_stop.cpp
     erv_conf/test_erv_config.cpp
 )
+
+# PTYs have no modem-control pins. Emulate only those ioctls in this test
+# executable; the production native serial checks remain unchanged.
+target_link_options(test_erv_exe PRIVATE "-Wl,--wrap=ioctl")
 
 target_link_libraries(test_erv_exe
     common_objs

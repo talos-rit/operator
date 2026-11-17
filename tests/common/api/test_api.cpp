@@ -191,3 +191,103 @@ TEST(APITest, ValidateCommand_InvalidCommandID)
     int result = API::validate_command(buffer, sizeof(API::DataHeader));
     CHECK_EQUAL(-1, result);
 }
+
+TEST(APITest, ValidateTrackingJogRateAndRejectInvalidRate)
+{
+    struct Message {
+        API::DataHeader header;
+        API::HardwareOperation operation;
+        API::TrackingJog jog;
+    } message{};
+    auto validate = [&](int interval) {
+        message.header = {.msg_id = htobe32(1), .reserved_1 = 0,
+                          .cmd_id = htobe16(static_cast<uint16_t>(API::CommandID::ExecuteHardwareOperation)),
+                          .len = htobe16(sizeof(API::HardwareOperation) + sizeof(API::TrackingJog))};
+        message.operation = {.subcommand = static_cast<uint8_t>(API::HardwareOperationID::TrackingJog), .reserved = 0};
+        message.jog = {.azimuth = 0, .altitude = 1, .interval_ms = static_cast<uint8_t>(interval)};
+        return API::validate_command(reinterpret_cast<uint8_t*>(&message), sizeof(message));
+    };
+    CHECK_EQUAL(0, validate(40));
+    CHECK_EQUAL(0, validate(200));
+    CHECK_EQUAL(-1, validate(0));
+    CHECK_EQUAL(-1, validate(201));
+}
+
+TEST(APITest, ValidateCommand_JointJogStartAndStop)
+{
+    struct JointJogMessage {
+        API::DataHeader header;
+        API::HardwareOperation operation;
+        API::JointJogStart jog;
+    } start = {
+        .header = {.msg_id = htobe32(1), .reserved_1 = 0,
+                   .cmd_id = htobe16(static_cast<uint16_t>(API::CommandID::ExecuteHardwareOperation)),
+                   .len = htobe16(sizeof(API::HardwareOperation) + sizeof(API::JointJogStart))},
+        .operation = {.subcommand = static_cast<uint8_t>(API::HardwareOperationID::JointJogStart), .reserved = 0},
+        .jog = {.axis = 2, .direction = -1},
+    };
+    CHECK_EQUAL(0, API::validate_command(reinterpret_cast<uint8_t*>(&start), sizeof(start)));
+
+    struct JointJogStopMessage {
+        API::DataHeader header;
+        API::HardwareOperation operation;
+    } stop = {
+        .header = {.msg_id = htobe32(1), .reserved_1 = 0,
+                   .cmd_id = htobe16(static_cast<uint16_t>(API::CommandID::ExecuteHardwareOperation)),
+                   .len = htobe16(sizeof(API::HardwareOperation))},
+        .operation = {.subcommand = static_cast<uint8_t>(API::HardwareOperationID::JointJogStop), .reserved = 0},
+    };
+    CHECK_EQUAL(0, API::validate_command(reinterpret_cast<uint8_t*>(&stop), sizeof(stop)));
+}
+
+TEST(APITest, ValidateCommand_RejectsMalformedJointJog)
+{
+    struct JointJogMessage {
+        API::DataHeader header;
+        API::HardwareOperation operation;
+        API::JointJogStart jog;
+    } message = {
+        .header = {.msg_id = htobe32(1), .reserved_1 = 0,
+                   .cmd_id = htobe16(static_cast<uint16_t>(API::CommandID::ExecuteHardwareOperation)),
+                   .len = htobe16(sizeof(API::HardwareOperation) + sizeof(API::JointJogStart))},
+        .operation = {.subcommand = static_cast<uint8_t>(API::HardwareOperationID::JointJogStart), .reserved = 0},
+        .jog = {.axis = 4, .direction = 0},
+    };
+    CHECK_EQUAL(-1, API::validate_command(reinterpret_cast<uint8_t*>(&message), sizeof(message)));
+
+    message.header.len = htobe16(sizeof(API::HardwareOperation));
+    message.jog.axis = 2;
+    message.jog.direction = 1;
+    CHECK_EQUAL(-1, API::validate_command(reinterpret_cast<uint8_t*>(&message), sizeof(message)));
+}
+
+TEST(APITest, ValidateCommand_EnableControlAndSpeedPercent)
+{
+    struct EnableControlMessage {
+        API::DataHeader header;
+        API::HardwareOperation operation;
+    } enable = {
+        .header = {.msg_id = htobe32(1), .reserved_1 = 0,
+                   .cmd_id = htobe16(static_cast<uint16_t>(API::CommandID::ExecuteHardwareOperation)),
+                   .len = htobe16(sizeof(API::HardwareOperation))},
+        .operation = {.subcommand = static_cast<uint8_t>(API::HardwareOperationID::EnableControl), .reserved = 0},
+    };
+    CHECK_EQUAL(0, API::validate_command(reinterpret_cast<uint8_t*>(&enable), sizeof(enable)));
+
+    struct SpeedMessage {
+        API::DataHeader header;
+        API::HardwareOperation operation;
+        API::SpeedPercent speed;
+    } message = {
+        .header = {.msg_id = htobe32(1), .reserved_1 = 0,
+                   .cmd_id = htobe16(static_cast<uint16_t>(API::CommandID::ExecuteHardwareOperation)),
+                   .len = htobe16(sizeof(API::HardwareOperation) + sizeof(API::SpeedPercent))},
+        .operation = {.subcommand = static_cast<uint8_t>(API::HardwareOperationID::SetSpeedPercent), .reserved = 0},
+        .speed = {.percent = 20},
+    };
+    CHECK_EQUAL(0, API::validate_command(reinterpret_cast<uint8_t*>(&message), sizeof(message)));
+
+    message.speed.percent = 0;
+    message.header.len = htobe16(sizeof(API::HardwareOperation) + sizeof(API::SpeedPercent));
+    CHECK_EQUAL(-1, API::validate_command(reinterpret_cast<uint8_t*>(&message), sizeof(message)));
+}

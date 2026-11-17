@@ -37,6 +37,8 @@ typedef enum _acl_command_type {
   ACL_CMD_MANUAL,
   ACL_CMD_HOME,
   ACL_CMD_MOVE,
+  ACL_CMD_CONTROL_ENABLE,
+  ACL_CMD_SPEED,
 } ACL_Command_Type;
 
 /** ACL Command Map for the command string, length, and node */
@@ -56,6 +58,12 @@ typedef struct _acl_command {
  * @returns 0 on success, -1 on failure
  */
 int ACL_init();
+int ACL_enqueue_shift_counts_cmd(S_List* cmd_queue, uint8_t axis, int32_t encoder_count);
+int ACL_enqueue_clrbuf_cmd(S_List* cmd_queue);
+int ACL_enqueue_move_cmd(S_List* cmd_queue);
+int ACL_enqueue_enable_control_cmd(S_List* cmd_queue);
+int ACL_enqueue_speed_percent_cmd(S_List* cmd_queue, uint8_t percent);
+int ACL_generate_enqueue_moved_cmd(S_List* cmd_queue);
 
 /**
  * @brief Clears the tx buffer to the Scorbot to ensure a blank slate
@@ -137,6 +145,13 @@ int ACL_enqueue_manual_mode_toggle_cmd(S_List* cmd_queue);
 int ACL_enqueue_here_cmd(S_List* cmd_queue);
 
 /**
+ * @brief Enqueues the ACL command that defines the DELTA position variable.
+ * @param cmd_queue Command queue to append to
+ * @returns 0 on success, -1 on failure
+ */
+int ACL_generate_enqueue_defp_cmd(S_List* cmd_queue);
+
+/**
  * @brief Inserts a delay into the cmd_queue sequence
  * @param cmd_queue S_List to append to
  * @param delay_ms Number of milliseconds to delay
@@ -151,6 +166,8 @@ int ACL_enqueue_delay(S_List* cmd_queue, uint16_t delay_ms);
  * @returns 0 on success, -1 on failure
  */
 int ACL_home_sequence(S_List* cmd_queue);
+// HOME alone for controllers without native position-variable commands.
+int ACL_generate_enqueue_home_cmd(S_List* cmd_queue);
 
 /**
  * @brief Returns the ACL character corresponding to the desired angular vector,
@@ -158,3 +175,6 @@ int ACL_home_sequence(S_List* cmd_queue);
  * @returns Corresponding ACL character on success, NULL character on failure
  */
 char ACL_get_polar_pan_continuous_vector(API::PolarPanStart* payload);
+
+/** Returns the ACL manual-mode character for an ER-V shoulder or elbow jog. */
+char ACL_get_joint_jog_vector(uint8_t axis, int8_t direction);

@@ -1,0 +1,6 @@
+numpy==2.4.6
+onnxruntime==1.30.0
+opencv-python-headless==4.11.0.86
+fastapi==0.141.1
+uvicorn==0.53.0
+loguru==0.7.3

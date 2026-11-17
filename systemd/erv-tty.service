@@ -1,0 +1,12 @@
+[Unit]
+Description=Prepare ER-V USB serial transport
+Wants=dev-ttyUSB0.device
+After=dev-ttyUSB0.device
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/sbin/erv-tty-setup
+RemainAfterExit=yes
+
+[Install]
+WantedBy=multi-user.target

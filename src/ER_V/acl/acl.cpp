@@ -116,6 +116,19 @@ char ACL_get_polar_pan_continuous_vector(API::PolarPanStart* payload) {
   return (char)vector;
 }
 
+char ACL_get_joint_jog_vector(uint8_t axis, int8_t direction) {
+  if (direction != -1 && direction != 1) return '\0';
+  switch (axis) {
+    case ACL_AXIS_SHOULDER:
+      return direction > 0 ? ACL_MAN_NEG_SHOULDER_AXIS
+                           : ACL_MAN_POS_SHOULDER_AXIS;
+    case ACL_AXIS_ELBOW:
+      return direction > 0 ? ACL_MAN_NEG_ELBOW_AXIS : ACL_MAN_POS_ELBOW_AXIS;
+    default:
+      return '\0';
+  }
+}
+
 int ACL_enqueue_shift_cmd(S_List* cmd_queue, ACL_Axis axis,
                           float degree_count) {
   ACL_Command* cmd = get_cmd(cmd_queue);
@@ -150,6 +163,16 @@ int ACL_enqueue_shift_cmd(S_List* cmd_queue, ACL_Axis axis,
   return 0;
 }
 
+int ACL_enqueue_shift_counts_cmd(S_List* cmd_queue, uint8_t axis,
+                                 int32_t encoder_count) {
+  ACL_Command* cmd = get_cmd(cmd_queue);
+  if (!cmd) STD_FAIL;
+  cmd->len = sprintf(&cmd->payload[0], ACL_SHIFT_FMT, ACL_VAR_POS, axis, encoder_count);
+  cmd->type = ACL_CMD_SHIFT;
+  DATA_S_List_append(cmd_queue, &cmd->node);
+  return 0;
+}
+
 int ACL_enqueue_here_cmd(S_List* cmd_queue) {
   ACL_Command* cmd = get_cmd(cmd_queue);
   if (!cmd) STD_FAIL;
@@ -181,6 +204,25 @@ int ACL_enqueue_move_cmd(S_List* cmd_queue) {
   cmd->len = sprintf(&cmd->payload[0], ACL_MOVE_FMT, ACL_VAR_POS);
   cmd->type = ACL_CMD_MOVE;
 
+  DATA_S_List_append(cmd_queue, &cmd->node);
+  return 0;
+}
+
+int ACL_enqueue_enable_control_cmd(S_List* cmd_queue) {
+  ACL_Command* cmd = get_cmd(cmd_queue);
+  if (!cmd) STD_FAIL;
+  cmd->len = sprintf(&cmd->payload[0], ACL_ENABLE_CONTROL_FMT);
+  cmd->type = ACL_CMD_CONTROL_ENABLE;
+  DATA_S_List_append(cmd_queue, &cmd->node);
+  return 0;
+}
+
+int ACL_enqueue_speed_percent_cmd(S_List* cmd_queue, uint8_t percent) {
+  if (percent < 1 || percent > 100) STD_FAIL;
+  ACL_Command* cmd = get_cmd(cmd_queue);
+  if (!cmd) STD_FAIL;
+  cmd->len = sprintf(&cmd->payload[0], ACL_SPEED_FMT, percent);
+  cmd->type = ACL_CMD_SPEED;
   DATA_S_List_append(cmd_queue, &cmd->node);
   return 0;
 }

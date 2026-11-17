@@ -7,6 +7,7 @@ set(COMMON_TEST_SRCS
     data/s_list_test.cpp
     log/test_log_config.cpp
     socket/test_socket_config.cpp
+    socket/test_socket_ports.cpp
     all_tests.cpp 
 )
 

@@ -61,6 +61,56 @@ int validate_command(const uint8_t* buf, uint16_t len) {
     case API::CommandID::Home:
       prep_home((API::Home*)&cmd->payload_head);
       break;
+    case API::CommandID::ExecuteHardwareOperation: {
+      if (cmd->header.len < sizeof(API::HardwareOperation)) return -1;
+      auto* operation = (API::HardwareOperation*)&cmd->payload_head;
+      switch (static_cast<API::HardwareOperationID>(operation->subcommand)) {
+        case API::HardwareOperationID::JointJogStart: {
+          if (cmd->header.len !=
+              sizeof(API::HardwareOperation) + sizeof(API::JointJogStart))
+            return -1;
+          auto* jog = reinterpret_cast<API::JointJogStart*>(operation + 1);
+          if ((jog->axis != 2 && jog->axis != 3) ||
+              (jog->direction != -1 && jog->direction != 1))
+            return -1;
+          break;
+        }
+        case API::HardwareOperationID::JointJogStop:
+          if (cmd->header.len != sizeof(API::HardwareOperation)) return -1;
+          break;
+        case API::HardwareOperationID::JointMoveRelative:
+          if (cmd->header.len != sizeof(API::HardwareOperation) + sizeof(API::JointMoveRelative)) return -1;
+          {
+            auto* move = reinterpret_cast<API::JointMoveRelative*>(operation + 1);
+            move->shoulder = be32toh(move->shoulder);
+            move->elbow = be32toh(move->elbow);
+            move->wrist_pitch = be32toh(move->wrist_pitch);
+          }
+          break;
+        case API::HardwareOperationID::EnableControl:
+          if (cmd->header.len != sizeof(API::HardwareOperation)) return -1;
+          break;
+        case API::HardwareOperationID::TrackingJog: {
+          if (cmd->header.len != sizeof(API::HardwareOperation) + sizeof(API::TrackingJog)) return -1;
+          auto* jog = reinterpret_cast<API::TrackingJog*>(operation + 1);
+          if (jog->azimuth < -1 || jog->azimuth > 1 || jog->altitude < -1 || jog->altitude > 1 ||
+              (jog->azimuth == 0) == (jog->altitude == 0) ||
+              jog->interval_ms < 10 || jog->interval_ms > 200) return -1;
+          break;
+        }
+        case API::HardwareOperationID::SetSpeedPercent: {
+          if (cmd->header.len !=
+              sizeof(API::HardwareOperation) + sizeof(API::SpeedPercent))
+            return -1;
+          auto* speed = reinterpret_cast<API::SpeedPercent*>(operation + 1);
+          if (speed->percent < 1 || speed->percent > 100) return -1;
+          break;
+        }
+        default:
+          return -1;
+      }
+      break;
+    }
     default:
       LOG_ERROR(
           "API: Failed to process Command ID %d: Unrecognized Command Value: "
