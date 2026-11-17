@@ -19,10 +19,11 @@ class TelemetrySchedule {
   static constexpr uint32_t kMaxIntervalMs = 900;
   // After a jog ends, wait this long before the post-motion poll so a quick
   // re-press (or Pi-Vision resuming a follow) does not queue behind a LISTPV
-  // reply. On Bingo (2026-11-16, 72 auto-track stops) Pi-Vision restarted
-  // inside the poll's ~0.45 s bus window after 14 stops at 250 ms and 4 at
-  // 650 ms; restarts cluster under 0.25 s and again from ~0.5 s.
-  static constexpr uint32_t kQuietAfterJogMs = 650;
+  // reply. It may exceed the cap: Pi-Vision bounds travel between readings.
+  // On Bingo (2026-11-17, same scripted jogs) restarts were blocked by a poll
+  // 37% of the time with the old 1 s hold, 37% at 650 ms and 12% at 1500 ms;
+  // in auto-track 58%, 48% and 34%, and only 1500 ms lost no jogs.
+  static constexpr uint32_t kQuietAfterJogMs = 1500;
 
   // `quiet` delays the post-motion poll by kQuietAfterJogMs (jogs); queued
   // commands and aborted requests poll as soon as the bus is free.

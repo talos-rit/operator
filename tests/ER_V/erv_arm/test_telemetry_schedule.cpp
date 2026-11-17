@@ -18,7 +18,6 @@ TEST(TelemetrySchedule, CapLeavesRoomForASlowReplyUnderPiVisionTimeout) {
   // Telemetry age at Pi-Vision tracks the request-to-request interval; leave
   // margin for LISTPV reply-time jitter (~390 ms nominal).
   CHECK(TelemetrySchedule::kMaxIntervalMs + 300 <= PI_VISION_TELEMETRY_TIMEOUT_MS);
-  CHECK(TelemetrySchedule::kQuietAfterJogMs < TelemetrySchedule::kMaxIntervalMs);
 }
 
 TEST(TelemetrySchedule, FirstRequestIsDueImmediately) {
