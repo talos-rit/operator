@@ -50,6 +50,18 @@ TEST(TelemetrySchedule, JogEndWaitsForQuietWindow) {
   CHECK_TRUE(schedule.due(1100 + TelemetrySchedule::kQuietAfterJogMs));
 }
 
+TEST(TelemetrySchedule, RequestedPollSkipsTheQuietWindow) {
+  TelemetrySchedule schedule;
+  schedule.requested(1000);
+  // Pi-Vision sends its stop and the request together; Operator only sees the
+  // jog end once it has left manual mode, after the request.
+  schedule.pollRequested();
+  schedule.motionEnded(1100, true);
+  CHECK_TRUE(schedule.due(1101));
+  schedule.requested(1101);
+  CHECK_FALSE(schedule.due(1102));
+}
+
 TEST(TelemetrySchedule, QuietWindowOutranksTheCap) {
   TelemetrySchedule schedule;
   schedule.requested(0);

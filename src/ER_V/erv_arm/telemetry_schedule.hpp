@@ -33,14 +33,19 @@ class TelemetrySchedule {
     motion_end_ms = now_ms;
   }
 
+  // A client needs a reading now. Survives the end of the jog it follows, so
+  // a stop sent just before this does not bring the quiet window back.
+  void pollRequested() { poll_requested = true; }
+
   void requested(uint64_t now_ms) {
     have_requested = true;
     last_request_ms = now_ms;
     post_motion = false;
+    poll_requested = false;
   }
 
   bool due(uint64_t now_ms) const {
-    if (!have_requested) return true;
+    if (!have_requested || poll_requested) return true;
     // The quiet window outranks the cap: telemetry is already stale after a
     // long jog, and a re-press inside the window must not wait for a reply.
     // Pi-Vision bounds the pose from its own commands meanwhile.
@@ -51,6 +56,7 @@ class TelemetrySchedule {
 
  private:
   bool have_requested = false;
+  bool poll_requested = false;
   uint64_t last_request_ms = 0;
   bool post_motion = false;
   bool post_motion_quiet = false;

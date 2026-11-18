@@ -25,6 +25,7 @@ enum class HardwareOperationID : uint8_t {
   EnableControl = 0x04,
   SetSpeedPercent = 0x05,
   TrackingJog = 0x06,
+  RequestTelemetry = 0x07,
 };
 
 #pragma pack(push, 1)

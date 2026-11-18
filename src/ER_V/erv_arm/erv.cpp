@@ -602,6 +602,11 @@ int Scorbot::executeHardwareOperation(API::HardwareOperation* operation) {
       writeCommandQueue(&commands);
       return 0;
     }
+    case API::HardwareOperationID::RequestTelemetry:
+      // Pi-Vision stopped because it no longer knows the pose well enough to
+      // move; skip the post-jog quiet window and poll once the bus is free.
+      telemetry_schedule.pollRequested();
+      return 0;
     case API::HardwareOperationID::SetSpeedPercent: {
       auto* speed = reinterpret_cast<API::SpeedPercent*>(operation + 1);
       if (speed->percent < 1 || speed->percent > 100) STD_FAIL;
