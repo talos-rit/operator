@@ -5,6 +5,7 @@ add_executable(test_erv_exe
     erv_arm/test_command_queue.cpp
     erv_arm/test_esp_profile.cpp
     erv_arm/test_native_stop.cpp
+    erv_arm/test_telemetry_schedule.cpp
     erv_conf/test_erv_config.cpp
 )
 

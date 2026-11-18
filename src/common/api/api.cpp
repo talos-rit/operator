@@ -88,6 +88,7 @@ int validate_command(const uint8_t* buf, uint16_t len) {
           }
           break;
         case API::HardwareOperationID::EnableControl:
+        case API::HardwareOperationID::RequestTelemetry:
           if (cmd->header.len != sizeof(API::HardwareOperation)) return -1;
           break;
         case API::HardwareOperationID::TrackingJog: {
