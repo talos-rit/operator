@@ -134,8 +134,23 @@ void Socket::poll() {
 
     while (buf_iter >= sizeof(API::DataHeader) + 1) {
       auto* msg = reinterpret_cast<API::DataWrapper*>(buffer.data());
-      uint16_t total_len =
+      std::size_t total_len =
           sizeof(API::DataHeader) + be16toh(msg->header.len) + 1;
+      // The length comes from the peer: reject frames that cannot fit in a
+      // subscriber buffer before copying anything.  Framing is lost at that
+      // point, so drop the client rather than trying to resync the stream.
+      if (total_len > SUB_MSG_LEN) {
+        LOG_ERROR("Rejecting oversized frame (%zu bytes, max %zu); "
+                  "dropping client.", total_len, SUB_MSG_LEN);
+        ::shutdown(props_.connfd, SHUT_RDWR);
+        props_.connfd.reset();
+        buf_iter = 0;
+        if (!waitForConnection()) {
+          LOG_ERROR("Reconnection failed after oversized frame.");
+          props_.running = false;
+        }
+        break;
+      }
       if (buf_iter < total_len) break;
 
       if (!props_.sub) {

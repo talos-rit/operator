@@ -8,6 +8,7 @@ set(COMMON_TEST_SRCS
     log/test_log_config.cpp
     socket/test_socket_config.cpp
     socket/test_socket_ports.cpp
+    socket/test_socket_framing.cpp
     all_tests.cpp 
 )
 
