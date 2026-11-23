@@ -2,7 +2,8 @@
 #include <unistd.h>
 #include "ER_V/acl/acl.hpp"
 
-bool poll_cmd_buffer(int fd, S_List* cmd_buffer);
+class SerialLink;
+bool poll_cmd_buffer(int fd, S_List* cmd_buffer, SerialLink* link);
 
 TEST_GROUP(CommandQueue) {};
 
@@ -19,9 +20,9 @@ TEST(CommandQueue, DelayDoesNotConsumePromptAndNextCommandStillTransmits) {
   DATA_S_List_append(&queue, &delay.node);
   DATA_S_List_append(&queue, &command.node);
 
-  CHECK_FALSE(poll_cmd_buffer(descriptors[1], &queue));
+  CHECK_FALSE(poll_cmd_buffer(descriptors[1], &queue, nullptr));
   CHECK_EQUAL(1, queue.len);
-  CHECK_TRUE(poll_cmd_buffer(descriptors[1], &queue));
+  CHECK_TRUE(poll_cmd_buffer(descriptors[1], &queue, nullptr));
   CHECK_EQUAL(0, queue.len);
   char received[sizeof(payload)]{};
   CHECK_EQUAL(sizeof(payload) - 1, read(descriptors[0], received, sizeof(received)));

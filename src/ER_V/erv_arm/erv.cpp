@@ -171,6 +171,14 @@ static void flush_buffer(char* tty_buffer, uint16_t len) {
   LOG_INFO("ACL RX: %s", tty_buffer);
 }
 
+// Monotonic, so link timing ignores the Pi's clock being set (it has no RTC
+// and is set from Gaia after boot, often days later).
+static uint64_t mono_ms() {
+  struct timespec ts;
+  clock_gettime(CLOCK_MONOTONIC, &ts);
+  return static_cast<uint64_t>(ts.tv_sec) * 1000 + ts.tv_nsec / 1000000;
+}
+
 static uint16_t tval_diff_ms(struct timeval* end, struct timeval* start) {
   time_t start_ms = (start->tv_sec * 1000) + (start->tv_usec / 1000);
   time_t end_ms = (end->tv_sec * 1000) + (end->tv_usec / 1000);
@@ -194,7 +202,7 @@ static bool poll_polar_pan(int fd, char* polar_pan_cont,
                            bool* direct_mode, bool* telemetry_request_pending,
                            struct timeval* telemetry_not_before,
                            uint16_t* telemetry_delay_ms, uint16_t jog_interval_ms,
-                           bool require_prompt = true) {
+                           SerialLink* link, bool require_prompt = true) {
   static char last_pan_cont;
   static struct timeval last_jog_byte;
   bool timed_out = false;
@@ -215,6 +223,10 @@ static bool poll_polar_pan(int fd, char* polar_pan_cont,
     return timed_out;
   }
   if (require_prompt && *polar_pan_cont && !*direct_mode && !*manual_mode) return timed_out;
+  // Don't start a jog while the controller's mode is in doubt: the entry '~'
+  // could instead take it out of manual mode, and the keys would become text.
+  if (require_prompt && *polar_pan_cont && !*manual_mode && !link->mayStartJog(mono_ms()))
+    return timed_out;
 
   bool direction_changed = last_pan_cont != *polar_pan_cont;
   if (direction_changed) {
@@ -223,6 +235,7 @@ static bool poll_polar_pan(int fd, char* polar_pan_cont,
     if (!last_pan_cont || !*polar_pan_cont) {
       // Manual mode is toggling
       if (!write_serial_all(fd, "~", 1)) return timed_out;
+      link->onTildeSent(mono_ms());
       *manual_mode = !(*manual_mode);
       // Wait for the controller's prompt after leaving manual mode.
       *direct_mode = false;
@@ -249,8 +262,9 @@ static bool poll_polar_pan(int fd, char* polar_pan_cont,
  * @param fd File descriptor for Scorbot ER V serial device
  */
 static void poll_tty_rx(int fd, bool* direct_mode,
-                        bool* telemetry_request_pending, TelemetrySink* sink) {
-  static clock_t last_print;
+                        bool* telemetry_request_pending, TelemetrySink* sink,
+                        SerialLink* link) {
+  static uint64_t last_print;
   static char buffer[ERV_TTY_BUFFER_LEN];
   static uint16_t len = 0;
 
@@ -258,11 +272,15 @@ static void poll_tty_rx(int fd, bool* direct_mode,
   char inbox[ERV_TTY_BUFFER_LEN];
   int result = read(fd, &inbox[0], ERV_TTY_BUFFER_LEN);
   if (-1 != result) {
+    uint64_t now = mono_ms();
     for (uint16_t iter = 0; iter < result; iter++) {
+      link->onByte(static_cast<uint8_t>(inbox[iter]), now);
       if (is_term(inbox[iter])) {
+        link->onLine(buffer, len);
         if (inbox[iter] == '>') {
           *direct_mode = true;
           *telemetry_request_pending = false;
+          link->onPrompt();
         }
         char* cursor = buffer;
         long values[11];
@@ -284,9 +302,11 @@ static void poll_tty_rx(int fd, bool* direct_mode,
               std::string_view(telemetry, telemetry_len));
         }
         long base, shoulder, elbow, wrist_pitch, wrist_roll;
-        if (sink && sscanf(buffer, " %*d:%ld %*d:%ld %*d:%ld %*d:%ld %*d:%ld",
-                           &base, &shoulder, &elbow, &wrist_pitch,
-                           &wrist_roll) == 5) {
+        bool joint_line = sscanf(buffer, " %*d:%ld %*d:%ld %*d:%ld %*d:%ld %*d:%ld",
+                                 &base, &shoulder, &elbow, &wrist_pitch,
+                                 &wrist_roll) == 5;
+        if (joint_line) link->onJointLine();
+        if (sink && joint_line) {
           char telemetry[112];
           int telemetry_len = snprintf(telemetry, sizeof(telemetry),
               "\nTELP %ld %ld %ld %ld %ld\n", base, shoulder, elbow,
@@ -312,7 +332,7 @@ static void poll_tty_rx(int fd, bool* direct_mode,
         flush_buffer(buffer, len);
         memset(buffer, 0, sizeof(buffer));
         len = 0;
-        last_print = clock();
+        last_print = now;
         continue;
       }
 
@@ -327,14 +347,15 @@ static void poll_tty_rx(int fd, bool* direct_mode,
     }
   }
 
-  // Handle rx timeout; If timeout has occurred, flush buffer
-  double delta_time_ms =
-      (static_cast<float>(clock() - last_print) * 1000) / (CLOCKS_PER_SEC);
-  if (len > 0 && (float)ERV_RX_TIMEOUT_MS < delta_time_ms) {
+  // Handle rx timeout; If timeout has occurred, flush buffer. Wall time, not
+  // clock() (CPU time), which barely advances under the container's CPU cap and
+  // hid unterminated output, such as keys echoed onto a half-typed line.
+  uint64_t now = mono_ms();
+  if (len > 0 && now - last_print > ERV_RX_TIMEOUT_MS) {
     flush_buffer(buffer, len);
     memset(buffer, 0, sizeof(buffer));
     len = 0;
-    last_print = clock();
+    last_print = now;
   }
 }
 
@@ -352,7 +373,7 @@ static bool execute_acl_cmd(int fd, ACL_Command* command) {
  * @param fd File descriptor to write commands to
  * @param cmd_buffer List of commands to execute
  */
-bool poll_cmd_buffer(int fd, S_List* cmd_buffer) {
+bool poll_cmd_buffer(int fd, S_List* cmd_buffer, SerialLink* link) {
   static bool init = false;
   static uint16_t last_delay_ms = 0;
   static struct timeval last_cmd_ts;
@@ -382,6 +403,7 @@ bool poll_cmd_buffer(int fd, S_List* cmd_buffer) {
   bool transmitted = cmd->len > 0;
   last_delay_ms = cmd->delay_ms;
   gettimeofday(&last_cmd_ts, NULL);
+  if (link) link->onCommandSent(&cmd->payload[0], cmd->len);
   bool sent = execute_acl_cmd(fd, cmd);
 
   return transmitted && sent;
@@ -400,23 +422,27 @@ void Scorbot::poll() {
       poll_polar_pan(fd, &polar_pan_cont, &last_start, &manual_mode,
                      &direct_mode, &telemetry_request_pending,
                      &telemetry_not_before, &telemetry_delay_ms, jog_interval_ms,
-                     !isEsp())) {
+                     &link, !isEsp())) {
     polarPanStop();
   }
   poll_tty_rx(fd, &direct_mode, &telemetry_request_pending,
-              isEsp() ? nullptr : telemetrySink());
+              isEsp() ? nullptr : telemetrySink(), &link);
   if (isEsp()) {
     // The limited ESP ACL bridge has no prompt, LISTPV, or measured arm pose.
     // Keep queue timing and manual-mode framing, but never wait for a reply.
-    if (!manual_mode && !polar_pan_cont) poll_cmd_buffer(fd, &cmd_buffer);
+    if (!manual_mode && !polar_pan_cont) poll_cmd_buffer(fd, &cmd_buffer, nullptr);
     return;
   }
+  uint64_t now_ms = mono_ms();
+  recoverLink(now_ms);
+  if (const char* report = link.report(now_ms)) LOG_INFO("%s", report);
+  bool may_type = link.mayTypeCommands(now_ms);
   bool command_queue_was_active = cmd_buffer.len > 0;
   // A queued command must not interrupt a LISTPV reply or manual-mode exit.
   // Every transmitted ACL command consumes the current prompt; its response
   // supplies the next prompt before another command can use the serial bus.
-  if (direct_mode && !telemetry_request_pending && !manual_mode) {
-    if (poll_cmd_buffer(fd, &cmd_buffer)) direct_mode = false;
+  if (direct_mode && !telemetry_request_pending && !manual_mode && may_type) {
+    if (poll_cmd_buffer(fd, &cmd_buffer, &link)) direct_mode = false;
   }
   struct timeval now;
   gettimeofday(&now, NULL);
@@ -426,15 +452,51 @@ void Scorbot::poll() {
     telemetry_not_before = now;
     telemetry_delay_ms = 500;
   }
-  if (direct_mode && !telemetry_request_pending && !manual_mode &&
+  if (direct_mode && !telemetry_request_pending && !manual_mode && may_type &&
       !polar_pan_cont && cmd_buffer.len == 0 &&
       tval_diff_ms(&now, &telemetry_not_before) >= telemetry_delay_ms) {
     if (write_serial_all(fd, "LISTPV POSITION\r", 16)) {
+      link.onPollSent();
       telemetry_request_pending = true;
       gettimeofday(&telemetry_not_before, NULL);
       telemetry_delay_ms = ERV_TELEMETRY_INTERVAL_MS;
     }
   }
+}
+
+// Keeps a lost byte from stopping the arm for good. Operator only writes after
+// a '>' prompt, so a corrupted or dropped prompt used to leave it waiting
+// forever; and if a '~' or its announcement was lost, Operator and the
+// controller could disagree about manual mode.
+void Scorbot::recoverLink(uint64_t now_ms) {
+  // The controller says it is in manual mode but Operator didn't put it there
+  // (e.g. a recovery '~' found it in direct mode). Leave manual mode again; a
+  // jog waiting to start enters it properly afterwards.
+  if (link.controllerManual(now_ms) && !manual_mode) {
+    LOG_WARN("Controller is in manual mode but no jog put it there; leaving manual mode");
+    if (write_serial_all(fd, "~", 1)) {
+      link.onTildeSent(now_ms, true);
+      direct_mode = false;
+    }
+    return;
+  }
+
+  // A prompt is expected: Operator sent a command, LISTPV or '~' and is not
+  // in manual mode, where the controller doesn't prompt.
+  bool waiting = (!direct_mode && !manual_mode) || telemetry_request_pending;
+  SerialLink::Recovery recovery = link.poll(waiting, now_ms);
+  if (recovery == SerialLink::Recovery::None) return;
+  uint32_t attempt = link.attemptsSincePrompt();
+  if (recovery == SerialLink::Recovery::SendReturn) {
+    LOG_WARN("No ACL prompt from the controller; sending CR to ask for one (attempt %u)", attempt);
+    write_serial_all(fd, "\r", 1);
+  } else {
+    LOG_WARN("No ACL prompt from the controller; toggling manual mode in case it is stuck there (attempt %u)", attempt);
+    if (write_serial_all(fd, "~", 1)) link.onTildeSent(now_ms, true);
+  }
+  // Whatever was pending lost its prompt; wait for the new one.
+  telemetry_request_pending = false;
+  direct_mode = false;
 }
 
 int Scorbot::handShake() {
