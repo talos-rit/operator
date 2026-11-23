@@ -12,19 +12,27 @@ TEST_GROUP(SerialLinkLogic) {};
 TEST(SerialLinkLogic, CountsPollsEchoesJointLinesAndFramingErrors) {
   SerialLink link;
   CHECK(link.report(0) == nullptr);
-  for (int i = 0; i < 4; i++) link.onPollSent();
-  link.onLine("LISTPV POSITION", 15);
-  link.onLine("LISTPV POSITION", 15);
-  link.onLine("LISTPV POSI", 11);      // split by a framing error
-  link.onLine("LISTPV POSITION10", 17);  // run into the next line
+  auto poll = [&](const char* echo) {
+    link.onPollSent();
+    if (echo) link.onLine(echo, strlen(echo));
+  };
+  poll("LISTPV POSITION");
+  poll("LISTPV POSI");          // split by a framing error
+  link.onLine("TION", 4);       // ...its second half isn't counted again
+  poll("LISTPV POSITION10");    // run into the next line
+  poll(nullptr);                // never arrived...
+  poll("LISTPV POSITION");      // ...noticed when the next poll goes out
   link.onJointLine();
   link.onByte('\0', 100);
   link.onByte('X', 100);
   const char* report = link.report(SerialLink::kReportIntervalMs);
   CHECK(report != nullptr);
-  STRCMP_CONTAINS("polls=4 damaged=2 joint=1 framing=1 recoveries=0", report);
-  // Each report covers its own window.
-  STRCMP_CONTAINS("polls=0 damaged=0", link.report(2 * SerialLink::kReportIntervalMs));
+  STRCMP_CONTAINS("polls=5 damaged=3 joint=1 framing=1 recoveries=0", report);
+  // A poll at the end of one window whose echo lands in the next is fine.
+  link.onPollSent();
+  STRCMP_CONTAINS("polls=1 damaged=0", link.report(2 * SerialLink::kReportIntervalMs));
+  link.onLine("LISTPV POSITION", 15);
+  STRCMP_CONTAINS("polls=0 damaged=0", link.report(3 * SerialLink::kReportIntervalMs));
 }
 
 TEST(SerialLinkLogic, OverduePromptAsksAgainAndAnyOutputRestartsTheClock) {

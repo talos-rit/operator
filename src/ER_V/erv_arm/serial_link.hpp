@@ -29,7 +29,7 @@ class SerialLink {
 
   struct Window {
     uint32_t polls = 0;      // LISTPV POSITION requests sent
-    uint32_t echo_ok = 0;    // ...whose echo came back intact
+    uint32_t damaged = 0;    // ...whose echo came back split, run on, or not at all
     uint32_t joint = 0;      // joint-position lines received
     uint32_t framing = 0;    // bytes received with a framing error ('\0')
     uint32_t recoveries = 0; // prompt recoveries attempted
@@ -53,7 +53,17 @@ class SerialLink {
 
   void onLine(const char* line, size_t len) {
     if (!len) return;
-    if (len == kEchoLen && strncmp(line, kEcho, kEchoLen) == 0) window.echo_ok++;
+    // Judge each echo by itself, not polls minus intact echoes: a poll near the
+    // end of one report window has its echo in the next.
+    if (awaiting_echo && line[0] == 'L') {
+      bool intact = len == kEchoLen && strncmp(line, kEcho, kEchoLen) == 0;
+      bool split = len < kEchoLen && strncmp(line, kEcho, len) == 0;
+      bool run_on = len > kEchoLen && strncmp(line, kEcho, kEchoLen) == 0;
+      if (intact || split || run_on) {
+        if (!intact) window.damaged++;
+        awaiting_echo = false;
+      }
+    }
     // The controller announces manual mode on entry ("MANUAL MODE!", then
     // " JOINT MODE." or " XYZ MODE.") and on exit ("EXIT MANUAL MODE...").
     if (contains(line, len, "EXIT MANUAL MODE")) {
@@ -67,7 +77,12 @@ class SerialLink {
   }
 
   void onJointLine() { window.joint++; }
-  void onPollSent() { window.polls++; }
+  void onPollSent() {
+    // The previous poll's echo never arrived (e.g. its first byte was lost).
+    if (awaiting_echo) window.damaged++;
+    awaiting_echo = true;
+    window.polls++;
+  }
 
   void onCommandSent(const char* payload, size_t len) {
     long_command = startsWith(payload, len, "HOME") || startsWith(payload, len, "MOVED");
@@ -151,10 +166,9 @@ class SerialLink {
       report_at_ms = now_ms;
     }
     if (now_ms - report_at_ms < kReportIntervalMs) return nullptr;
-    uint32_t damaged = window.polls > window.echo_ok ? window.polls - window.echo_ok : 0;
     snprintf(text, sizeof(text),
              "Serial link: polls=%u damaged=%u joint=%u framing=%u recoveries=%u quiet_ms=%llu",
-             window.polls, damaged, window.joint, window.framing, window.recoveries,
+             window.polls, window.damaged, window.joint, window.framing, window.recoveries,
              static_cast<unsigned long long>(now_ms - (heard_anything ? last_rx_ms : report_at_ms)));
     window = Window{};
     report_at_ms = now_ms;
@@ -186,6 +200,7 @@ class SerialLink {
 
   Window window;
   bool controller_manual = false;
+  bool awaiting_echo = false;
   bool announced_since_tilde = true;  // no '~' sent yet
   bool recovery_tilde = false;
   bool reporting = false;
