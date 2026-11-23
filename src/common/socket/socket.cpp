@@ -1,6 +1,7 @@
 #include "socket/socket.hpp"
 
 #include <endian.h>
+#include <poll.h>
 #include <sys/socket.h>
 
 #include <cerrno>
@@ -13,6 +14,15 @@
 
 #define LOG_CONSOLE_THRESHOLD_THIS LOG_THRESHOLD_DEFAULT
 #define LOG_FILE_THRESHOLD_THIS LOG_THRESHOLD_MAX
+
+// Wait until `fd` is readable, or for at most SOCKET_POLL_PERIOD so the loops
+// still notice stop(). Sleeping for the whole period instead delayed every
+// command that arrived while idle by up to 25 ms.
+static void waitReadable(int fd) {
+  pollfd pfd{fd, POLLIN, 0};
+  int ret = ::poll(&pfd, 1, static_cast<int>(SOCKET_POLL_PERIOD.count()));
+  if (ret < 0 && errno != EINTR) std::this_thread::sleep_for(SOCKET_POLL_PERIOD);
+}
 
 Socket::Socket(uint16_t port, uint32_t bind_address) {
   props_.port = port;
@@ -68,7 +78,7 @@ bool Socket::waitForConnection() {
       return false;
     }
 
-    std::this_thread::sleep_for(SOCKET_POLL_PERIOD);
+    waitReadable(props_.sockfd);
   }
 
   LOG_INFO("Socket stopped before connection.");
@@ -103,7 +113,7 @@ void Socket::poll() {
         ::recv(props_.connfd, remaining.data(), remaining.size(), MSG_DONTWAIT);
     if (ret == -1) {
       if (errno == EAGAIN) {
-        std::this_thread::sleep_for(SOCKET_POLL_PERIOD);
+        waitReadable(props_.connfd);
         continue;
       }
       LOG_ERROR("Socket recv failed: (%d) %s", errno, strerror(errno));
@@ -134,8 +144,23 @@ void Socket::poll() {
 
     while (buf_iter >= sizeof(API::DataHeader) + 1) {
       auto* msg = reinterpret_cast<API::DataWrapper*>(buffer.data());
-      uint16_t total_len =
+      std::size_t total_len =
           sizeof(API::DataHeader) + be16toh(msg->header.len) + 1;
+      // The length comes from the peer: reject frames that cannot fit in a
+      // subscriber buffer before copying anything.  Framing is lost at that
+      // point, so drop the client rather than trying to resync the stream.
+      if (total_len > SUB_MSG_LEN) {
+        LOG_ERROR("Rejecting oversized frame (%zu bytes, max %zu); "
+                  "dropping client.", total_len, SUB_MSG_LEN);
+        ::shutdown(props_.connfd, SHUT_RDWR);
+        props_.connfd.reset();
+        buf_iter = 0;
+        if (!waitForConnection()) {
+          LOG_ERROR("Reconnection failed after oversized frame.");
+          props_.running = false;
+        }
+        break;
+      }
       if (buf_iter < total_len) break;
 
       if (!props_.sub) {
