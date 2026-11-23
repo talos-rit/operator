@@ -1,6 +1,7 @@
 #include "socket/socket.hpp"
 
 #include <endian.h>
+#include <poll.h>
 #include <sys/socket.h>
 
 #include <cerrno>
@@ -13,6 +14,15 @@
 
 #define LOG_CONSOLE_THRESHOLD_THIS LOG_THRESHOLD_DEFAULT
 #define LOG_FILE_THRESHOLD_THIS LOG_THRESHOLD_MAX
+
+// Wait until `fd` is readable, or for at most SOCKET_POLL_PERIOD so the loops
+// still notice stop(). Sleeping for the whole period instead delayed every
+// command that arrived while idle by up to 25 ms.
+static void waitReadable(int fd) {
+  pollfd pfd{fd, POLLIN, 0};
+  int ret = ::poll(&pfd, 1, static_cast<int>(SOCKET_POLL_PERIOD.count()));
+  if (ret < 0 && errno != EINTR) std::this_thread::sleep_for(SOCKET_POLL_PERIOD);
+}
 
 Socket::Socket(uint16_t port, uint32_t bind_address) {
   props_.port = port;
@@ -68,7 +78,7 @@ bool Socket::waitForConnection() {
       return false;
     }
 
-    std::this_thread::sleep_for(SOCKET_POLL_PERIOD);
+    waitReadable(props_.sockfd);
   }
 
   LOG_INFO("Socket stopped before connection.");
@@ -103,7 +113,7 @@ void Socket::poll() {
         ::recv(props_.connfd, remaining.data(), remaining.size(), MSG_DONTWAIT);
     if (ret == -1) {
       if (errno == EAGAIN) {
-        std::this_thread::sleep_for(SOCKET_POLL_PERIOD);
+        waitReadable(props_.connfd);
         continue;
       }
       LOG_ERROR("Socket recv failed: (%d) %s", errno, strerror(errno));

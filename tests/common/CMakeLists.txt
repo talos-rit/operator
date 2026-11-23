@@ -9,6 +9,7 @@ set(COMMON_TEST_SRCS
     socket/test_socket_config.cpp
     socket/test_socket_ports.cpp
     socket/test_socket_framing.cpp
+    socket/test_socket_latency.cpp
     all_tests.cpp 
 )
 
