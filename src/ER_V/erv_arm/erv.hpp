@@ -3,6 +3,7 @@
 #include "api/api.hpp"
 #include "arm/arm.hpp"
 #include "data/s_list.h"
+#include "erv_arm/serial_link.hpp"
 
 #define ERV_RX_TIMEOUT_MS 500
 #define ERV_CONT_POLAR_PAN_TIMEOUT_MS 500
@@ -33,6 +34,7 @@ class Scorbot : public Arm {
   struct timeval last_start;
   struct timeval telemetry_not_before;
   struct timeval profile_report_at{};
+  SerialLink link;
 
   int handShake();
   int polarPan(API::PolarPan* pan);
@@ -42,4 +44,5 @@ class Scorbot : public Arm {
   int home(API::Home* home);
   int writeCommandQueue(S_List* cmd_list);
   void poll();
+  void recoverLink(uint64_t now_ms);
 };
